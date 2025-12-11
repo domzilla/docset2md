@@ -1,0 +1,32 @@
+{
+  "name": "docset2md",
+  "version": "1.0.0",
+  "description": "Convert Apple Documentation docsets to Markdown for AI agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "docset2md": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "keywords": [
+    "docset",
+    "apple",
+    "documentation",
+    "markdown",
+    "docc"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.6.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}
