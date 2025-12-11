@@ -1,10 +1,43 @@
+/**
+ * Cache Reader for Apple DocC docsets
+ *
+ * Reads the refs table from cache.db SQLite database.
+ * This table maps UUIDs (generated from request keys) to locations
+ * in the compressed fs/ files.
+ *
+ * @module db/CacheReader
+ */
+
 import Database from 'better-sqlite3';
 import type { CacheRef } from '../parser/types.js';
 
+/**
+ * Reads cache references from the cache.db SQLite database.
+ *
+ * The refs table maps UUIDs to content locations:
+ * - uuid: Generated from SHA-1 hash of canonical path
+ * - data_id: ID of the file in fs/ directory
+ * - offset: Byte offset in decompressed data
+ * - length: Length of JSON content
+ *
+ * @example
+ * ```typescript
+ * const reader = new CacheReader('/path/to/cache.db');
+ * const ref = reader.getRef('lsXYZ123...');
+ * if (ref) {
+ *   console.log(`Data in fs/${ref.dataId} at offset ${ref.offset}`);
+ * }
+ * reader.close();
+ * ```
+ */
 export class CacheReader {
   private db: Database.Database;
   private getRefStmt: Database.Statement;
 
+  /**
+   * Create a new CacheReader.
+   * @param dbPath - Path to the cache.db SQLite database
+   */
   constructor(dbPath: string) {
     this.db = new Database(dbPath, { readonly: true });
     this.getRefStmt = this.db.prepare(`
@@ -15,7 +48,9 @@ export class CacheReader {
   }
 
   /**
-   * Get cache reference by UUID
+   * Get cache reference by UUID.
+   * @param uuid - The UUID generated from a request key
+   * @returns CacheRef with location info, or null if not found
    */
   getRef(uuid: string): CacheRef | null {
     const row = this.getRefStmt.get(uuid) as CacheRef | undefined;
@@ -23,7 +58,9 @@ export class CacheReader {
   }
 
   /**
-   * Get multiple cache references by UUIDs
+   * Get multiple cache references by UUIDs.
+   * @param uuids - Array of UUIDs to look up
+   * @returns Map from UUID to CacheRef (missing UUIDs are omitted)
    */
   getRefs(uuids: string[]): Map<string, CacheRef> {
     const result = new Map<string, CacheRef>();
@@ -39,14 +76,17 @@ export class CacheReader {
   }
 
   /**
-   * Check if a UUID exists in the cache
+   * Check if a UUID exists in the cache.
+   * @param uuid - The UUID to check
+   * @returns true if the UUID has a cache entry
    */
   hasRef(uuid: string): boolean {
     return this.getRef(uuid) !== null;
   }
 
   /**
-   * Get all unique data_ids (for preloading fs files)
+   * Get all unique data_ids (for preloading fs files).
+   * @returns Array of data file IDs used in the cache
    */
   getDataIds(): number[] {
     const stmt = this.db.prepare('SELECT DISTINCT data_id FROM refs ORDER BY data_id');
@@ -55,7 +95,10 @@ export class CacheReader {
   }
 
   /**
-   * Get count of refs for a specific data_id
+   * Get count of refs for a specific data_id.
+   * Useful for determining how many entries are in each fs file.
+   * @param dataId - The data file ID
+   * @returns Number of cache entries referencing this data file
    */
   getRefCountForDataId(dataId: number): number {
     const stmt = this.db.prepare('SELECT COUNT(*) as count FROM refs WHERE data_id = ?');
@@ -64,7 +107,9 @@ export class CacheReader {
   }
 
   /**
-   * Get metadata from the metadata table
+   * Get metadata from the metadata table.
+   * @param key - Metadata key to look up
+   * @returns Metadata value or null if not found
    */
   getMetadata(key: string): string | null {
     const stmt = this.db.prepare('SELECT value FROM metadata WHERE key = ?');
@@ -72,6 +117,10 @@ export class CacheReader {
     return row?.value ?? null;
   }
 
+  /**
+   * Close the database connection.
+   * Should be called when done reading to release resources.
+   */
   close(): void {
     this.db.close();
   }

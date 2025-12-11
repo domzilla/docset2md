@@ -1,10 +1,15 @@
 /**
- * Apple DocC format handler
+ * Apple DocC Format Handler
  *
  * Handles Apple's proprietary docset format with:
  * - searchIndex table in docSet.dsidx
  * - cache.db with refs table for UUID-to-location mapping
  * - Brotli-compressed DocC JSON in fs/ directory
+ *
+ * This is the most feature-rich format, supporting dual Swift/Objective-C
+ * documentation with rich metadata, relationships, and topic hierarchies.
+ *
+ * @module formats/AppleDocCFormat
  */
 
 import { existsSync } from 'node:fs';
@@ -21,6 +26,26 @@ import { ContentExtractor } from '../extractor/ContentExtractor.js';
 import { DocCParser } from '../parser/DocCParser.js';
 import type { ParsedDocumentation, TopicItem } from '../parser/types.js';
 
+/**
+ * Format handler for Apple DocC docsets.
+ *
+ * Apple DocC docsets use a sophisticated format:
+ * 1. Index entries stored in searchIndex table with request keys
+ * 2. Content locations cached in cache.db (UUID -> dataId, offset, length)
+ * 3. Actual content stored as DocC JSON in brotli-compressed fs/ files
+ *
+ * @implements {DocsetFormat}
+ *
+ * @example
+ * ```typescript
+ * const format = new AppleDocCFormat();
+ * if (await format.detect('./Apple_UIKit_Reference.docset')) {
+ *   await format.initialize('./Apple_UIKit_Reference.docset');
+ *   console.log(`Found ${format.getEntryCount()} entries`);
+ *   format.close();
+ * }
+ * ```
+ */
 export class AppleDocCFormat implements DocsetFormat {
   private docsetPath: string = '';
   private indexReader: IndexReader | null = null;
@@ -28,10 +53,22 @@ export class AppleDocCFormat implements DocsetFormat {
   private parser: DocCParser = new DocCParser();
   private initialized = false;
 
+  /** @inheritdoc */
   getName(): string {
     return 'Apple DocC';
   }
 
+  /**
+   * Detect if a docset is in Apple DocC format.
+   *
+   * Apple DocC format is identified by the presence of:
+   * - docSet.dsidx with searchIndex table
+   * - cache.db with refs table
+   * - fs/ directory with brotli-compressed content
+   *
+   * @param docsetPath - Path to the .docset directory
+   * @returns true if this is an Apple DocC docset
+   */
   async detect(docsetPath: string): Promise<boolean> {
     // Apple format has: searchIndex (in docSet.dsidx), cache.db, and fs/ directory
     const hasIndex = existsSync(join(docsetPath, 'Contents/Resources/docSet.dsidx'));
@@ -41,6 +78,7 @@ export class AppleDocCFormat implements DocsetFormat {
     return hasIndex && hasCache && hasFs;
   }
 
+  /** @inheritdoc */
   async initialize(docsetPath: string): Promise<void> {
     this.docsetPath = docsetPath;
     const indexPath = join(docsetPath, 'Contents/Resources/docSet.dsidx');
@@ -49,15 +87,18 @@ export class AppleDocCFormat implements DocsetFormat {
     this.initialized = true;
   }
 
+  /** @inheritdoc */
   isInitialized(): boolean {
     return this.initialized;
   }
 
+  /** @inheritdoc */
   getEntryCount(filters?: EntryFilters): number {
     if (!this.indexReader) throw new Error('Not initialized');
     return this.indexReader.getCount(this.convertFilters(filters));
   }
 
+  /** @inheritdoc */
   *iterateEntries(filters?: EntryFilters): Generator<NormalizedEntry> {
     if (!this.indexReader) throw new Error('Not initialized');
 
@@ -80,6 +121,7 @@ export class AppleDocCFormat implements DocsetFormat {
     }
   }
 
+  /** @inheritdoc */
   async extractContent(entry: NormalizedEntry): Promise<ParsedContent | null> {
     if (!this.extractor) throw new Error('Not initialized');
 
@@ -92,30 +134,40 @@ export class AppleDocCFormat implements DocsetFormat {
     return this.convertParsedDoc(parsed);
   }
 
+  /** @inheritdoc */
   getTypes(): string[] {
     if (!this.indexReader) return [];
     return this.indexReader.getTypes();
   }
 
+  /** @inheritdoc */
   getCategories(): string[] {
     if (!this.indexReader) return [];
     return this.indexReader.getFrameworks();
   }
 
+  /** @inheritdoc */
   supportsMultipleLanguages(): boolean {
     return true;
   }
 
+  /** @inheritdoc */
   getLanguages(): string[] {
     return ['swift', 'objc'];
   }
 
+  /** @inheritdoc */
   close(): void {
     this.indexReader?.close();
     this.extractor?.close();
     this.initialized = false;
   }
 
+  /**
+   * Convert generic EntryFilters to IndexReader-specific filter format.
+   * @param filters - Generic entry filters
+   * @returns IndexReader-compatible filter object
+   */
   private convertFilters(filters?: EntryFilters): {
     types?: string[];
     frameworks?: string[];
@@ -132,6 +184,11 @@ export class AppleDocCFormat implements DocsetFormat {
     };
   }
 
+  /**
+   * Convert ParsedDocumentation from DocCParser to generic ParsedContent.
+   * @param parsed - DocC-specific parsed documentation
+   * @returns Generic ParsedContent for markdown generation
+   */
   private convertParsedDoc(parsed: ParsedDocumentation): ParsedContent {
     return {
       title: parsed.title,
@@ -163,6 +220,11 @@ export class AppleDocCFormat implements DocsetFormat {
     };
   }
 
+  /**
+   * Convert a DocC TopicItem to generic ContentItem.
+   * @param item - DocC-specific topic item
+   * @returns Generic ContentItem for markdown generation
+   */
   private convertTopicItem(item: TopicItem): ContentItem {
     return {
       title: item.title,

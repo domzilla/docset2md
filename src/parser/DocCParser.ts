@@ -1,3 +1,13 @@
+/**
+ * DocC JSON Parser
+ *
+ * Parses Apple's DocC JSON format into a simplified structure
+ * suitable for markdown generation. Handles content sections,
+ * declarations, relationships, and link resolution.
+ *
+ * @module parser/DocCParser
+ */
+
 import type {
   DocCDocument,
   ParsedDocumentation,
@@ -10,11 +20,34 @@ import type {
   Platform,
 } from './types.js';
 
+/**
+ * Parses DocC JSON documents into ParsedDocumentation.
+ *
+ * The parser extracts:
+ * - Metadata (title, framework, platforms)
+ * - Code declarations
+ * - Overview content (prose, code blocks, lists)
+ * - Parameters and return values
+ * - Topic sections and relationships
+ * - Reference links
+ *
+ * URL-to-path mappings can be registered for accurate link resolution.
+ *
+ * @example
+ * ```typescript
+ * const parser = new DocCParser();
+ * const doc = extractor.extractByRequestKey('ls/documentation/uikit/uiwindow');
+ * const parsed = parser.parse(doc, 'swift');
+ * console.log(parsed.title, parsed.declaration);
+ * ```
+ */
 export class DocCParser {
   private urlToPathMap: Map<string, string> = new Map();
 
   /**
    * Register a URL to file path mapping for link resolution.
+   * @param docUrl - Documentation URL (e.g., doc://com.apple.xxx/documentation/uikit)
+   * @param filePath - Corresponding file path in output
    */
   registerPath(docUrl: string, filePath: string): void {
     // Normalize the URL - extract the path part
@@ -25,7 +58,7 @@ export class DocCParser {
   }
 
   /**
-   * Clear the URL to path mappings.
+   * Clear all URL to path mappings.
    */
   clearMappings(): void {
     this.urlToPathMap.clear();
@@ -33,6 +66,8 @@ export class DocCParser {
 
   /**
    * Normalize a doc:// URL to a comparable path.
+   * @param url - URL to normalize
+   * @returns Normalized lowercase path or null if invalid
    */
   private normalizeDocUrl(url: string): string | null {
     // Handle doc://com.apple.xxx/documentation/... format
@@ -49,6 +84,9 @@ export class DocCParser {
 
   /**
    * Parse a DocC document into a simplified structure for markdown generation.
+   * @param doc - DocC JSON document from the extractor
+   * @param language - Target language (swift or objc)
+   * @returns ParsedDocumentation ready for markdown generation
    */
   parse(doc: DocCDocument, language: 'swift' | 'objc'): ParsedDocumentation {
     const metadata = doc.metadata;
@@ -75,6 +113,9 @@ export class DocCParser {
     return result;
   }
 
+  /**
+   * Extract framework name from document metadata or URL.
+   */
   private extractFramework(doc: DocCDocument): string | undefined {
     const modules = doc.metadata?.modules;
     if (modules && modules.length > 0) {
@@ -87,6 +128,9 @@ export class DocCParser {
     return match?.[1];
   }
 
+  /**
+   * Render abstract section to markdown string.
+   */
   private renderAbstract(abstract?: InlineContent[]): string | undefined {
     if (!abstract || abstract.length === 0) {
       return undefined;
@@ -94,6 +138,9 @@ export class DocCParser {
     return this.renderInlineContent(abstract);
   }
 
+  /**
+   * Render code declaration for the target language.
+   */
   private renderDeclaration(sections?: ContentSection[], language?: 'swift' | 'objc'): string | undefined {
     if (!sections) return undefined;
 
@@ -118,10 +165,16 @@ export class DocCParser {
     return undefined;
   }
 
+  /**
+   * Convert declaration tokens to a code string.
+   */
   private renderDeclarationTokens(decl: Declaration): string {
     return decl.tokens.map(t => t.text).join('');
   }
 
+  /**
+   * Render overview/content sections to markdown.
+   */
   private renderOverview(sections?: ContentSection[], references?: Record<string, Reference>): string | undefined {
     if (!sections) return undefined;
 
@@ -138,6 +191,9 @@ export class DocCParser {
     return parts.join('\n\n') || undefined;
   }
 
+  /**
+   * Extract function/method parameters.
+   */
   private extractParameters(
     sections?: ContentSection[],
     references?: Record<string, Reference>
@@ -155,6 +211,9 @@ export class DocCParser {
     return undefined;
   }
 
+  /**
+   * Extract return value description.
+   */
   private extractReturnValue(
     sections?: ContentSection[],
     references?: Record<string, Reference>
@@ -184,6 +243,9 @@ export class DocCParser {
     return undefined;
   }
 
+  /**
+   * Extract topic sections with their items.
+   */
   private extractTopics(
     sections?: Array<{ title?: string; identifiers: string[]; generated?: boolean }>,
     references?: Record<string, Reference>
@@ -201,6 +263,9 @@ export class DocCParser {
       .filter(s => s.items.length > 0);
   }
 
+  /**
+   * Extract relationship sections (inheritance, conformance, etc.).
+   */
   private extractRelationships(
     doc: DocCDocument
   ): Array<{ kind: string; title: string; items: TopicItem[] }> | undefined {
@@ -218,6 +283,9 @@ export class DocCParser {
       }));
   }
 
+  /**
+   * Convert a reference identifier to a TopicItem.
+   */
   private referenceToTopicItem(
     identifier: string,
     references?: Record<string, Reference>
@@ -251,7 +319,9 @@ export class DocCParser {
 
   /**
    * Build a relative path from a documentation URL.
-   * e.g., /documentation/uikit/uiwindow/rootviewcontroller -> ./uiwindow/rootViewController.md
+   * @param url - Documentation URL path
+   * @param title - Display title for the filename
+   * @returns Relative path (e.g., ./uiwindow/rootViewController.md)
    */
   private buildRelativePathFromUrl(url: string, title: string): string {
     // Extract path after /documentation/framework/
@@ -275,6 +345,9 @@ export class DocCParser {
     return `./${dirParts.join('/')}/${fileName}.md`;
   }
 
+  /**
+   * Extract breadcrumb hierarchy from document.
+   */
   private extractHierarchy(doc: DocCDocument): string[] | undefined {
     if (!doc.hierarchy?.paths || doc.hierarchy.paths.length === 0) {
       return undefined;
@@ -288,7 +361,9 @@ export class DocCParser {
     });
   }
 
-  // Block content rendering
+  /**
+   * Render an array of block content to markdown.
+   */
   private renderBlockContent(
     content: BlockContent[],
     references?: Record<string, Reference>
@@ -299,6 +374,9 @@ export class DocCParser {
       .join('\n\n');
   }
 
+  /**
+   * Render a single block content element to markdown.
+   */
   private renderBlock(block: BlockContent, references?: Record<string, Reference>): string {
     switch (block.type) {
       case 'heading':
@@ -322,11 +400,13 @@ export class DocCParser {
     }
   }
 
+  /** Render heading element. */
   private renderHeading(block: { type: 'heading'; level: number; text: string }): string {
     const prefix = '#'.repeat(Math.min(block.level + 1, 6));
     return `${prefix} ${block.text}`;
   }
 
+  /** Render paragraph element. */
   private renderParagraph(
     block: { type: 'paragraph'; inlineContent: InlineContent[] },
     references?: Record<string, Reference>
@@ -334,6 +414,7 @@ export class DocCParser {
     return this.renderInlineContent(block.inlineContent, references);
   }
 
+  /** Render code listing as fenced code block. */
   private renderCodeListing(block: {
     type: 'codeListing';
     syntax?: string;
@@ -344,6 +425,7 @@ export class DocCParser {
     return '```' + lang + '\n' + code + '\n```';
   }
 
+  /** Render aside/callout as blockquote. */
   private renderAside(
     block: { type: 'aside'; style: string; name?: string; content: BlockContent[] },
     references?: Record<string, Reference>
@@ -353,6 +435,7 @@ export class DocCParser {
     return `> **${title}**: ${content}`;
   }
 
+  /** Convert aside style to display title. */
   private asideStyleToTitle(style: string): string {
     const titles: Record<string, string> = {
       note: 'Note',
@@ -364,6 +447,7 @@ export class DocCParser {
     return titles[style] ?? 'Note';
   }
 
+  /** Render unordered list. */
   private renderUnorderedList(
     block: { type: 'unorderedList'; items: Array<{ content: BlockContent[] }> },
     references?: Record<string, Reference>
@@ -373,6 +457,7 @@ export class DocCParser {
       .join('\n');
   }
 
+  /** Render ordered list. */
   private renderOrderedList(
     block: { type: 'orderedList'; items: Array<{ content: BlockContent[] }>; start?: number },
     references?: Record<string, Reference>
@@ -383,6 +468,7 @@ export class DocCParser {
       .join('\n');
   }
 
+  /** Render table as markdown table. */
   private renderTable(
     block: {
       type: 'table';
@@ -411,6 +497,7 @@ export class DocCParser {
     return rows.join('\n');
   }
 
+  /** Render term list as definition list. */
   private renderTermList(
     block: {
       type: 'termList';
@@ -427,7 +514,9 @@ export class DocCParser {
       .join('\n\n');
   }
 
-  // Inline content rendering
+  /**
+   * Render an array of inline content to markdown string.
+   */
   private renderInlineContent(
     content: InlineContent[],
     references?: Record<string, Reference>
@@ -435,6 +524,9 @@ export class DocCParser {
     return content.map(c => this.renderInlineContentSingle(c, references)).join('');
   }
 
+  /**
+   * Render a single inline content element.
+   */
   private renderInlineContentSingle(
     content: InlineContent,
     references?: Record<string, Reference>
@@ -467,6 +559,9 @@ export class DocCParser {
     }
   }
 
+  /**
+   * Render a reference as a markdown link.
+   */
   private renderReference(
     content: { type: 'reference'; identifier: string; isActive?: boolean; overridingTitle?: string },
     references?: Record<string, Reference>
@@ -490,6 +585,7 @@ export class DocCParser {
     return title;
   }
 
+  /** Render image reference as markdown image. */
   private renderImageRef(identifier: string, references?: Record<string, Reference>): string {
     const ref = references?.[identifier];
     if (ref?.type === 'image' && ref.variants && ref.variants.length > 0) {
@@ -500,6 +596,9 @@ export class DocCParser {
     return '';
   }
 
+  /**
+   * Resolve a documentation URL to a file path using registered mappings.
+   */
   private resolveUrl(url: string, title?: string): string | null {
     // First try to find in our registered mappings
     const normalized = this.normalizeDocUrl(url);
@@ -512,6 +611,9 @@ export class DocCParser {
     return null;
   }
 
+  /**
+   * Sanitize a string for use as a filename.
+   */
   private sanitizeFileName(name: string): string {
     // Remove or replace invalid characters
     let sanitized = name

@@ -1,3 +1,13 @@
+/**
+ * UUID Generator for Apple DocC cache lookup
+ *
+ * Generates UUIDs that map request keys to cache.db entries.
+ * Apple uses a specific algorithm: SHA-1 hash of the canonical path,
+ * truncated to 6 bytes and base64url encoded, with a language prefix.
+ *
+ * @module extractor/UuidGenerator
+ */
+
 import { createHash } from 'node:crypto';
 
 /**
@@ -8,7 +18,17 @@ import { createHash } from 'node:crypto';
  * 2. Computing SHA-1 hash of the path
  * 3. Truncating to first 6 bytes
  * 4. Base64url encoding
- * 5. Prepending language prefix
+ * 5. Prepending language prefix (ls for Swift, lc for Objective-C)
+ *
+ * @param requestKey - Request key from docSet.dsidx (e.g., "ls/documentation/uikit/uiwindow")
+ * @returns UUID for cache.db lookup (e.g., "lsXYZ123")
+ * @throws Error if request key format is invalid
+ *
+ * @example
+ * ```typescript
+ * const uuid = generateUuid('ls/documentation/uikit/uiwindow');
+ * // Returns something like "lsABC123..."
+ * ```
  */
 export function generateUuid(requestKey: string): string {
   // Determine language prefix and extract canonical path
@@ -37,7 +57,16 @@ export function generateUuid(requestKey: string): string {
 
 /**
  * Extract the documentation path from a request key.
- * e.g., "ls/documentation/accelerate" -> "/documentation/accelerate"
+ * Removes the language prefix and adds a leading slash.
+ *
+ * @param requestKey - Request key (e.g., "ls/documentation/accelerate")
+ * @returns Canonical path (e.g., "/documentation/accelerate")
+ *
+ * @example
+ * ```typescript
+ * getDocPath('ls/documentation/uikit') // Returns "/documentation/uikit"
+ * getDocPath('lc/documentation/uikit') // Returns "/documentation/uikit"
+ * ```
  */
 export function getDocPath(requestKey: string): string {
   if (requestKey.startsWith('ls/') || requestKey.startsWith('lc/')) {
@@ -48,7 +77,16 @@ export function getDocPath(requestKey: string): string {
 
 /**
  * Extract framework name from a request key.
- * e.g., "ls/documentation/accelerate/vdsp" -> "accelerate"
+ * The framework is the first path component after "documentation".
+ *
+ * @param requestKey - Request key (e.g., "ls/documentation/accelerate/vdsp")
+ * @returns Framework name (e.g., "accelerate") or undefined if not found
+ *
+ * @example
+ * ```typescript
+ * extractFramework('ls/documentation/uikit/uiwindow') // Returns "uikit"
+ * extractFramework('ls/other/path') // Returns undefined
+ * ```
  */
 export function extractFramework(requestKey: string): string | undefined {
   const match = requestKey.match(/l[sc]\/documentation\/([^/]+)/);
@@ -56,7 +94,16 @@ export function extractFramework(requestKey: string): string | undefined {
 }
 
 /**
- * Get the language from a request key.
+ * Get the programming language from a request key.
+ *
+ * @param requestKey - Request key (e.g., "ls/documentation/uikit")
+ * @returns 'swift' for ls/ prefix, 'objc' for lc/ prefix
+ *
+ * @example
+ * ```typescript
+ * getLanguage('ls/documentation/uikit') // Returns 'swift'
+ * getLanguage('lc/documentation/uikit') // Returns 'objc'
+ * ```
  */
 export function getLanguage(requestKey: string): 'swift' | 'objc' {
   return requestKey.startsWith('ls/') ? 'swift' : 'objc';

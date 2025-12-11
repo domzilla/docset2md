@@ -1,5 +1,29 @@
 #!/usr/bin/env node
 
+/**
+ * docset2md CLI Entry Point
+ *
+ * Command-line interface for converting documentation docsets to Markdown.
+ * Supports multiple docset formats:
+ * - Apple DocC (Swift/Objective-C documentation)
+ * - Standard Dash (generic docsets from Kapeli)
+ * - CoreData (older docset format)
+ *
+ * @module index
+ *
+ * @example
+ * ```bash
+ * # Convert a docset to markdown
+ * docset2md ./PHP.docset -o ./output
+ *
+ * # Convert specific types only
+ * docset2md ./PHP.docset -o ./output -t Function Class
+ *
+ * # Show docset information
+ * docset2md info ./PHP.docset
+ * ```
+ */
+
 import { program } from 'commander';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, basename, join, dirname } from 'node:path';
@@ -8,15 +32,30 @@ import { MarkdownGenerator } from './generator/MarkdownGenerator.js';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from './formats/types.js';
 import type { TopicItem, ParsedDocumentation } from './parser/types.js';
 
+/**
+ * Command-line options for the convert command.
+ */
 interface ConvertOptions {
+  /** Output directory path */
   output: string;
+  /** Language filter for Apple docsets */
   language?: 'swift' | 'objc' | 'both';
+  /** Framework name filters */
   framework?: string[];
+  /** Entry type filters */
   type?: string[];
+  /** Maximum number of entries to process */
   limit?: number;
+  /** Enable verbose output */
   verbose?: boolean;
 }
 
+/**
+ * CLI entry point.
+ *
+ * Sets up the commander program with all available commands and options,
+ * then parses command-line arguments to execute the appropriate action.
+ */
 async function main() {
   program
     .name('docset2md')
@@ -52,6 +91,15 @@ async function main() {
   await program.parseAsync();
 }
 
+/**
+ * Convert a docset to markdown files.
+ *
+ * Main conversion command that detects the docset format, iterates through
+ * all entries, extracts content, generates markdown, and writes output files.
+ *
+ * @param docsetPath - Path to the .docset directory
+ * @param options - Conversion options (output dir, filters, etc.)
+ */
 async function convert(docsetPath: string, options: ConvertOptions) {
   const resolvedPath = resolve(docsetPath);
 
@@ -221,6 +269,16 @@ async function convert(docsetPath: string, options: ConvertOptions) {
   format.close();
 }
 
+/**
+ * Generate markdown string from parsed content.
+ *
+ * Converts ParsedContent to ParsedDocumentation format expected by
+ * MarkdownGenerator, then generates the markdown output.
+ *
+ * @param content - Parsed content from format handler
+ * @param generator - MarkdownGenerator instance
+ * @returns Markdown string
+ */
 function generateMarkdown(content: ParsedContent, generator: MarkdownGenerator): string {
   // Convert ParsedContent to ParsedDocumentation for the generator
   const doc: ParsedDocumentation = {
@@ -258,6 +316,11 @@ function generateMarkdown(content: ParsedContent, generator: MarkdownGenerator):
   return generator.generate(doc);
 }
 
+/**
+ * Convert ContentItem to TopicItem format.
+ * @param item - Content item to convert
+ * @returns TopicItem for use in MarkdownGenerator
+ */
 function convertToTopicItem(item: ContentItem): TopicItem {
   return {
     title: item.title,
@@ -269,6 +332,15 @@ function convertToTopicItem(item: ContentItem): TopicItem {
   };
 }
 
+/**
+ * Sanitize a string for use as a filename.
+ *
+ * Removes/replaces invalid characters, truncates long names, and
+ * simplifies method signatures.
+ *
+ * @param name - Raw name to sanitize
+ * @returns Safe filename string
+ */
 function sanitizeFileName(name: string): string {
   let sanitized = name
     .replace(/[<>:"/\\|?*]/g, '_')
@@ -287,11 +359,28 @@ function sanitizeFileName(name: string): string {
   return sanitized || 'unnamed';
 }
 
+/**
+ * Capitalize the first letter of a type name.
+ * @param type - Type name to capitalize
+ * @returns Capitalized type name
+ */
 function capitalizeType(type: string): string {
   // Capitalize first letter
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
+/**
+ * Write an Apple docset entry to the output directory.
+ *
+ * Apple entries are organized by Language/Framework/Item.md structure.
+ *
+ * @param outputDir - Base output directory
+ * @param entry - Normalized entry to write
+ * @param content - Parsed content
+ * @param markdown - Generated markdown content
+ * @param createdDirs - Set tracking created directories
+ * @returns Full path to the written file
+ */
 function writeAppleEntry(
   outputDir: string,
   entry: NormalizedEntry,
@@ -331,6 +420,18 @@ function writeAppleEntry(
   return filePath;
 }
 
+/**
+ * Write a generic docset entry to the output directory.
+ *
+ * Generic entries are organized by Type/Item.md structure.
+ *
+ * @param outputDir - Base output directory
+ * @param entry - Normalized entry to write
+ * @param content - Parsed content
+ * @param markdown - Generated markdown content
+ * @param createdDirs - Set tracking created directories
+ * @returns Full path to the written file
+ */
 function writeGenericEntry(
   outputDir: string,
   entry: NormalizedEntry,
@@ -349,6 +450,11 @@ function writeGenericEntry(
   return filePath;
 }
 
+/**
+ * Ensure a directory exists, creating it if necessary.
+ * @param dir - Directory path to ensure exists
+ * @param createdDirs - Set to track which directories have been created
+ */
 function ensureDir(dir: string, createdDirs: Set<string>): void {
   if (!createdDirs.has(dir)) {
     if (!existsSync(dir)) {
@@ -358,6 +464,21 @@ function ensureDir(dir: string, createdDirs: Set<string>): void {
   }
 }
 
+/**
+ * Track an entry for index file generation.
+ *
+ * Collects items by type (for generic docsets) or by framework and language
+ * (for Apple docsets) for use when generating index files.
+ *
+ * @param entry - Entry being processed
+ * @param content - Parsed content
+ * @param filePath - Output file path
+ * @param outputDir - Base output directory
+ * @param typeItems - Map of type to items (generic docsets)
+ * @param frameworkItems - Map of framework to language to items (Apple docsets)
+ * @param seenEntries - Set of seen entry keys to avoid duplicates
+ * @param format - Format handler
+ */
 function trackForIndex(
   entry: NormalizedEntry,
   content: ParsedContent,
@@ -409,6 +530,16 @@ function trackForIndex(
   }
 }
 
+/**
+ * Generate index files for Apple docsets.
+ *
+ * Creates _index.md files for each framework and language root.
+ *
+ * @param outputDir - Base output directory
+ * @param frameworkItems - Map of framework to language to items
+ * @param generator - MarkdownGenerator instance
+ * @param createdDirs - Set tracking created directories
+ */
 function generateAppleIndexes(
   outputDir: string,
   frameworkItems: Map<string, Map<string, ContentItem[]>>,
@@ -459,6 +590,17 @@ function generateAppleIndexes(
   }
 }
 
+/**
+ * Generate index files for generic docsets.
+ *
+ * Creates _index.md files for each type and a root index.
+ *
+ * @param outputDir - Base output directory
+ * @param typeItems - Map of type to items
+ * @param generator - MarkdownGenerator instance
+ * @param docsetName - Name of the docset for the root index title
+ * @param createdDirs - Set tracking created directories
+ */
 function generateGenericIndexes(
   outputDir: string,
   typeItems: Map<string, ContentItem[]>,
@@ -502,6 +644,14 @@ function generateGenericIndexes(
   }
 }
 
+/**
+ * Capitalize framework name properly.
+ *
+ * Uses a lookup table for known Apple framework names.
+ *
+ * @param name - Framework name (case-insensitive)
+ * @returns Properly capitalized framework name
+ */
 function capitalizeFramework(name: string): string {
   const knownFrameworks: Record<string, string> = {
     accelerate: 'Accelerate',
@@ -520,6 +670,13 @@ function capitalizeFramework(name: string): string {
   return knownFrameworks[lower] || name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/**
+ * List all entry types in a docset.
+ *
+ * Displays each type and its entry count.
+ *
+ * @param docsetPath - Path to the .docset directory
+ */
 async function listTypes(docsetPath: string) {
   const resolvedPath = resolve(docsetPath);
 
@@ -548,6 +705,11 @@ async function listTypes(docsetPath: string) {
   format.close();
 }
 
+/**
+ * List all frameworks/categories in a docset.
+ *
+ * @param docsetPath - Path to the .docset directory
+ */
 async function listFrameworks(docsetPath: string) {
   const resolvedPath = resolve(docsetPath);
 
@@ -579,6 +741,13 @@ async function listFrameworks(docsetPath: string) {
   format.close();
 }
 
+/**
+ * Show information about a docset.
+ *
+ * Displays format, entry count, frameworks, languages, and type breakdown.
+ *
+ * @param docsetPath - Path to the .docset directory
+ */
 async function showInfo(docsetPath: string) {
   const resolvedPath = resolve(docsetPath);
 

@@ -1,16 +1,56 @@
+/**
+ * Index Reader for Apple DocC docsets
+ *
+ * Reads the searchIndex table from docSet.dsidx SQLite database.
+ * This table contains all documentation entries with their names,
+ * types, and paths for content lookup.
+ *
+ * @module db/IndexReader
+ */
+
 import Database from 'better-sqlite3';
 import type { IndexEntry } from '../parser/types.js';
 
+/**
+ * Options for filtering index queries.
+ */
 export interface IndexReaderOptions {
+  /** Filter by entry types (Class, Method, etc.) */
   types?: string[];
+  /** Filter by framework names */
   frameworks?: string[];
+  /** Filter by programming language */
   languages?: Array<'swift' | 'objc'>;
+  /** Maximum number of entries to return */
   limit?: number;
 }
 
+/**
+ * Reads documentation entries from the docSet.dsidx SQLite database.
+ *
+ * The searchIndex table contains entries with:
+ * - id: Row identifier
+ * - name: Symbol name
+ * - type: Entry type (Class, Method, Property, etc.)
+ * - path: URL with request_key parameter for content lookup
+ *
+ * @example
+ * ```typescript
+ * const reader = new IndexReader('/path/to/docSet.dsidx');
+ * const types = reader.getTypes();
+ * for (const entry of reader.iterateEntries({ types: ['Class'] })) {
+ *   console.log(entry.name);
+ * }
+ * reader.close();
+ * ```
+ */
 export class IndexReader {
   private db: Database.Database;
 
+  /**
+   * Create a new IndexReader.
+   * @param dbPath - Path to the docSet.dsidx SQLite database
+   */
   constructor(dbPath: string) {
     this.db = new Database(dbPath, { readonly: true });
   }
@@ -82,7 +122,10 @@ export class IndexReader {
   }
 
   /**
-   * Iterate over all entries (memory efficient for large datasets)
+   * Iterate over entries using a generator (memory efficient for large datasets).
+   * Yields entries one at a time without loading all into memory.
+   * @param options - Optional filtering options
+   * @yields IndexEntry for each matching entry
    */
   *iterateEntries(options?: IndexReaderOptions): Generator<IndexEntry> {
     const { where, params } = this.buildWhereClause(options);
@@ -103,6 +146,11 @@ export class IndexReader {
     }
   }
 
+  /**
+   * Build SQL WHERE clause from filter options.
+   * @param options - Filter options
+   * @returns Object with WHERE clause string and parameter values
+   */
   private buildWhereClause(options?: IndexReaderOptions): { where: string; params: unknown[] } {
     const conditions: string[] = [];
     const params: unknown[] = [];
@@ -136,6 +184,12 @@ export class IndexReader {
     return { where, params };
   }
 
+  /**
+   * Parse a database row into an IndexEntry.
+   * Extracts the request key and language from the path URL.
+   * @param row - Database row with id, name, type, path
+   * @returns Parsed IndexEntry or null if path format is invalid
+   */
   private parseEntry(row: { id: number; name: string; type: string; path: string }): IndexEntry | null {
     // Parse the path to extract request_key and language
     // Format: dash-apple-api://load?request_key=ls/documentation/...#<metadata>
@@ -157,6 +211,10 @@ export class IndexReader {
     };
   }
 
+  /**
+   * Close the database connection.
+   * Should be called when done reading to release resources.
+   */
   close(): void {
     this.db.close();
   }

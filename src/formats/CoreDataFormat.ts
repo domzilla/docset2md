@@ -1,9 +1,14 @@
 /**
- * CoreData format handler
+ * CoreData Format Handler
  *
  * Handles docsets with CoreData schema:
  * - ZTOKEN, ZNODE, ZTOKENTYPE tables in docSet.dsidx
  * - HTML files in tarix.tgz archive
+ *
+ * This format is used by some older or specialized docsets like C.docset.
+ * Uses Apple's CoreData schema for structured token storage.
+ *
+ * @module formats/CoreDataFormat
  */
 
 import Database from 'better-sqlite3';
@@ -18,6 +23,30 @@ import type {
 import { TarixExtractor } from '../extractor/TarixExtractor.js';
 import { HtmlParser } from '../parser/HtmlParser.js';
 
+/**
+ * Format handler for CoreData-based docsets.
+ *
+ * CoreData docsets use a more complex schema:
+ * 1. Tokens stored in ZTOKEN table with type references to ZTOKENTYPE
+ * 2. Node hierarchy in ZNODE table
+ * 3. File paths via ZTOKENMETAINFORMATION -> ZFILEPATH join
+ * 4. HTML content in tarix.tgz archive
+ *
+ * @implements {DocsetFormat}
+ *
+ * @example
+ * ```typescript
+ * const format = new CoreDataFormat();
+ * if (await format.detect('./C.docset')) {
+ *   await format.initialize('./C.docset');
+ *   for (const entry of format.iterateEntries({ types: ['Function'] })) {
+ *     const content = await format.extractContent(entry);
+ *     // Process content...
+ *   }
+ *   format.close();
+ * }
+ * ```
+ */
 export class CoreDataFormat implements DocsetFormat {
   private docsetPath: string = '';
   private db: Database.Database | null = null;
@@ -26,10 +55,20 @@ export class CoreDataFormat implements DocsetFormat {
   private docsetName: string = '';
   private initialized = false;
 
+  /** @inheritdoc */
   getName(): string {
     return 'CoreData';
   }
 
+  /**
+   * Detect if a docset is in CoreData format.
+   *
+   * CoreData format is identified by the presence of ZTOKEN and ZNODE
+   * tables in the docSet.dsidx SQLite database.
+   *
+   * @param docsetPath - Path to the .docset directory
+   * @returns true if this is a CoreData docset
+   */
   async detect(docsetPath: string): Promise<boolean> {
     const indexPath = join(docsetPath, 'Contents/Resources/docSet.dsidx');
     if (!existsSync(indexPath)) return false;
@@ -47,6 +86,7 @@ export class CoreDataFormat implements DocsetFormat {
     }
   }
 
+  /** @inheritdoc */
   async initialize(docsetPath: string): Promise<void> {
     this.docsetPath = docsetPath;
     this.docsetName = docsetPath.split('/').pop()?.replace('.docset', '') || 'Docset';
@@ -65,10 +105,12 @@ export class CoreDataFormat implements DocsetFormat {
     this.initialized = true;
   }
 
+  /** @inheritdoc */
   isInitialized(): boolean {
     return this.initialized;
   }
 
+  /** @inheritdoc */
   getEntryCount(filters?: EntryFilters): number {
     if (!this.db) throw new Error('Not initialized');
 
@@ -88,6 +130,7 @@ export class CoreDataFormat implements DocsetFormat {
     return row.count;
   }
 
+  /** @inheritdoc */
   *iterateEntries(filters?: EntryFilters): Generator<NormalizedEntry> {
     if (!this.db) throw new Error('Not initialized');
 
@@ -135,6 +178,7 @@ export class CoreDataFormat implements DocsetFormat {
     }
   }
 
+  /** @inheritdoc */
   async extractContent(entry: NormalizedEntry): Promise<ParsedContent | null> {
     let html: string | null = null;
 
@@ -167,6 +211,7 @@ export class CoreDataFormat implements DocsetFormat {
     return this.htmlParser.parse(html, entry.name, entry.type);
   }
 
+  /** @inheritdoc */
   getTypes(): string[] {
     if (!this.db) return [];
 
@@ -177,6 +222,7 @@ export class CoreDataFormat implements DocsetFormat {
     return rows.map(r => this.normalizeType(r.ZTYPENAME));
   }
 
+  /** @inheritdoc */
   getCategories(): string[] {
     // Could extract from ZNODE hierarchy
     if (!this.db) return [];
@@ -192,20 +238,28 @@ export class CoreDataFormat implements DocsetFormat {
     return rows.map(r => r.name).filter(n => n && n.length > 0);
   }
 
+  /** @inheritdoc */
   supportsMultipleLanguages(): boolean {
     return false;
   }
 
+  /** @inheritdoc */
   getLanguages(): string[] {
     return [];
   }
 
+  /** @inheritdoc */
   close(): void {
     this.db?.close();
     this.tarix?.close();
     this.initialized = false;
   }
 
+  /**
+   * Build SQL WHERE clause from filters.
+   * @param filters - Entry filters to convert
+   * @returns Object with conditions array and params array
+   */
   private buildWhereClause(filters?: EntryFilters): {
     conditions: string[];
     params: unknown[];
@@ -223,8 +277,13 @@ export class CoreDataFormat implements DocsetFormat {
   }
 
   /**
-   * Clean path from CoreData format
-   * Paths may have dash_entry metadata embedded
+   * Clean path from CoreData format.
+   *
+   * CoreData paths may have dash_entry metadata embedded like
+   * `<dash_entry_name=foo>actual/path.html`. This extracts the actual path.
+   *
+   * @param path - Raw path from ZFILEPATH table
+   * @returns Cleaned file path
    */
   private cleanPath(path: string): string {
     // Remove dash_entry metadata: <dash_entry_name=...>actual/path.html
@@ -240,7 +299,9 @@ export class CoreDataFormat implements DocsetFormat {
   }
 
   /**
-   * Normalize type names
+   * Normalize type names to standard format.
+   * @param type - Raw type from ZTOKENTYPE table
+   * @returns Normalized type name
    */
   private normalizeType(type: string): string {
     const typeMap: Record<string, string> = {
@@ -260,7 +321,9 @@ export class CoreDataFormat implements DocsetFormat {
   }
 
   /**
-   * Denormalize type for query
+   * Denormalize type for SQL query.
+   * @param type - Normalized type name
+   * @returns Original type code for database query
    */
   private denormalizeType(type: string): string {
     const reverseMap: Record<string, string> = {

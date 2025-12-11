@@ -1,8 +1,39 @@
+/**
+ * Markdown Generator
+ *
+ * Converts ParsedDocumentation into formatted markdown files.
+ * Handles metadata, declarations, content sections, topics, and relationships.
+ *
+ * @module generator/MarkdownGenerator
+ */
+
 import type { ParsedDocumentation, TopicItem, Platform } from '../parser/types.js';
 
+/**
+ * Generates markdown files from parsed documentation.
+ *
+ * The generator produces markdown with:
+ * - Title and metadata (framework, type, platforms)
+ * - Hierarchy breadcrumb
+ * - Code declarations in fenced blocks
+ * - Overview content
+ * - Parameters and return values
+ * - Topic sections with links
+ * - Relationships
+ * - See Also sections
+ *
+ * @example
+ * ```typescript
+ * const generator = new MarkdownGenerator();
+ * const markdown = generator.generate(parsedDoc);
+ * fs.writeFileSync('output.md', markdown);
+ * ```
+ */
 export class MarkdownGenerator {
   /**
    * Generate markdown from parsed documentation.
+   * @param doc - ParsedDocumentation to convert
+   * @returns Complete markdown string
    */
   generate(doc: ParsedDocumentation): string {
     const sections: string[] = [];
@@ -98,6 +129,9 @@ export class MarkdownGenerator {
     return sections.join('\n\n');
   }
 
+  /**
+   * Format role into human-readable type name.
+   */
   private formatRole(role: string): string {
     const roleMap: Record<string, string> = {
       collection: 'Framework',
@@ -111,6 +145,9 @@ export class MarkdownGenerator {
     return roleMap[role] ?? role;
   }
 
+  /**
+   * Format platforms into display string.
+   */
   private formatPlatforms(platforms: Platform[]): string {
     return platforms
       .map(p => {
@@ -129,6 +166,9 @@ export class MarkdownGenerator {
       .join(', ');
   }
 
+  /**
+   * Render topic items as markdown list.
+   */
   private renderTopicItems(items: TopicItem[]): string {
     return items
       .map(item => {
@@ -161,6 +201,10 @@ export class MarkdownGenerator {
 
   /**
    * Generate an index file for a directory of documentation.
+   * @param title - Page title
+   * @param description - Optional description text
+   * @param items - Optional list of items to include
+   * @returns Markdown string for index page
    */
   generateIndex(title: string, description?: string, items?: TopicItem[]): string {
     const sections: string[] = [];

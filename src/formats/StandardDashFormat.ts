@@ -1,9 +1,14 @@
 /**
- * Standard Dash format handler
+ * Standard Dash Format Handler
  *
  * Handles generic Dash/Kapeli docsets with:
  * - Simple searchIndex table in docSet.dsidx
  * - HTML files in Documents/ or tarix.tgz archive
+ *
+ * This is the fallback format for docsets that don't match Apple DocC
+ * or CoreData schemas. Works with PHP.docset and similar generated docsets.
+ *
+ * @module formats/StandardDashFormat
  */
 
 import Database from 'better-sqlite3';
@@ -18,6 +23,29 @@ import type {
 import { TarixExtractor } from '../extractor/TarixExtractor.js';
 import { HtmlParser } from '../parser/HtmlParser.js';
 
+/**
+ * Format handler for standard Dash/Kapeli docsets.
+ *
+ * Standard Dash docsets use a simpler format:
+ * 1. Index entries stored in searchIndex table (id, name, type, path)
+ * 2. HTML content stored either in Documents/ folder or tarix.tgz archive
+ * 3. No language variants or complex cache system
+ *
+ * @implements {DocsetFormat}
+ *
+ * @example
+ * ```typescript
+ * const format = new StandardDashFormat();
+ * if (await format.detect('./PHP.docset')) {
+ *   await format.initialize('./PHP.docset');
+ *   for (const entry of format.iterateEntries({ types: ['Function'] })) {
+ *     const content = await format.extractContent(entry);
+ *     // Process content...
+ *   }
+ *   format.close();
+ * }
+ * ```
+ */
 export class StandardDashFormat implements DocsetFormat {
   private docsetPath: string = '';
   private db: Database.Database | null = null;
@@ -26,10 +54,22 @@ export class StandardDashFormat implements DocsetFormat {
   private docsetName: string = '';
   private initialized = false;
 
+  /** @inheritdoc */
   getName(): string {
     return 'Standard Dash';
   }
 
+  /**
+   * Detect if a docset is in Standard Dash format.
+   *
+   * Standard Dash format is identified by:
+   * - Has searchIndex table in docSet.dsidx
+   * - Does NOT have CoreData tables (ZTOKEN)
+   * - Does NOT have Apple's cache.db
+   *
+   * @param docsetPath - Path to the .docset directory
+   * @returns true if this is a Standard Dash docset
+   */
   async detect(docsetPath: string): Promise<boolean> {
     const indexPath = join(docsetPath, 'Contents/Resources/docSet.dsidx');
     if (!existsSync(indexPath)) return false;
@@ -58,6 +98,7 @@ export class StandardDashFormat implements DocsetFormat {
     }
   }
 
+  /** @inheritdoc */
   async initialize(docsetPath: string): Promise<void> {
     this.docsetPath = docsetPath;
     this.docsetName = docsetPath.split('/').pop()?.replace('.docset', '') || 'Docset';
@@ -76,10 +117,12 @@ export class StandardDashFormat implements DocsetFormat {
     this.initialized = true;
   }
 
+  /** @inheritdoc */
   isInitialized(): boolean {
     return this.initialized;
   }
 
+  /** @inheritdoc */
   getEntryCount(filters?: EntryFilters): number {
     if (!this.db) throw new Error('Not initialized');
 
@@ -94,6 +137,7 @@ export class StandardDashFormat implements DocsetFormat {
     return row.count;
   }
 
+  /** @inheritdoc */
   *iterateEntries(filters?: EntryFilters): Generator<NormalizedEntry> {
     if (!this.db) throw new Error('Not initialized');
 
@@ -127,6 +171,7 @@ export class StandardDashFormat implements DocsetFormat {
     }
   }
 
+  /** @inheritdoc */
   async extractContent(entry: NormalizedEntry): Promise<ParsedContent | null> {
     const htmlPath = this.resolveContentPath(entry.path);
     if (!htmlPath) return null;
@@ -162,6 +207,7 @@ export class StandardDashFormat implements DocsetFormat {
     return this.htmlParser.parse(html, entry.name, entry.type);
   }
 
+  /** @inheritdoc */
   getTypes(): string[] {
     if (!this.db) return [];
 
@@ -172,26 +218,35 @@ export class StandardDashFormat implements DocsetFormat {
     return rows.map(r => this.normalizeType(r.type));
   }
 
+  /** @inheritdoc */
   getCategories(): string[] {
     // Standard Dash format doesn't have framework concept
     // Could extract from path patterns if needed
     return [];
   }
 
+  /** @inheritdoc */
   supportsMultipleLanguages(): boolean {
     return false;
   }
 
+  /** @inheritdoc */
   getLanguages(): string[] {
     return [];
   }
 
+  /** @inheritdoc */
   close(): void {
     this.db?.close();
     this.tarix?.close();
     this.initialized = false;
   }
 
+  /**
+   * Build SQL WHERE clause from filters.
+   * @param filters - Entry filters to convert
+   * @returns Object with conditions array and params array
+   */
   private buildWhereClause(filters?: EntryFilters): {
     conditions: string[];
     params: unknown[];
@@ -210,6 +265,15 @@ export class StandardDashFormat implements DocsetFormat {
     return { conditions, params };
   }
 
+  /**
+   * Resolve entry path to content file path.
+   *
+   * Handles various path formats including full URLs, relative paths,
+   * and paths with anchors.
+   *
+   * @param path - Raw path from searchIndex
+   * @returns Resolved path or null if invalid
+   */
   private resolveContentPath(path: string): string | null {
     // Handle various path formats
 
@@ -242,7 +306,12 @@ export class StandardDashFormat implements DocsetFormat {
   }
 
   /**
-   * Normalize type names to standard format
+   * Normalize type names to standard format.
+   *
+   * Converts short type codes (func, cl, clm) to full names (Function, Class, Method).
+   *
+   * @param type - Raw type from searchIndex
+   * @returns Normalized type name
    */
   private normalizeType(type: string): string {
     // Map common short forms to full names
@@ -269,7 +338,13 @@ export class StandardDashFormat implements DocsetFormat {
   }
 
   /**
-   * Convert normalized type back to possible original forms
+   * Convert normalized type back to possible original forms.
+   *
+   * Used when building SQL queries to match entries with either
+   * the normalized or original type name.
+   *
+   * @param type - Normalized type name
+   * @returns Array of possible original type names
    */
   private denormalizeType(type: string): string[] {
     const reverseMap: Record<string, string[]> = {

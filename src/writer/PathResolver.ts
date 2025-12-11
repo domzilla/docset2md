@@ -1,15 +1,60 @@
+/**
+ * Path Resolver for documentation output
+ *
+ * Converts documentation request keys to file system paths and handles
+ * filename sanitization, framework name capitalization, and relative
+ * path calculations for markdown links.
+ *
+ * @module writer/PathResolver
+ */
+
 import { join, dirname, basename } from 'node:path';
 
+/**
+ * Resolves documentation paths to output file paths.
+ *
+ * Handles the conversion of DocC request keys (e.g., "ls/documentation/uikit/uiwindow")
+ * to file system paths (e.g., "Swift/UIKit/UIWindow.md"). Also provides utilities
+ * for calculating relative paths between documents for linking.
+ *
+ * @example
+ * ```typescript
+ * const resolver = new PathResolver('./output');
+ * const filePath = resolver.resolveFilePath(
+ *   'ls/documentation/uikit/uiwindow',
+ *   'swift',
+ *   'UIWindow'
+ * );
+ * // Returns: "./output/Swift/UIKit/UIWindow.md"
+ * ```
+ */
 export class PathResolver {
   private outputDir: string;
 
+  /**
+   * Create a new PathResolver.
+   * @param outputDir - Base directory for all output files
+   */
   constructor(outputDir: string) {
     this.outputDir = outputDir;
   }
 
   /**
    * Convert a request key to an output file path.
-   * e.g., "ls/documentation/accelerate/vdsp" -> "Swift/Accelerate/vDSP.md"
+   *
+   * Parses the request key to extract the documentation path, applies
+   * framework capitalization, and constructs the full output path.
+   *
+   * @param requestKey - DocC request key (e.g., "ls/documentation/uikit/uiwindow")
+   * @param language - Target language ('swift' or 'objc')
+   * @param name - Display name for the entry (used as filename)
+   * @returns Full file path for the markdown output
+   *
+   * @example
+   * ```typescript
+   * resolver.resolveFilePath('ls/documentation/accelerate/vdsp', 'swift', 'vDSP');
+   * // Returns: "./output/Swift/Accelerate/vDSP.md"
+   * ```
    */
   resolveFilePath(requestKey: string, language: 'swift' | 'objc', name: string): string {
     const langDir = language === 'swift' ? 'Swift' : 'Objective-C';
@@ -43,6 +88,9 @@ export class PathResolver {
 
   /**
    * Resolve directory path for a framework.
+   * @param framework - Framework name (will be capitalized)
+   * @param language - Target language ('swift' or 'objc')
+   * @returns Full directory path for the framework
    */
   resolveFrameworkDir(framework: string, language: 'swift' | 'objc'): string {
     const langDir = language === 'swift' ? 'Swift' : 'Objective-C';
@@ -50,7 +98,23 @@ export class PathResolver {
   }
 
   /**
-   * Get relative path from one doc to another for linking.
+   * Get relative path from one document to another for linking.
+   *
+   * Calculates the relative path needed to link from one markdown file
+   * to another, handling directory traversal correctly.
+   *
+   * @param fromPath - Path of the source document
+   * @param toPath - Path of the target document
+   * @returns Relative path string for use in markdown links
+   *
+   * @example
+   * ```typescript
+   * resolver.getRelativePath(
+   *   './output/Swift/UIKit/UIWindow.md',
+   *   './output/Swift/UIKit/UIView.md'
+   * );
+   * // Returns: "./UIView.md"
+   * ```
    */
   getRelativePath(fromPath: string, toPath: string): string {
     const fromDir = dirname(fromPath);
@@ -87,6 +151,16 @@ export class PathResolver {
 
   /**
    * Sanitize a string for use as a filename.
+   *
+   * Applies the following transformations:
+   * - Replaces invalid characters (`<>:"/\|?*`) with underscores
+   * - Collapses whitespace and multiple underscores
+   * - Truncates method signatures at opening parenthesis
+   * - Limits length to 100 characters
+   * - Ensures non-empty result (returns 'unnamed' if empty)
+   *
+   * @param name - Raw name to sanitize
+   * @returns Safe filename string
    */
   sanitizeFileName(name: string): string {
     // Remove or replace invalid characters
@@ -117,6 +191,13 @@ export class PathResolver {
 
   /**
    * Capitalize framework name properly.
+   *
+   * Uses a lookup table of known Apple framework names to ensure correct
+   * capitalization (e.g., "uikit" -> "UIKit", "corefoundation" -> "CoreFoundation").
+   * Falls back to capitalizing the first letter for unknown frameworks.
+   *
+   * @param name - Framework name (case-insensitive)
+   * @returns Properly capitalized framework name
    */
   private capitalizeFramework(name: string): string {
     // Common framework name mappings

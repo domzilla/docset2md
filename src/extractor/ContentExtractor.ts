@@ -1,3 +1,13 @@
+/**
+ * Content Extractor for Apple DocC docsets
+ *
+ * Extracts DocC JSON content from the compressed fs/ files.
+ * Uses cache.db to map request keys to locations in the brotli-compressed
+ * data files, then decompresses and parses the JSON.
+ *
+ * @module extractor/ContentExtractor
+ */
+
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
@@ -5,12 +15,38 @@ import { CacheReader } from '../db/CacheReader.js';
 import { generateUuid } from './UuidGenerator.js';
 import type { DocCDocument } from '../parser/types.js';
 
+/**
+ * Extracts documentation content from Apple DocC docsets.
+ *
+ * The extraction process:
+ * 1. Generate UUID from request key
+ * 2. Look up (dataId, offset, length) in cache.db
+ * 3. Decompress fs/{dataId} with brotli
+ * 4. Extract JSON at offset:offset+length
+ * 5. Parse and return DocCDocument
+ *
+ * Decompressed files are cached in memory for performance.
+ *
+ * @example
+ * ```typescript
+ * const extractor = new ContentExtractor('/path/to/docset');
+ * const doc = extractor.extractByRequestKey('ls/documentation/uikit/uiwindow');
+ * if (doc) {
+ *   console.log(doc.metadata?.title);
+ * }
+ * extractor.close();
+ * ```
+ */
 export class ContentExtractor {
   private cacheReader: CacheReader;
   private fsDir: string;
   private decompressedCache: Map<number, Buffer> = new Map();
   private brotliPath: string | null = null;
 
+  /**
+   * Create a new ContentExtractor.
+   * @param docsetPath - Path to the .docset directory
+   */
   constructor(docsetPath: string) {
     const cacheDbPath = join(docsetPath, 'Contents/Resources/Documents/cache.db');
     this.cacheReader = new CacheReader(cacheDbPath);
@@ -20,6 +56,10 @@ export class ContentExtractor {
     this.brotliPath = this.findBrotli();
   }
 
+  /**
+   * Find the brotli CLI tool on the system.
+   * @returns Path to brotli executable or null if not found
+   */
   private findBrotli(): string | null {
     try {
       const path = execSync('which brotli', { encoding: 'utf-8' }).trim();
@@ -31,6 +71,8 @@ export class ContentExtractor {
 
   /**
    * Extract documentation content by request key.
+   * @param requestKey - Request key from the index (e.g., "ls/documentation/uikit/uiwindow")
+   * @returns Parsed DocCDocument or null if not found
    */
   extractByRequestKey(requestKey: string): DocCDocument | null {
     const uuid = generateUuid(requestKey);
@@ -39,6 +81,8 @@ export class ContentExtractor {
 
   /**
    * Extract documentation content by UUID.
+   * @param uuid - Cache UUID (generated from request key)
+   * @returns Parsed DocCDocument or null if not found
    */
   extractByUuid(uuid: string): DocCDocument | null {
     const ref = this.cacheReader.getRef(uuid);
@@ -51,6 +95,10 @@ export class ContentExtractor {
 
   /**
    * Extract JSON from fs file at specific offset.
+   * @param dataId - ID of the data file in fs/
+   * @param offset - Byte offset in decompressed data
+   * @param length - Length of JSON content
+   * @returns Parsed DocCDocument or null on error
    */
   private extractFromFs(dataId: number, offset: number, length: number): DocCDocument | null {
     const fsFile = join(this.fsDir, String(dataId));
@@ -90,6 +138,9 @@ export class ContentExtractor {
 
   /**
    * Decompress a brotli-compressed file.
+   * Falls back to raw file if brotli decompression fails.
+   * @param filePath - Path to the compressed file
+   * @returns Decompressed buffer or null on error
    */
   private decompressFile(filePath: string): Buffer | null {
     // Try brotli decompression using CLI tool
@@ -112,6 +163,8 @@ export class ContentExtractor {
 
   /**
    * Preload specific fs files into cache for better performance.
+   * Useful when processing many entries from the same data files.
+   * @param dataIds - Array of data file IDs to preload
    */
   preloadDataIds(dataIds: number[]): void {
     for (const dataId of dataIds) {
@@ -131,13 +184,15 @@ export class ContentExtractor {
 
   /**
    * Clear the decompression cache to free memory.
+   * Call this periodically when processing large docsets.
    */
   clearCache(): void {
     this.decompressedCache.clear();
   }
 
   /**
-   * Get the size of the decompression cache.
+   * Get the total size of the decompression cache in bytes.
+   * @returns Total bytes of cached decompressed data
    */
   getCacheSize(): number {
     let size = 0;
@@ -149,12 +204,18 @@ export class ContentExtractor {
 
   /**
    * Check if content exists for a request key.
+   * @param requestKey - Request key to check
+   * @returns true if content is available in the cache
    */
   hasContent(requestKey: string): boolean {
     const uuid = generateUuid(requestKey);
     return this.cacheReader.hasRef(uuid);
   }
 
+  /**
+   * Close the extractor and release resources.
+   * Closes the cache reader and clears the decompression cache.
+   */
   close(): void {
     this.cacheReader.close();
     this.clearCache();

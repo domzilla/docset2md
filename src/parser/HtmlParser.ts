@@ -1,16 +1,41 @@
 /**
- * HTML Parser for generic docsets
+ * HTML Parser for generic Dash docsets
  *
  * Uses cheerio for HTML parsing and turndown for HTML-to-markdown conversion.
+ * Extracts title, abstract, declaration, parameters, and main content from
+ * HTML documentation pages.
+ *
+ * @module parser/HtmlParser
  */
 
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import type { ParsedContent } from '../formats/types.js';
 
+/**
+ * Parses HTML documentation pages into ParsedContent.
+ *
+ * Supports various HTML structures from different documentation generators.
+ * Automatically detects and extracts:
+ * - Title from h1, title tag, or meta tags
+ * - Abstract from meta description or first paragraph
+ * - Code declarations from common selector patterns
+ * - Main content converted to markdown
+ * - Parameters from definition lists or tables
+ *
+ * @example
+ * ```typescript
+ * const parser = new HtmlParser();
+ * const content = parser.parse(html, 'array_map', 'Function');
+ * console.log(content.title, content.description);
+ * ```
+ */
 export class HtmlParser {
   private turndown: TurndownService;
 
+  /**
+   * Create a new HtmlParser with preconfigured turndown rules.
+   */
   constructor() {
     this.turndown = new TurndownService({
       headingStyle: 'atx',
@@ -42,7 +67,11 @@ export class HtmlParser {
   }
 
   /**
-   * Parse HTML content into structured documentation
+   * Parse HTML content into structured documentation.
+   * @param html - HTML content to parse
+   * @param name - Entry name (fallback for title)
+   * @param type - Entry type (Class, Function, etc.)
+   * @returns ParsedContent with extracted documentation
    */
   parse(html: string, name: string, type: string): ParsedContent {
     const $ = cheerio.load(html);
@@ -297,7 +326,9 @@ export class HtmlParser {
   }
 
   /**
-   * Convert HTML to markdown
+   * Convert raw HTML to markdown.
+   * @param html - HTML content to convert
+   * @returns Markdown string
    */
   htmlToMarkdown(html: string): string {
     return this.turndown.turndown(html);
