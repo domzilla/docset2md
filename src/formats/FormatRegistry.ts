@@ -1,4 +1,11 @@
 /**
+ * @file FormatRegistry.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Format Registry for docset format detection
  *
  * Manages registration and detection of docset format handlers.

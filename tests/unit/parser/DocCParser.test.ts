@@ -1,3 +1,10 @@
+/**
+ * @file DocCParser.test.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
 import { DocCParser } from '../../../src/parser/DocCParser.js';
 import type { DocCDocument } from '../../../src/parser/types.js';
 

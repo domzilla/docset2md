@@ -1,4 +1,11 @@
 /**
+ * @file ContentExtractor.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Content Extractor for Apple DocC docsets
  *
  * Extracts DocC JSON content from the compressed fs/ files.

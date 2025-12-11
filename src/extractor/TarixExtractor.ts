@@ -1,4 +1,11 @@
 /**
+ * @file TarixExtractor.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Tarix archive extractor for Dash docsets
  *
  * Extracts files from tarix.tgz archives used by generic Dash docsets.

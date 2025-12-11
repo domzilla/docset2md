@@ -1,5 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
+ * @file extract-framework-apple-docset.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Extract a framework-specific test docset from an Apple docset
  *
  * Usage:

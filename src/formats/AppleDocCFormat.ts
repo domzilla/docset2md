@@ -1,4 +1,11 @@
 /**
+ * @file AppleDocCFormat.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Apple DocC Format Handler
  *
  * Handles Apple's proprietary docset format with:

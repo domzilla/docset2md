@@ -1,3 +1,10 @@
+/**
+ * @file MarkdownGenerator.test.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
 import { MarkdownGenerator } from '../../../src/generator/MarkdownGenerator.js';
 import type { ParsedDocumentation } from '../../../src/parser/types.js';
 

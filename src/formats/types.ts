@@ -1,4 +1,11 @@
 /**
+ * @file types.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Format Abstraction Types
  *
  * Provides a unified interface for handling multiple docset formats

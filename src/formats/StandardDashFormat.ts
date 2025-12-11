@@ -1,4 +1,11 @@
 /**
+ * @file StandardDashFormat.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Standard Dash Format Handler
  *
  * Handles generic Dash/Kapeli docsets with:

@@ -1,4 +1,11 @@
 /**
+ * @file CoreDataFormat.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * CoreData Format Handler
  *
  * Handles docsets with CoreData schema:

@@ -1,3 +1,10 @@
+/**
+ * @file PathResolver.test.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
 import { PathResolver } from '../../../src/writer/PathResolver.js';
 
 describe('PathResolver', () => {

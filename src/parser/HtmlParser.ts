@@ -1,4 +1,11 @@
 /**
+ * @file HtmlParser.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * HTML Parser for generic Dash docsets
  *
  * Uses cheerio for HTML parsing and turndown for HTML-to-markdown conversion.

@@ -1,4 +1,11 @@
 /**
+ * @file IndexReader.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Index Reader for Apple DocC docsets
  *
  * Reads the searchIndex table from docSet.dsidx SQLite database.

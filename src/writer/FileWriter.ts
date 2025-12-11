@@ -1,4 +1,11 @@
 /**
+ * @file FileWriter.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * File Writer for documentation output
  *
  * Handles writing markdown files to the output directory with automatic

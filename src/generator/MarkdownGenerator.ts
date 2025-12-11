@@ -1,4 +1,11 @@
 /**
+ * @file MarkdownGenerator.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Markdown Generator
  *
  * Converts ParsedDocumentation into formatted markdown files.

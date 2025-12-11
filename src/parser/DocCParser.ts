@@ -1,4 +1,11 @@
 /**
+ * @file DocCParser.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * DocC JSON Parser
  *
  * Parses Apple's DocC JSON format into a simplified structure

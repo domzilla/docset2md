@@ -1,4 +1,11 @@
 /**
+ * @file UuidGenerator.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * UUID Generator for Apple DocC cache lookup
  *
  * Generates UUIDs that map request keys to cache.db entries.

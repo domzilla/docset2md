@@ -1,4 +1,11 @@
 /**
+ * @file CacheReader.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Cache Reader for Apple DocC docsets
  *
  * Reads the refs table from cache.db SQLite database.

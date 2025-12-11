@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
 /**
+ * @file index.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * docset2md CLI Entry Point
  *
  * Command-line interface for converting documentation docsets to Markdown.

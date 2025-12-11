@@ -1,4 +1,11 @@
 /**
+ * @file PathResolver.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Path Resolver for documentation output
  *
  * Converts documentation request keys to file system paths and handles

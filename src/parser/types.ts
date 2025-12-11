@@ -1,4 +1,11 @@
 /**
+ * @file types.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * DocC JSON Schema Types
  *
  * TypeScript interfaces that model Apple's DocC documentation format.

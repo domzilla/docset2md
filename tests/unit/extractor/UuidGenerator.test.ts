@@ -1,3 +1,10 @@
+/**
+ * @file UuidGenerator.test.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
 import { generateUuid, getDocPath, extractFramework, getLanguage } from '../../../src/extractor/UuidGenerator.js';
 
 describe('UuidGenerator', () => {

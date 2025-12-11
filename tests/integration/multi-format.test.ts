@@ -1,4 +1,11 @@
 /**
+ * @file multi-format.test.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Integration tests for multi-format docset support
  *
  * Dynamically tests all docsets found in test_data/input.

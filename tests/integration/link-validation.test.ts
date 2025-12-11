@@ -1,4 +1,11 @@
 /**
+ * @file link-validation.test.ts
+ * @author Dominic Rodemer
+ * @created 2025-12-11
+ * @license MIT
+ */
+
+/**
  * Link validation integration tests
  *
  * Tests that generated markdown has valid internal links.
