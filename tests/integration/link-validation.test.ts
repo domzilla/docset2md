@@ -82,7 +82,7 @@ describe('Link Validation', () => {
       throw new Error(
         `No Apple DocC docsets found in ${TEST_DATA_DIR}. ` +
         'Please add an Apple docset (with cache.db) to test_data/input/ before running link validation tests. ' +
-        'Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit'
+        'Run: npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o test_data/input UIKit'
       );
     });
     return;

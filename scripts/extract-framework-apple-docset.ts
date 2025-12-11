@@ -1,26 +1,20 @@
 #!/usr/bin/env npx tsx
 /**
- * Extract a framework-specific test docset from the full Apple_API_Reference.docset
+ * Extract a framework-specific test docset from an Apple docset
  *
  * Usage:
- *   npx tsx scripts/extract-framework-apple-docset.ts <framework> [framework2 ...]
+ *   npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o <output-dir> <framework> [framework2 ...]
  *
  * Examples:
- *   npx tsx scripts/extract-framework-apple-docset.ts UIKit
- *   npx tsx scripts/extract-framework-apple-docset.ts Foundation CoreData
- *   npx tsx scripts/extract-framework-apple-docset.ts SwiftUI Combine
+ *   npx tsx scripts/extract-framework-apple-docset.ts -i Apple_API_Reference.docset -o test_data/input UIKit
+ *   npx tsx scripts/extract-framework-apple-docset.ts --input ./Apple.docset --output ./out Foundation CoreData
  */
 
 import Database from 'better-sqlite3';
 import { createHash } from 'node:crypto';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = join(__dirname, '..');
-
-const SOURCE_DOCSET = join(projectRoot, 'test/input/Apple_API_Reference.docset');
 
 function generateUuid(requestKey: string): string {
   let prefix: string;
@@ -45,20 +39,23 @@ function generateUuid(requestKey: string): string {
 
 function printUsage() {
   console.log(`
-Usage: npx tsx scripts/extract-framework-apple-docset.ts <framework> [framework2 ...]
+Usage: npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o <output-dir> <framework> [framework2 ...]
 
-Extract specific frameworks from Apple_API_Reference.docset into a smaller test docset.
+Extract specific frameworks from an Apple docset into a smaller test docset.
+
+Required:
+  -i, --input <path>     Path to source Apple docset
+  -o, --output <path>    Output directory for extracted docset
 
 Arguments:
-  framework    One or more framework names (case-insensitive)
+  framework              One or more framework names (case-insensitive)
 
 Examples:
-  npx tsx scripts/extract-framework-apple-docset.ts UIKit
-  npx tsx scripts/extract-framework-apple-docset.ts Foundation CoreData
-  npx tsx scripts/extract-framework-apple-docset.ts SwiftUI Combine
+  npx tsx scripts/extract-framework-apple-docset.ts -i Apple_API_Reference.docset -o test_data/input UIKit
+  npx tsx scripts/extract-framework-apple-docset.ts --input ./Apple.docset --output ./out Foundation CoreData
 
 Available frameworks can be listed with:
-  npm run dev -- list-frameworks test/input/Apple_API_Reference.docset
+  npm run dev -- list-frameworks <docset-path>
 `);
 }
 
@@ -102,6 +99,37 @@ function getDisplayName(framework: string): string {
   return FRAMEWORK_DISPLAY_NAMES[lower] || framework.charAt(0).toUpperCase() + framework.slice(1).toLowerCase();
 }
 
+interface ParsedArgs {
+  input: string;
+  output: string;
+  frameworks: string[];
+}
+
+function parseArgs(args: string[]): ParsedArgs | null {
+  let input: string | null = null;
+  let output: string | null = null;
+  const frameworks: string[] = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '-i' || arg === '--input') {
+      input = args[++i];
+    } else if (arg === '-o' || arg === '--output') {
+      output = args[++i];
+    } else if (arg === '-h' || arg === '--help') {
+      return null;
+    } else if (!arg.startsWith('-')) {
+      frameworks.push(arg);
+    }
+  }
+
+  if (!input || !output || frameworks.length === 0) {
+    return null;
+  }
+
+  return { input: resolve(input), output: resolve(output), frameworks };
+}
+
 async function main() {
   const args = process.argv.slice(2);
 
@@ -110,18 +138,38 @@ async function main() {
     process.exit(args.length === 0 ? 1 : 0);
   }
 
-  const frameworks = args.map(f => f.toLowerCase());
-  const frameworksDisplay = args.map(getDisplayName);
+  const parsed = parseArgs(args);
+  if (!parsed) {
+    printUsage();
+    process.exit(1);
+  }
+
+  const { input: sourceDocset, output: outputDir, frameworks: frameworkArgs } = parsed;
+
+  // Validate source docset exists
+  if (!existsSync(sourceDocset)) {
+    console.error(`Error: Source docset not found: ${sourceDocset}`);
+    process.exit(1);
+  }
+
+  const frameworks = frameworkArgs.map(f => f.toLowerCase());
+  const frameworksDisplay = frameworkArgs.map(getDisplayName);
 
   // Generate output name based on frameworks
   const docsetName = frameworks.length === 1
     ? `Apple_${frameworksDisplay[0]}_Reference.docset`
     : `Apple_Test_Reference.docset`;
 
-  const targetDocset = join(projectRoot, 'test/input', docsetName);
+  const targetDocset = join(outputDir, docsetName);
 
+  console.log(`Source: ${sourceDocset}`);
   console.log(`Extracting frameworks: ${frameworksDisplay.join(', ')}`);
-  console.log(`Target: ${docsetName}\n`);
+  console.log(`Target: ${targetDocset}\n`);
+
+  // Ensure output directory exists
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
+  }
 
   // Clean up existing target
   if (existsSync(targetDocset)) {
@@ -138,10 +186,10 @@ async function main() {
 
   // Copy static files
   console.log('Copying static files...');
-  const sourceDocuments = join(SOURCE_DOCSET, 'Contents/Resources/Documents');
+  const sourceDocuments = join(sourceDocset, 'Contents/Resources/Documents');
 
   // Copy Info.plist if exists
-  const infoPlist = join(SOURCE_DOCSET, 'Contents/Info.plist');
+  const infoPlist = join(sourceDocset, 'Contents/Info.plist');
   if (existsSync(infoPlist)) {
     mkdirSync(join(targetDocset, 'Contents'), { recursive: true });
     copyFileSync(infoPlist, join(targetDocset, 'Contents/Info.plist'));
@@ -153,7 +201,7 @@ async function main() {
 
   // Open source databases
   console.log('Opening source databases...');
-  const sourceIndex = new Database(join(SOURCE_DOCSET, 'Contents/Resources/docSet.dsidx'), { readonly: true });
+  const sourceIndex = new Database(join(sourceDocset, 'Contents/Resources/docSet.dsidx'), { readonly: true });
   const sourceCache = new Database(join(sourceDocuments, 'cache.db'), { readonly: true });
 
   // Build query for multiple frameworks

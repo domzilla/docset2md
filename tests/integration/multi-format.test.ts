@@ -67,7 +67,7 @@ describe('Multi-Format Support', () => {
       throw new Error(
         `No docsets found in ${TEST_DATA_DIR}. ` +
         'Please add .docset directories to test_data/input/ before running integration tests. ' +
-        'For Apple docsets, run: npx tsx scripts/extract-framework-apple-docset.ts UIKit'
+        'For Apple docsets, run: npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o test_data/input UIKit'
       );
     }
 
