@@ -125,12 +125,19 @@ async function convert(docsetPath: string, options: ConvertOptions) {
 
     processed++;
 
+    const total = limit ?? totalCount;
+    const percent = Math.floor((processed / total) * 100);
+    const elapsed = (Date.now() - startTime) / 1000;
+    const rate = elapsed > 0 ? Math.floor(processed / elapsed) : 0;
+
     if (options.verbose) {
-      console.log(`[${processed}/${limit ?? totalCount}] Processing: ${entry.name}`);
-    } else if (processed % 1000 === 0) {
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      const rate = (processed / parseFloat(elapsed)).toFixed(0);
-      console.log(`Progress: ${processed.toLocaleString()}/${(limit ?? totalCount).toLocaleString()} (${rate}/sec)`);
+      console.log(`[${processed}/${total}] (${percent}%) Processing: ${entry.name}`);
+    } else {
+      // Update progress every 1% or every 100 entries, whichever comes first
+      const prevPercent = Math.floor(((processed - 1) / total) * 100);
+      if (percent !== prevPercent || processed % 100 === 0 || processed === total) {
+        process.stdout.write(`\rProgress: ${processed.toLocaleString()}/${total.toLocaleString()} (${percent}%) - ${rate}/sec    `);
+      }
     }
 
     try {
@@ -185,7 +192,10 @@ async function convert(docsetPath: string, options: ConvertOptions) {
     }
   }
 
-  // Generate index files
+  // Clear progress line and generate index files
+  if (!options.verbose) {
+    process.stdout.write('\n');
+  }
   console.log('Generating index files...');
 
   if (format.supportsMultipleLanguages()) {
