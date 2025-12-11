@@ -10,7 +10,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js"
+    "dev": "tsc && node dist/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "keywords": [
     "docset",
@@ -22,11 +25,19 @@
   "license": "MIT",
   "dependencies": {
     "better-sqlite3": "^11.6.0",
-    "commander": "^12.1.0"
+    "cheerio": "^1.1.2",
+    "commander": "^12.1.0",
+    "tar-stream": "^3.1.7",
+    "turndown": "^7.2.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.2",
+    "@types/tar-stream": "^3.1.4",
+    "@types/turndown": "^5.0.6",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.7.2"
   }
 }
