@@ -1,8 +1,11 @@
 /**
  * @file DocCParser.test.ts
+ * @module tests/unit/parser/DocCParser
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for DocCParser JSON parsing.
  */
 
 import { DocCParser } from '../../../src/parser/DocCParser.js';

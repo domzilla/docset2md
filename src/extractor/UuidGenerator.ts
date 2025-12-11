@@ -1,18 +1,11 @@
 /**
  * @file UuidGenerator.ts
+ * @module extractor/UuidGenerator
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * UUID Generator for Apple DocC cache lookup
  *
- * Generates UUIDs that map request keys to cache.db entries.
- * Apple uses a specific algorithm: SHA-1 hash of the canonical path,
- * truncated to 6 bytes and base64url encoded, with a language prefix.
- *
- * @module extractor/UuidGenerator
+ * @fileoverview Generates UUIDs for Apple DocC cache lookup using SHA-1 hashing.
  */
 
 import { createHash } from 'node:crypto';

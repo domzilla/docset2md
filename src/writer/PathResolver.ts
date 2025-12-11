@@ -1,18 +1,11 @@
 /**
  * @file PathResolver.ts
+ * @module writer/PathResolver
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Path Resolver for documentation output
  *
- * Converts documentation request keys to file system paths and handles
- * filename sanitization, framework name capitalization, and relative
- * path calculations for markdown links.
- *
- * @module writer/PathResolver
+ * @fileoverview Converts request keys to file paths and handles filename sanitization.
  */
 
 import { join, dirname, basename } from 'node:path';

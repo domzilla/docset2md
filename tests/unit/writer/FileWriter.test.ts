@@ -1,8 +1,11 @@
 /**
  * @file FileWriter.test.ts
+ * @module tests/unit/writer/FileWriter
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for FileWriter file output operations.
  */
 
 import { existsSync, mkdirSync, rmSync, readFileSync } from 'node:fs';

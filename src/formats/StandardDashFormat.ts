@@ -1,21 +1,11 @@
 /**
  * @file StandardDashFormat.ts
+ * @module formats/StandardDashFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Standard Dash Format Handler
  *
- * Handles generic Dash/Kapeli docsets with:
- * - Simple searchIndex table in docSet.dsidx
- * - HTML files in Documents/ or tarix.tgz archive
- *
- * This is the fallback format for docsets that don't match Apple DocC
- * or CoreData schemas. Works with PHP.docset and similar generated docsets.
- *
- * @module formats/StandardDashFormat
+ * @fileoverview Handler for generic Dash/Kapeli docsets with HTML content.
  */
 
 import Database from 'better-sqlite3';

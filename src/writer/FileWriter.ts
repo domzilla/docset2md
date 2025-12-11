@@ -1,17 +1,11 @@
 /**
  * @file FileWriter.ts
+ * @module writer/FileWriter
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * File Writer for documentation output
  *
- * Handles writing markdown files to the output directory with automatic
- * directory creation and statistics tracking.
- *
- * @module writer/FileWriter
+ * @fileoverview Writes markdown files to output directory with statistics tracking.
  */
 
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';

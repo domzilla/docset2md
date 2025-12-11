@@ -1,8 +1,11 @@
 /**
  * @file PathResolver.test.ts
+ * @module tests/unit/writer/PathResolver
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for PathResolver path resolution and sanitization.
  */
 
 import { PathResolver } from '../../../src/writer/PathResolver.js';

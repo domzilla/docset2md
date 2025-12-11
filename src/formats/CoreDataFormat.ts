@@ -1,21 +1,11 @@
 /**
  * @file CoreDataFormat.ts
+ * @module formats/CoreDataFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * CoreData Format Handler
  *
- * Handles docsets with CoreData schema:
- * - ZTOKEN, ZNODE, ZTOKENTYPE tables in docSet.dsidx
- * - HTML files in tarix.tgz archive
- *
- * This format is used by some older or specialized docsets like C.docset.
- * Uses Apple's CoreData schema for structured token storage.
- *
- * @module formats/CoreDataFormat
+ * @fileoverview Handler for CoreData-based docsets with ZTOKEN/ZNODE tables.
  */
 
 import Database from 'better-sqlite3';

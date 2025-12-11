@@ -2,22 +2,16 @@
 
 /**
  * @file index.ts
+ * @module index
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview CLI entry point for converting documentation docsets to Markdown.
+ * Supports Apple DocC, Standard Dash, and CoreData docset formats.
  */
 
 /**
- * docset2md CLI Entry Point
- *
- * Command-line interface for converting documentation docsets to Markdown.
- * Supports multiple docset formats:
- * - Apple DocC (Swift/Objective-C documentation)
- * - Standard Dash (generic docsets from Kapeli)
- * - CoreData (older docset format)
- *
- * @module index
- *
  * @example
  * ```bash
  * # Convert a docset to markdown

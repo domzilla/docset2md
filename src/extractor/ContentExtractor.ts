@@ -1,18 +1,11 @@
 /**
  * @file ContentExtractor.ts
+ * @module extractor/ContentExtractor
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Content Extractor for Apple DocC docsets
  *
- * Extracts DocC JSON content from the compressed fs/ files.
- * Uses cache.db to map request keys to locations in the brotli-compressed
- * data files, then decompresses and parses the JSON.
- *
- * @module extractor/ContentExtractor
+ * @fileoverview Extracts DocC JSON content from brotli-compressed fs/ files.
  */
 
 import { readFileSync, existsSync } from 'node:fs';

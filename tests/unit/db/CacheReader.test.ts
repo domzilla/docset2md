@@ -1,8 +1,11 @@
 /**
  * @file CacheReader.test.ts
+ * @module tests/unit/db/CacheReader
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for CacheReader cache.db operations.
  */
 
 import { existsSync } from 'node:fs';

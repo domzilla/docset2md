@@ -1,18 +1,11 @@
 /**
  * @file FormatRegistry.ts
+ * @module formats/FormatRegistry
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Format Registry for docset format detection
  *
- * Manages registration and detection of docset format handlers.
- * Automatically detects the correct format for a docset and returns
- * an initialized handler.
- *
- * @module formats/FormatRegistry
+ * @fileoverview Manages registration and auto-detection of docset format handlers.
  */
 
 import type { DocsetFormat } from './types.js';

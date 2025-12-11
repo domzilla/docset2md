@@ -1,18 +1,11 @@
 /**
  * @file types.ts
+ * @module parser/types
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * DocC JSON Schema Types
  *
- * TypeScript interfaces that model Apple's DocC documentation format.
- * DocC is Apple's documentation compiler that produces structured JSON
- * documents from Swift documentation comments.
- *
- * @module parser/types
+ * @fileoverview TypeScript interfaces for Apple DocC JSON schema.
  */
 
 /**

@@ -1,18 +1,11 @@
 /**
  * @file HtmlParser.ts
+ * @module parser/HtmlParser
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * HTML Parser for generic Dash docsets
  *
- * Uses cheerio for HTML parsing and turndown for HTML-to-markdown conversion.
- * Extracts title, abstract, declaration, parameters, and main content from
- * HTML documentation pages.
- *
- * @module parser/HtmlParser
+ * @fileoverview Parses HTML documentation pages using cheerio and turndown.
  */
 
 import * as cheerio from 'cheerio';

@@ -1,8 +1,11 @@
 /**
  * @file IndexReader.test.ts
+ * @module tests/unit/db/IndexReader
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for IndexReader searchIndex operations.
  */
 
 import { existsSync } from 'node:fs';

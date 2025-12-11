@@ -1,8 +1,11 @@
 /**
  * @file setup.ts
+ * @module tests/setup
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Global test setup with test data path helpers.
  */
 
 import { existsSync } from 'node:fs';

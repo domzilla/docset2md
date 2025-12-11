@@ -1,17 +1,11 @@
 /**
  * @file MarkdownGenerator.ts
+ * @module generator/MarkdownGenerator
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Markdown Generator
  *
- * Converts ParsedDocumentation into formatted markdown files.
- * Handles metadata, declarations, content sections, topics, and relationships.
- *
- * @module generator/MarkdownGenerator
+ * @fileoverview Converts parsed documentation into formatted markdown files.
  */
 
 import type { ParsedDocumentation, TopicItem, Platform } from '../parser/types.js';

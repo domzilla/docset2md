@@ -1,20 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
  * @file extract-framework-apple-docset.ts
+ * @module scripts/extract-framework-apple-docset
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Extract a framework-specific test docset from an Apple docset
  *
- * Usage:
- *   npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o <output-dir> <framework> [framework2 ...]
- *
- * Examples:
- *   npx tsx scripts/extract-framework-apple-docset.ts -i Apple_API_Reference.docset -o test_data/input UIKit
- *   npx tsx scripts/extract-framework-apple-docset.ts --input ./Apple.docset --output ./out Foundation CoreData
+ * @fileoverview Extracts framework-specific test docsets from Apple docsets.
  */
 
 import Database from 'better-sqlite3';

@@ -1,18 +1,11 @@
 /**
  * @file TarixExtractor.ts
+ * @module extractor/TarixExtractor
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Tarix archive extractor for Dash docsets
  *
- * Extracts files from tarix.tgz archives used by generic Dash docsets.
- * Uses tarixIndex.db SQLite database to look up file locations within
- * the gzipped tar archive for efficient random access.
- *
- * @module extractor/TarixExtractor
+ * @fileoverview Extracts files from tarix.tgz archives used by Dash docsets.
  */
 
 import Database from 'better-sqlite3';

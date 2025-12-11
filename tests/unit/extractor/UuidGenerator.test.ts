@@ -1,8 +1,11 @@
 /**
  * @file UuidGenerator.test.ts
+ * @module tests/unit/extractor/UuidGenerator
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for UUID generation and request key parsing.
  */
 
 import { generateUuid, getDocPath, extractFramework, getLanguage } from '../../../src/extractor/UuidGenerator.js';

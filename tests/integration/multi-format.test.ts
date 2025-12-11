@@ -1,15 +1,11 @@
 /**
  * @file multi-format.test.ts
+ * @module tests/integration/multi-format
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Integration tests for multi-format docset support
  *
- * Dynamically tests all docsets found in test_data/input.
- * Fails if no docsets are present.
+ * @fileoverview Integration tests for multi-format docset support.
  */
 
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';

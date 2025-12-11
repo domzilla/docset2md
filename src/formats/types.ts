@@ -1,19 +1,11 @@
 /**
  * @file types.ts
+ * @module formats/types
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Format Abstraction Types
  *
- * Provides a unified interface for handling multiple docset formats
- * (Apple DocC, Standard Dash, CoreData). Each format implements the
- * DocsetFormat strategy interface, allowing the converter to work
- * with any supported docset type.
- *
- * @module formats/types
+ * @fileoverview Unified interfaces for handling multiple docset formats.
  */
 
 /**

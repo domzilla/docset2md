@@ -149,3 +149,28 @@ npx tsx scripts/extract-framework-apple-docset.ts UIKit
 # Multiple frameworks
 npx tsx scripts/extract-framework-apple-docset.ts Foundation CoreData
 ```
+
+## Code Style
+
+### File Headers
+
+Every newly generated TypeScript file must include a file header in the following format:
+
+```typescript
+/**
+ * @file filename.ts
+ * @module path/to/module
+ * @author Dominic Rodemer
+ * @created YYYY-MM-DD
+ * @license MIT
+ *
+ * @fileoverview Short description of the file's purpose.
+ */
+```
+
+- `@file`: The filename
+- `@module`: The module path (e.g., `db/CacheReader`, `tests/unit/parser/DocCParser`)
+- `@author`: Dominic Rodemer
+- `@created`: The file creation date in ISO format
+- `@license`: MIT
+- `@fileoverview`: A concise one-line description of what the file does

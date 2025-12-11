@@ -1,18 +1,11 @@
 /**
  * @file IndexReader.ts
+ * @module db/IndexReader
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Index Reader for Apple DocC docsets
  *
- * Reads the searchIndex table from docSet.dsidx SQLite database.
- * This table contains all documentation entries with their names,
- * types, and paths for content lookup.
- *
- * @module db/IndexReader
+ * @fileoverview Reads searchIndex table from docSet.dsidx for documentation entries.
  */
 
 import Database from 'better-sqlite3';

@@ -1,8 +1,11 @@
 /**
  * @file ContentExtractor.test.ts
+ * @module tests/unit/extractor/ContentExtractor
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for ContentExtractor DocC content extraction.
  */
 
 import { existsSync } from 'node:fs';

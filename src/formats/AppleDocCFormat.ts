@@ -1,22 +1,11 @@
 /**
  * @file AppleDocCFormat.ts
+ * @module formats/AppleDocCFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Apple DocC Format Handler
  *
- * Handles Apple's proprietary docset format with:
- * - searchIndex table in docSet.dsidx
- * - cache.db with refs table for UUID-to-location mapping
- * - Brotli-compressed DocC JSON in fs/ directory
- *
- * This is the most feature-rich format, supporting dual Swift/Objective-C
- * documentation with rich metadata, relationships, and topic hierarchies.
- *
- * @module formats/AppleDocCFormat
+ * @fileoverview Handler for Apple DocC docsets with brotli-compressed JSON content.
  */
 
 import { existsSync } from 'node:fs';

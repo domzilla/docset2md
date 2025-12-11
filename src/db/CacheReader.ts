@@ -1,18 +1,11 @@
 /**
  * @file CacheReader.ts
+ * @module db/CacheReader
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * Cache Reader for Apple DocC docsets
  *
- * Reads the refs table from cache.db SQLite database.
- * This table maps UUIDs (generated from request keys) to locations
- * in the compressed fs/ files.
- *
- * @module db/CacheReader
+ * @fileoverview Reads cache.db to map UUIDs to content locations in Apple DocC docsets.
  */
 
 import Database from 'better-sqlite3';

@@ -1,8 +1,11 @@
 /**
  * @file MarkdownGenerator.test.ts
+ * @module tests/unit/generator/MarkdownGenerator
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
+ *
+ * @fileoverview Unit tests for MarkdownGenerator output formatting.
  */
 
 import { MarkdownGenerator } from '../../../src/generator/MarkdownGenerator.js';

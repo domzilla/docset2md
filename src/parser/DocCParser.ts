@@ -1,18 +1,11 @@
 /**
  * @file DocCParser.ts
+ * @module parser/DocCParser
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
- */
-
-/**
- * DocC JSON Parser
  *
- * Parses Apple's DocC JSON format into a simplified structure
- * suitable for markdown generation. Handles content sections,
- * declarations, relationships, and link resolution.
- *
- * @module parser/DocCParser
+ * @fileoverview Parses Apple DocC JSON format into structured documentation data.
  */
 
 import type {
