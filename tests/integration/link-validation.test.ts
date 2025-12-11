@@ -1,3 +1,10 @@
+/**
+ * Link validation integration tests
+ *
+ * Tests that generated markdown has valid internal links.
+ * Requires Apple_UIKit_Reference.docset in test_data/input.
+ */
+
 import { existsSync, readdirSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,11 +18,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const TEST_DATA_DIR = resolve(__dirname, '../../test_data/input');
-const APPLE_DOCSET_PATH = resolve(TEST_DATA_DIR, 'Apple_UIKit_Reference.docset');
-const INDEX_PATH = resolve(APPLE_DOCSET_PATH, 'Contents/Resources/docSet.dsidx');
+const OUTPUT_DIR = resolve(__dirname, '../../test_data/output');
+const TEST_OUTPUT_DIR = resolve(OUTPUT_DIR, 'link-validation');
 
-const hasTestData = existsSync(INDEX_PATH);
-const TEST_OUTPUT_DIR = resolve(__dirname, '../../.test-output-link-validation');
+/**
+ * Find Apple DocC docsets in test_data/input
+ */
+function findAppleDocsets(): string[] {
+  if (!existsSync(TEST_DATA_DIR)) {
+    return [];
+  }
+
+  const entries = readdirSync(TEST_DATA_DIR, { withFileTypes: true });
+  return entries
+    .filter(entry => {
+      if (!entry.isDirectory() || !entry.name.endsWith('.docset')) return false;
+      // Check if it's an Apple DocC format (has cache.db)
+      const cacheDbPath = join(TEST_DATA_DIR, entry.name, 'Contents/Resources/Documents/cache.db');
+      return existsSync(cacheDbPath);
+    })
+    .map(entry => join(TEST_DATA_DIR, entry.name));
+}
 
 // Helper to find all markdown files recursively
 function findMarkdownFiles(dir: string): string[] {
@@ -50,15 +73,27 @@ function extractLinks(content: string): Array<{ text: string; path: string }> {
 }
 
 describe('Link Validation', () => {
-  // Skip if no test data
-  if (!hasTestData) {
-    it.skip('Apple test data not found', () => {
-      console.warn('Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit');
+  const appleDocsets = findAppleDocsets();
+  let allTestsPassed = true;
+
+  // Fail if no Apple docsets found
+  if (appleDocsets.length === 0) {
+    it('should have Apple DocC docsets available', () => {
+      throw new Error(
+        `No Apple DocC docsets found in ${TEST_DATA_DIR}. ` +
+        'Please add an Apple docset (with cache.db) to test_data/input/ before running link validation tests. ' +
+        'Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit'
+      );
     });
     return;
   }
 
+  const APPLE_DOCSET_PATH = appleDocsets[0];
+  const INDEX_PATH = resolve(APPLE_DOCSET_PATH, 'Contents/Resources/docSet.dsidx');
+
   beforeAll(() => {
+    console.log(`\nUsing Apple docset: ${APPLE_DOCSET_PATH}\n`);
+
     // Create test output directory
     if (existsSync(TEST_OUTPUT_DIR)) {
       rmSync(TEST_OUTPUT_DIR, { recursive: true, force: true });
@@ -98,9 +133,23 @@ describe('Link Validation', () => {
   }, 60000); // 60 second timeout for setup
 
   afterAll(() => {
-    // Cleanup test output
-    if (existsSync(TEST_OUTPUT_DIR)) {
-      rmSync(TEST_OUTPUT_DIR, { recursive: true, force: true });
+    // Only cleanup if all tests passed
+    if (allTestsPassed) {
+      console.log('\nAll link validation tests passed. Cleaning up...');
+      if (existsSync(TEST_OUTPUT_DIR)) {
+        rmSync(TEST_OUTPUT_DIR, { recursive: true, force: true });
+      }
+      console.log('Cleanup complete.\n');
+    } else {
+      console.log(`\nSome tests failed. Keeping output at ${TEST_OUTPUT_DIR} for inspection.\n`);
+    }
+  });
+
+  afterEach(() => {
+    // Track test failures
+    const state = expect.getState();
+    if (state.assertionCalls > 0 && state.numPassingAsserts === 0) {
+      allTestsPassed = false;
     }
   });
 
