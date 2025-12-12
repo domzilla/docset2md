@@ -266,7 +266,7 @@ export class StandardDashFormat implements DocsetFormat {
    * Resolve entry path to content file path.
    *
    * Handles various path formats including full URLs, relative paths,
-   * and paths with anchors.
+   * paths with anchors, and Dash metadata tags.
    *
    * @param path - Raw path from searchIndex
    * @returns Resolved path or null if invalid
@@ -274,8 +274,19 @@ export class StandardDashFormat implements DocsetFormat {
   private resolveContentPath(path: string): string | null {
     // Handle various path formats
 
+    // Strip Dash metadata tags like <dash_entry_name=...><dash_entry_originalName=...>
+    // These appear as prefixes before the actual path
+    let cleanPath = path;
+    if (cleanPath.startsWith('<dash_entry_')) {
+      // Find the last > that precedes the actual path
+      const lastTagEnd = cleanPath.lastIndexOf('>');
+      if (lastTagEnd !== -1) {
+        cleanPath = cleanPath.substring(lastTagEnd + 1);
+      }
+    }
+
     // Remove fragment
-    const withoutFragment = path.split('#')[0];
+    const withoutFragment = cleanPath.split('#')[0];
 
     // Handle full URLs
     if (withoutFragment.startsWith('http://') || withoutFragment.startsWith('https://')) {
