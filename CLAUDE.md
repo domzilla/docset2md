@@ -160,6 +160,28 @@ npm run test:coverage    # Run with coverage
 npm run test:watch       # Watch mode
 ```
 
+### Link Validation
+
+To validate that all internal markdown links in a docset are correct, use the link validation script. This performs a **full conversion** (not sample-based) and checks every link:
+
+```bash
+# Validate links in a specific docset
+npx tsx scripts/validate-links.ts <docset-path>
+
+# Keep the output directory for inspection
+npx tsx scripts/validate-links.ts <docset-path> --keep-output
+
+# Use custom output directory
+npx tsx scripts/validate-links.ts <docset-path> --output ./validation-output
+```
+
+The script will:
+1. Perform a complete conversion of the docset
+2. Scan all generated markdown files for internal links
+3. Verify each link points to an existing file
+4. Report any broken or absolute links
+5. Exit with code 1 if validation fails, 0 if passes
+
 ## Test Data
 
 Place `.docset` bundles in `test_data/input/` for integration testing. The test suite automatically discovers all docsets in this directory and runs format detection and content extraction tests against them.
