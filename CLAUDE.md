@@ -1,6 +1,6 @@
 # docset2md
 
-A Node.js TypeScript CLI tool that converts Apple Documentation docsets to Markdown files for AI agent consumption.
+A Node.js TypeScript CLI tool that converts documentation docsets to Markdown files for AI agent consumption.
 
 ## Project Structure
 
@@ -12,54 +12,65 @@ src/
 │   └── CacheReader.ts          # Reads cache.db for content locations
 ├── extractor/
 │   ├── UuidGenerator.ts        # SHA-1 based UUID generation for cache lookup
-│   └── ContentExtractor.ts     # Brotli decompression and JSON extraction
+│   ├── ContentExtractor.ts     # Brotli decompression and JSON extraction
+│   └── TarixExtractor.ts       # Tarix archive extraction for Dash docsets
 ├── parser/
 │   ├── DocCParser.ts           # Parses DocC JSON into structured data
+│   ├── HtmlParser.ts           # Parses HTML using cheerio/turndown
 │   └── types.ts                # TypeScript interfaces for DocC schema
 ├── generator/
 │   └── MarkdownGenerator.ts    # Converts parsed docs to markdown
-└── writer/
-    ├── FileWriter.ts           # Writes output files
-    └── PathResolver.ts         # Resolves documentation paths to file paths
+├── writer/
+│   ├── FileWriter.ts           # Writes output files
+│   └── PathResolver.ts         # Resolves documentation paths to file paths
+└── formats/                    # Format abstraction layer
+    ├── types.ts                # DocsetFormat interface and types
+    ├── FormatRegistry.ts       # Format auto-detection
+    ├── AppleDocCFormat.ts      # Apple DocC format handler
+    ├── StandardDashFormat.ts   # Generic Dash format handler
+    └── CoreDataFormat.ts       # CoreData format handler
 ```
+
+## Supported Formats
+
+| Format | Detection | Content Storage | Content Format |
+|--------|-----------|-----------------|----------------|
+| **Apple DocC** | cache.db + fs/ | Brotli-compressed JSON | DocC JSON |
+| **Standard Dash** | searchIndex only | tarix.tgz or Documents/ | HTML |
+| **CoreData** | ZTOKEN + ZNODE tables | tarix.tgz | HTML |
 
 ## How It Works
 
-### Apple Docset Format
+### Format Detection
 
-Apple docsets use a complex format:
+The `FormatRegistry` automatically detects the docset format:
+1. **Apple DocC**: Has `cache.db` and `fs/` directory
+2. **CoreData**: Has `ZTOKEN` table in SQLite
+3. **Standard Dash**: Has `searchIndex` table (fallback)
 
-1. **SQLite Index** (`Contents/Resources/docSet.dsidx`): Contains `searchIndex` table with entries (name, type, path)
-2. **Cache Database** (`Contents/Resources/Documents/cache.db`): Maps UUIDs to content locations (data_id, offset, length)
-3. **Compressed Content** (`Contents/Resources/Documents/fs/`): Brotli-compressed files containing DocC JSON
-
-### UUID Generation Algorithm
-
-```typescript
-// Request key: "ls/documentation/uikit/uiwindow"
-// 1. Extract canonical path: "/documentation/uikit/uiwindow"
-// 2. SHA-1 hash, truncate to 6 bytes, base64url encode
-// 3. Prepend language prefix: "ls" (Swift) or "lc" (Obj-C)
-// Result: "lsXYZ123..."
-```
-
-### Content Extraction Flow
+### Apple DocC Content Extraction
 
 1. Query `searchIndex` for entries
-2. Parse request_key from path URL
-3. Generate UUID from request_key
-4. Look up (data_id, offset, length) in cache.db
-5. Decompress fs/{data_id} with brotli
-6. Extract JSON at offset:offset+length
-7. Parse DocC JSON and generate markdown
+2. Generate UUID from request_key (SHA-1 hash, truncate to 6 bytes, base64url)
+3. Look up (data_id, offset, length) in cache.db
+4. Decompress fs/{data_id} with brotli
+5. Extract JSON at offset:offset+length
+6. Parse DocC JSON and generate markdown
+
+### Standard Dash / CoreData Content Extraction
+
+1. Query entries from searchIndex or ZTOKEN tables
+2. Extract HTML from tarix.tgz archive or Documents/ folder
+3. Parse HTML with cheerio
+4. Convert to markdown with turndown
 
 ## Commands
 
 ```bash
-# Convert full docset (both Swift and Objective-C)
+# Convert full docset
 npm run dev -- <docset-path> -o <output-dir>
 
-# Convert specific language
+# Convert specific language (Apple docsets)
 npm run dev -- <docset-path> -o <output-dir> -l swift
 
 # Filter by framework or type
@@ -78,6 +89,8 @@ npm run dev -- list-frameworks <docset-path>
 
 ## Output Structure
 
+### Apple Docsets
+
 ```
 output/
 ├── Swift/
@@ -86,20 +99,31 @@ output/
 │       ├── _index.md
 │       ├── UIWindow.md
 │       └── uiwindow/
-│           ├── rootViewController.md
-│           └── becomeKeyWindow.md
+│           └── rootViewController.md
 └── Objective-C/
     └── UIKit/
         └── ...
+```
+
+### Generic Docsets
+
+```
+output/
+├── _index.md
+├── Function/
+│   ├── _index.md
+│   └── array_map.md
+├── Class/
+│   └── DateTime.md
+└── Constant/
+    └── PHP_VERSION.md
 ```
 
 ## Key Implementation Details
 
 ### Link Resolution
 
-Links in DocC JSON use URL paths like `/documentation/uikit/uiwindow/rootviewcontroller`. These are converted to relative markdown links like `./uiwindow/rootViewController.md` based on:
-- URL path structure determines subdirectory
-- Reference title determines filename (sanitized)
+Links in DocC JSON use URL paths like `/documentation/uikit/uiwindow/rootviewcontroller`. These are converted to relative markdown links like `./uiwindow/rootViewController.md`.
 
 ### Filename Sanitization
 
@@ -110,13 +134,15 @@ Links in DocC JSON use URL paths like `/documentation/uikit/uiwindow/rootviewcon
 
 ### Entry Types
 
-The docset contains 21 entry types: Framework, Class, Struct, Protocol, Enum, Method, Property, Function, Constant, Type, Variable, Constructor, Operator, Macro, Guide, Sample, Section, Category, Union, Namespace, Script
+Common types: Framework, Class, Struct, Protocol, Enum, Method, Property, Function, Constant, Type, Variable, Constructor, Operator, Macro, Guide, Sample, Section, Category, Union, Namespace, Script
 
 ## Dependencies
 
 - `better-sqlite3`: SQLite database access
 - `commander`: CLI argument parsing
-- `brotli` (system): Decompression via CLI tool
+- `cheerio`: HTML parsing
+- `turndown`: HTML to Markdown conversion
+- `tar-stream`: Tarix archive extraction
 
 ## Build & Run
 
@@ -126,28 +152,24 @@ npm run build
 npm run dev -- <docset-path> -o <output-dir>
 ```
 
+## Testing
+
+```bash
+npm test                 # Run all tests
+npm run test:coverage    # Run with coverage
+npm run test:watch       # Watch mode
+```
+
 ## Test Data
 
-Full docset: `test_data/input/Apple_API_Reference.docset/`
-- 678,322 entries
-- 306 frameworks
-- ~1.8GB markdown output
+Place `.docset` bundles in `test_data/input/` for integration testing. The test suite automatically discovers all docsets in this directory and runs format detection and content extraction tests against them.
 
-Smaller test docset: `test_data/input/Apple_UIKit_Reference.docset/`
-- 25,254 entries (UIKit only)
-- 73MB size
-- Use for faster testing
-
-### Extracting Framework-Specific Docsets
+### Extracting Framework-Specific Apple Docsets
 
 Use `scripts/extract-framework-apple-docset.ts` to create smaller test docsets:
 
 ```bash
-# Single framework
-npx tsx scripts/extract-framework-apple-docset.ts UIKit
-
-# Multiple frameworks
-npx tsx scripts/extract-framework-apple-docset.ts Foundation CoreData
+npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o test_data/input UIKit
 ```
 
 ## Code Style
