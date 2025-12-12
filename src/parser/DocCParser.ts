@@ -43,6 +43,23 @@ import type {
  */
 export class DocCParser {
   private urlToPathMap: Map<string, string> = new Map();
+  private sourceDocumentPath: string | null = null;
+
+  /**
+   * Set the source document path for correct relative link resolution.
+   * Call this before parsing each document.
+   * @param path - Request key path (e.g., 'ls/documentation/xpc/os_xpc_listener')
+   */
+  setSourceDocumentPath(path: string): void {
+    this.sourceDocumentPath = path;
+  }
+
+  /**
+   * Clear the source document path after parsing.
+   */
+  clearSourceDocumentPath(): void {
+    this.sourceDocumentPath = null;
+  }
 
   /**
    * Register a URL to file path mapping for link resolution.
@@ -319,30 +336,136 @@ export class DocCParser {
 
   /**
    * Build a relative path from a documentation URL.
-   * @param url - Documentation URL path
+   *
+   * Handles both same-framework and cross-framework links by comparing
+   * the source and target frameworks and computing the appropriate relative path.
+   *
+   * @param url - Target documentation URL path (e.g., '/documentation/swift/equatable')
    * @param title - Display title for the filename
-   * @returns Relative path (e.g., ./uiwindow/rootViewController.md)
+   * @returns Relative path (e.g., './item.md' or '../Swift/Equatable.md')
    */
   private buildRelativePathFromUrl(url: string, title: string): string {
-    // Extract path after /documentation/framework/
-    const match = url.match(/\/documentation\/[^/]+\/(.+)/);
-    if (!match) {
+    // Extract target framework and path from URL
+    const targetMatch = url.match(/\/documentation\/([^/]+)(?:\/(.*))?/);
+    if (!targetMatch) {
       return `./${this.sanitizeFileName(title)}.md`;
     }
 
-    const pathParts = match[1].split('/');
+    const targetFramework = targetMatch[1].toLowerCase();
+    const targetPathAfterFramework = targetMatch[2] || '';
+    const targetPathParts = targetPathAfterFramework
+      ? targetPathAfterFramework.split('/')
+      : [];
 
-    if (pathParts.length <= 1) {
-      // Top-level item (like a class)
-      return `./${this.sanitizeFileName(title)}.md`;
+    // Extract source framework and path from source document
+    let sourceFramework: string | null = null;
+    let sourcePathParts: string[] = [];
+
+    if (this.sourceDocumentPath) {
+      // Source path format: ls/documentation/framework/path or lc/documentation/framework/path
+      const sourceMatch = this.sourceDocumentPath.match(
+        /l[sc]\/documentation\/([^/]+)(?:\/(.*))?/
+      );
+      if (sourceMatch) {
+        sourceFramework = sourceMatch[1].toLowerCase();
+        const sourcePathAfterFramework = sourceMatch[2] || '';
+        sourcePathParts = sourcePathAfterFramework
+          ? sourcePathAfterFramework.split('/')
+          : [];
+      }
     }
 
-    // For nested items, build the subdirectory path
-    // e.g., uiwindow/rootviewcontroller -> ./uiwindow/rootViewController.md
-    const dirParts = pathParts.slice(0, -1); // All but last
-    const fileName = this.sanitizeFileName(title);
+    const fileName = this.sanitizeFileName(title) + '.md';
 
-    return `./${dirParts.join('/')}/${fileName}.md`;
+    // If we don't have source context, fall back to simple relative path
+    if (!sourceFramework) {
+      if (targetPathParts.length === 0) {
+        return `./${fileName}`;
+      }
+      return `./${targetPathParts.slice(0, -1).join('/')}/${fileName}`.replace(
+        /\/+/g,
+        '/'
+      );
+    }
+
+    // Cross-framework link: need to go up to framework level and into target framework
+    if (sourceFramework !== targetFramework) {
+      // Calculate how many levels to go up from source path to reach framework level
+      // Source is at: Framework/path/to/source.md
+      // Need: ../...Framework/ then into target framework
+      const levelsUp = sourcePathParts.length; // Number of dirs above source file
+      const upPath = levelsUp > 0 ? '../'.repeat(levelsUp) : './';
+
+      // Capitalize target framework name for directory
+      const targetFrameworkDir = this.capitalizeFrameworkName(targetFramework);
+
+      if (targetPathParts.length === 0) {
+        // Link to framework root (_index.md)
+        return `${upPath}${targetFrameworkDir}/_index.md`;
+      }
+
+      // Link to item within target framework
+      const targetSubPath = targetPathParts.slice(0, -1).join('/');
+      if (targetSubPath) {
+        return `${upPath}${targetFrameworkDir}/${targetSubPath}/${fileName}`;
+      }
+      return `${upPath}${targetFrameworkDir}/${fileName}`;
+    }
+
+    // Same framework: compute relative path within framework
+    if (targetPathParts.length === 0) {
+      // Link to framework root
+      const levelsUp = sourcePathParts.length;
+      return levelsUp > 0 ? '../'.repeat(levelsUp) + '_index.md' : './_index.md';
+    }
+
+    // Find common path prefix
+    let commonPrefixLength = 0;
+    const minLen = Math.min(sourcePathParts.length, targetPathParts.length - 1);
+    for (let i = 0; i < minLen; i++) {
+      if (
+        sourcePathParts[i].toLowerCase() ===
+        targetPathParts[i].toLowerCase()
+      ) {
+        commonPrefixLength++;
+      } else {
+        break;
+      }
+    }
+
+    // Calculate path: go up from source, then down to target
+    const levelsUp = sourcePathParts.length - commonPrefixLength;
+    const upPath = levelsUp > 0 ? '../'.repeat(levelsUp) : './';
+    const downPath = targetPathParts.slice(commonPrefixLength, -1).join('/');
+
+    if (downPath) {
+      return `${upPath}${downPath}/${fileName}`;
+    }
+    return `${upPath}${fileName}`;
+  }
+
+  /**
+   * Capitalize framework name for directory path.
+   */
+  private capitalizeFrameworkName(name: string): string {
+    const knownFrameworks: Record<string, string> = {
+      accelerate: 'Accelerate',
+      accessibility: 'Accessibility',
+      foundation: 'Foundation',
+      uikit: 'UIKit',
+      appkit: 'AppKit',
+      swiftui: 'SwiftUI',
+      corefoundation: 'CoreFoundation',
+      coredata: 'CoreData',
+      coregraphics: 'CoreGraphics',
+      webkit: 'WebKit',
+      mapkit: 'MapKit',
+      swift: 'Swift',
+      objectivec: 'ObjectiveC',
+      os: 'OS',
+      xpc: 'Xpc',
+    };
+    return knownFrameworks[name] || name.charAt(0).toUpperCase() + name.slice(1);
   }
 
   /**

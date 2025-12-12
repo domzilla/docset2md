@@ -124,8 +124,14 @@ export class AppleDocCFormat implements DocsetFormat {
     const doc = this.extractor.extractByRequestKey(entry.path);
     if (!doc) return null;
 
+    // Set source document path for correct relative link resolution
+    this.parser.setSourceDocumentPath(entry.path);
+
     const lang = (entry.language as 'swift' | 'objc') ?? 'swift';
     const parsed = this.parser.parse(doc, lang);
+
+    // Clear source path after parsing
+    this.parser.clearSourceDocumentPath();
 
     return this.convertParsedDoc(parsed);
   }
