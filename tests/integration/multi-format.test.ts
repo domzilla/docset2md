@@ -59,7 +59,6 @@ function cleanupOutput(): void {
 describe('Multi-Format Support', () => {
   let registry: FormatRegistry;
   let docsets: DiscoveredDocset[];
-  let allTestsPassed = true;
 
   beforeAll(() => {
     registry = new FormatRegistry();
@@ -83,24 +82,10 @@ describe('Multi-Format Support', () => {
   });
 
   afterAll(() => {
-    // Only clean up if all tests passed
-    if (allTestsPassed) {
-      console.log('\nAll tests passed. Cleaning up test_data/output...');
-      cleanupOutput();
-      console.log('Cleanup complete.\n');
-    } else {
-      console.log('\nSome tests failed. Keeping test_data/output for inspection.\n');
-    }
-  });
-
-  afterEach(() => {
-    // Track if any test failed
-    if (expect.getState().currentTestName) {
-      const state = expect.getState();
-      if (state.numPassingAsserts === 0 && state.assertionCalls > 0) {
-        allTestsPassed = false;
-      }
-    }
+    // Always clean up after tests
+    console.log('\nCleaning up test_data/output...');
+    cleanupOutput();
+    console.log('Cleanup complete.\n');
   });
 
   describe('Docset Discovery', () => {
