@@ -45,20 +45,27 @@ interface ValidationResult {
 }
 
 /**
- * Find all markdown files recursively in a directory
+ * Find all markdown files iteratively in a directory (avoids stack overflow)
  */
 function findMarkdownFiles(dir: string): string[] {
   const files: string[] = [];
 
   if (!existsSync(dir)) return files;
 
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...findMarkdownFiles(fullPath));
-    } else if (entry.name.endsWith('.md')) {
-      files.push(fullPath);
+  // Use iterative approach with a stack to avoid call stack overflow
+  const stack: string[] = [dir];
+
+  while (stack.length > 0) {
+    const currentDir = stack.pop()!;
+    const entries = readdirSync(currentDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(fullPath);
+      } else if (entry.name.endsWith('.md')) {
+        files.push(fullPath);
+      }
     }
   }
 
@@ -279,18 +286,33 @@ async function convertDocset(
 /**
  * Validate all links in markdown files
  */
-function validateLinks(outputDir: string): {
+function validateLinks(
+  outputDir: string,
+  onProgress?: (current: number, total: number) => void
+): {
   totalLinks: number;
   brokenLinks: BrokenLink[];
   validLinks: number;
 } {
+  console.log('  Scanning for markdown files...');
   const mdFiles = findMarkdownFiles(outputDir);
+  console.log(`  Found ${mdFiles.length} markdown files`);
+
+  console.log('  Building file index...');
   const existingFiles = new Set(mdFiles.map(f => resolve(f)));
+
+  console.log('  Checking links...');
   const brokenLinks: BrokenLink[] = [];
   let totalLinks = 0;
   let validLinks = 0;
+  let filesProcessed = 0;
 
   for (const mdFile of mdFiles) {
+    filesProcessed++;
+    if (onProgress && filesProcessed % 10000 === 0) {
+      onProgress(filesProcessed, mdFiles.length);
+    }
+
     const content = readFileSync(mdFile, 'utf-8');
     const links = extractLinks(content);
 
@@ -452,7 +474,13 @@ async function main(): Promise<void> {
 
     // Validate links
     console.log('Validating links...');
-    const { totalLinks, validLinks, brokenLinks } = validateLinks(outputDir);
+    const { totalLinks, validLinks, brokenLinks } = validateLinks(
+      outputDir,
+      (current, total) => {
+        process.stdout.write(`\r  Progress: ${current}/${total} files checked`);
+      }
+    );
+    console.log(''); // New line after progress
     const absoluteLinks = checkAbsoluteLinks(outputDir);
 
     // Print results
