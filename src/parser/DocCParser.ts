@@ -446,11 +446,11 @@ export class DocCParser {
 
   /**
    * Capitalize framework name for directory path.
+   * Must match the capitalization used by PathResolver and validate-links.ts.
    */
   private capitalizeFrameworkName(name: string): string {
     const knownFrameworks: Record<string, string> = {
       accelerate: 'Accelerate',
-      accessibility: 'Accessibility',
       foundation: 'Foundation',
       uikit: 'UIKit',
       appkit: 'AppKit',
@@ -458,12 +458,18 @@ export class DocCParser {
       corefoundation: 'CoreFoundation',
       coredata: 'CoreData',
       coregraphics: 'CoreGraphics',
+      coreanimation: 'CoreAnimation',
+      corelocation: 'CoreLocation',
+      avfoundation: 'AVFoundation',
       webkit: 'WebKit',
       mapkit: 'MapKit',
-      swift: 'Swift',
-      objectivec: 'ObjectiveC',
-      os: 'OS',
-      xpc: 'Xpc',
+      healthkit: 'HealthKit',
+      homekit: 'HomeKit',
+      cloudkit: 'CloudKit',
+      gamekit: 'GameKit',
+      spritekit: 'SpriteKit',
+      scenekit: 'SceneKit',
+      metalkit: 'MetalKit',
     };
     return knownFrameworks[name] || name.charAt(0).toUpperCase() + name.slice(1);
   }

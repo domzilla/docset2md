@@ -120,6 +120,7 @@ function capitalizeType(type: string): string {
  * Capitalize framework name properly
  */
 function capitalizeFramework(name: string): string {
+  // Must match PathResolver.capitalizeFramework and DocCParser.capitalizeFrameworkName
   const knownFrameworks: Record<string, string> = {
     accelerate: 'Accelerate',
     foundation: 'Foundation',
@@ -129,8 +130,18 @@ function capitalizeFramework(name: string): string {
     corefoundation: 'CoreFoundation',
     coredata: 'CoreData',
     coregraphics: 'CoreGraphics',
+    coreanimation: 'CoreAnimation',
+    corelocation: 'CoreLocation',
+    avfoundation: 'AVFoundation',
     webkit: 'WebKit',
     mapkit: 'MapKit',
+    healthkit: 'HealthKit',
+    homekit: 'HomeKit',
+    cloudkit: 'CloudKit',
+    gamekit: 'GameKit',
+    spritekit: 'SpriteKit',
+    scenekit: 'SceneKit',
+    metalkit: 'MetalKit',
   };
 
   const lower = name.toLowerCase();
