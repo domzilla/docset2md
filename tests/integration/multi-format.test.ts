@@ -11,7 +11,7 @@
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FormatRegistry } from '../../src/FormatRegistry.js';
+import { FormatDetector } from '../../src/FormatDetector.js';
 import type { DocsetFormat } from '../../src/shared/formats/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -57,11 +57,11 @@ function cleanupOutput(): void {
 }
 
 describe('Multi-Format Support', () => {
-  let registry: FormatRegistry;
+  let registry: FormatDetector;
   let docsets: DiscoveredDocset[];
 
   beforeAll(() => {
-    registry = new FormatRegistry();
+    registry = new FormatDetector();
     docsets = discoverDocsets();
 
     // Fail immediately if no docsets found

@@ -28,8 +28,8 @@
 import { program } from 'commander';
 import { existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
-import { FormatRegistry } from './FormatRegistry.js';
-import { ConverterRegistry } from './ConverterRegistry.js';
+import { FormatDetector } from './FormatDetector.js';
+import { ConverterFactory } from './ConverterFactory.js';
 import { validateLinks, printValidationResults } from './shared/LinkValidator.js';
 import type { NormalizedEntry } from './shared/formats/types.js';
 import type { ProgressCallback } from './shared/converter/types.js';
@@ -119,7 +119,7 @@ async function convert(docsetPath: string, options: ConvertOptions) {
   }
 
   // Detect format
-  const registry = new FormatRegistry();
+  const registry = new FormatDetector();
   const format = await registry.detectFormat(resolvedPath, {
     enableDownload: options.download,
   });
@@ -138,7 +138,7 @@ async function convert(docsetPath: string, options: ConvertOptions) {
   console.log(`Output directory: ${resolve(options.output)}`);
 
   // Create converter for this format
-  const converter = ConverterRegistry.createConverter(format, docsetName);
+  const converter = ConverterFactory.createConverter(format, docsetName);
 
   // Build filter options
   const filters = {
@@ -226,7 +226,7 @@ async function listTypes(docsetPath: string) {
     process.exit(1);
   }
 
-  const registry = new FormatRegistry();
+  const registry = new FormatDetector();
   const format = await registry.detectFormat(resolvedPath);
 
   if (!format) {
@@ -259,7 +259,7 @@ async function listFrameworks(docsetPath: string) {
     process.exit(1);
   }
 
-  const registry = new FormatRegistry();
+  const registry = new FormatDetector();
   const format = await registry.detectFormat(resolvedPath);
 
   if (!format) {
@@ -297,7 +297,7 @@ async function showInfo(docsetPath: string) {
     process.exit(1);
   }
 
-  const registry = new FormatRegistry();
+  const registry = new FormatDetector();
   const format = await registry.detectFormat(resolvedPath);
 
   if (!format) {

@@ -11,8 +11,8 @@
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { FormatRegistry } from '../../src/FormatRegistry.js';
-import { ConverterRegistry } from '../../src/ConverterRegistry.js';
+import { FormatDetector } from '../../src/FormatDetector.js';
+import { ConverterFactory } from '../../src/ConverterFactory.js';
 
 // Test data paths
 const TEST_DATA_DIR = join(process.cwd(), 'test_data', 'input');
@@ -50,13 +50,13 @@ describe('Converter Pipeline Integration', () => {
       const outputDir = join(tempDir, 'apple-output');
       mkdirSync(outputDir, { recursive: true });
 
-      const registry = new FormatRegistry();
+      const registry = new FormatDetector();
       const format = await registry.detectFormat(APPLE_DOCSET_PATH);
 
       expect(format).not.toBeNull();
       expect(format!.getName()).toBe('Apple DocC');
 
-      const converter = ConverterRegistry.createConverter(format!, 'Apple');
+      const converter = ConverterFactory.createConverter(format!, 'Apple');
 
       const result = await converter.convert({
         outputDir,
@@ -77,10 +77,10 @@ describe('Converter Pipeline Integration', () => {
       const outputDir = join(tempDir, 'apple-index-output');
       mkdirSync(outputDir, { recursive: true });
 
-      const registry = new FormatRegistry();
+      const registry = new FormatDetector();
       const format = await registry.detectFormat(APPLE_DOCSET_PATH);
 
-      const converter = ConverterRegistry.createConverter(format!, 'Apple');
+      const converter = ConverterFactory.createConverter(format!, 'Apple');
 
       await converter.convert({
         outputDir,
@@ -112,13 +112,13 @@ describe('Converter Pipeline Integration', () => {
       const outputDir = join(tempDir, 'php-output');
       mkdirSync(outputDir, { recursive: true });
 
-      const registry = new FormatRegistry();
+      const registry = new FormatDetector();
       const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
       expect(format).not.toBeNull();
       expect(format!.getName()).toBe('Standard Dash');
 
-      const converter = ConverterRegistry.createConverter(format!, 'PHP');
+      const converter = ConverterFactory.createConverter(format!, 'PHP');
 
       const result = await converter.convert({
         outputDir,
@@ -136,10 +136,10 @@ describe('Converter Pipeline Integration', () => {
       const outputDir = join(tempDir, 'php-index-output');
       mkdirSync(outputDir, { recursive: true });
 
-      const registry = new FormatRegistry();
+      const registry = new FormatDetector();
       const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
-      const converter = ConverterRegistry.createConverter(format!, 'PHP');
+      const converter = ConverterFactory.createConverter(format!, 'PHP');
 
       await converter.convert({
         outputDir,
@@ -164,10 +164,10 @@ describe('Converter Pipeline Integration', () => {
       const outputDir = join(tempDir, 'progress-output');
       mkdirSync(outputDir, { recursive: true });
 
-      const registry = new FormatRegistry();
+      const registry = new FormatDetector();
       const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
-      const converter = ConverterRegistry.createConverter(format!, 'PHP');
+      const converter = ConverterFactory.createConverter(format!, 'PHP');
 
       const progressCalls: number[] = [];
       const onProgress = (current: number) => {
@@ -195,10 +195,10 @@ describe('Converter Pipeline Integration', () => {
       const outputDir = join(tempDir, 'stats-output');
       mkdirSync(outputDir, { recursive: true });
 
-      const registry = new FormatRegistry();
+      const registry = new FormatDetector();
       const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
-      const converter = ConverterRegistry.createConverter(format!, 'PHP');
+      const converter = ConverterFactory.createConverter(format!, 'PHP');
 
       const result = await converter.convert({
         outputDir,

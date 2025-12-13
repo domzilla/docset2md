@@ -1,20 +1,20 @@
 /**
- * @file ConverterRegistry.test.ts
- * @module tests/unit/converter/ConverterRegistry
+ * @file ConverterFactory.test.ts
+ * @module tests/unit/converter/ConverterFactory
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
  *
- * @fileoverview Unit tests for ConverterRegistry.
+ * @fileoverview Unit tests for ConverterFactory.
  */
 
-import { ConverterRegistry } from '../../../src/ConverterRegistry.js';
+import { ConverterFactory } from '../../../src/ConverterFactory.js';
 import { DocCConverter } from '../../../src/docc/DocCConverter.js';
 import { StandardConverter } from '../../../src/standard/StandardConverter.js';
 import { CoreDataConverter } from '../../../src/coredata/CoreDataConverter.js';
 import type { DocsetFormat } from '../../../src/shared/formats/types.js';
 
-describe('ConverterRegistry', () => {
+describe('ConverterFactory', () => {
   // Mock format handler factory
   function createMockFormat(name: string): DocsetFormat {
     return {
@@ -36,7 +36,7 @@ describe('ConverterRegistry', () => {
   describe('createConverter', () => {
     it('should create DocCConverter for Apple DocC format', () => {
       const format = createMockFormat('Apple DocC');
-      const converter = ConverterRegistry.createConverter(format, 'TestDocset');
+      const converter = ConverterFactory.createConverter(format, 'TestDocset');
 
       expect(converter).toBeInstanceOf(DocCConverter);
       expect(converter.getFormatName()).toBe('Apple DocC');
@@ -44,7 +44,7 @@ describe('ConverterRegistry', () => {
 
     it('should create StandardConverter for Standard Dash format', () => {
       const format = createMockFormat('Standard Dash');
-      const converter = ConverterRegistry.createConverter(format, 'TestDocset');
+      const converter = ConverterFactory.createConverter(format, 'TestDocset');
 
       expect(converter).toBeInstanceOf(StandardConverter);
       expect(converter.getFormatName()).toBe('Standard Dash');
@@ -52,7 +52,7 @@ describe('ConverterRegistry', () => {
 
     it('should create CoreDataConverter for CoreData format', () => {
       const format = createMockFormat('CoreData');
-      const converter = ConverterRegistry.createConverter(format, 'TestDocset');
+      const converter = ConverterFactory.createConverter(format, 'TestDocset');
 
       expect(converter).toBeInstanceOf(CoreDataConverter);
       expect(converter.getFormatName()).toBe('CoreData');
@@ -60,7 +60,7 @@ describe('ConverterRegistry', () => {
 
     it('should fallback to StandardConverter for unknown format', () => {
       const format = createMockFormat('Unknown Format');
-      const converter = ConverterRegistry.createConverter(format, 'TestDocset');
+      const converter = ConverterFactory.createConverter(format, 'TestDocset');
 
       expect(converter).toBeInstanceOf(StandardConverter);
     });

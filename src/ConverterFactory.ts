@@ -1,11 +1,11 @@
 /**
- * @file ConverterRegistry.ts
- * @module converter/ConverterRegistry
+ * @file ConverterFactory.ts
+ * @module ConverterFactory
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
  *
- * @fileoverview Maps format handlers to their corresponding converters.
+ * @fileoverview Factory for creating format-specific converters.
  */
 
 import type { DocsetFormat } from './shared/formats/types.js';
@@ -19,12 +19,12 @@ import { CoreDataConverter } from './coredata/CoreDataConverter.js';
  *
  * @example
  * ```typescript
- * const format = await registry.detectFormat('/path/to/docset');
- * const converter = ConverterRegistry.createConverter(format, 'MyDocset');
+ * const format = await detector.detectFormat('/path/to/docset');
+ * const converter = ConverterFactory.createConverter(format, 'MyDocset');
  * const result = await converter.convert({ outputDir: './output' });
  * ```
  */
-export class ConverterRegistry {
+export class ConverterFactory {
   /**
    * Create a converter for the given format handler.
    *

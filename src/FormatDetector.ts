@@ -1,11 +1,11 @@
 /**
- * @file FormatRegistry.ts
- * @module formats/FormatRegistry
+ * @file FormatDetector.ts
+ * @module FormatDetector
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
  *
- * @fileoverview Manages registration and auto-detection of docset format handlers.
+ * @fileoverview Auto-detection of docset format handlers.
  */
 
 import type { DocsetFormat, FormatInitOptions } from './shared/formats/types.js';
@@ -14,7 +14,7 @@ import { StandardFormat } from './standard/StandardFormat.js';
 import { CoreDataFormat } from './coredata/CoreDataFormat.js';
 
 /**
- * Registry for docset format detection and instantiation.
+ * Detector for docset format identification and instantiation.
  *
  * Maintains a priority-ordered list of format handlers and provides
  * automatic format detection. The first handler that can process a
@@ -27,19 +27,19 @@ import { CoreDataFormat } from './coredata/CoreDataFormat.js';
  *
  * @example
  * ```typescript
- * const registry = new FormatRegistry();
- * const format = await registry.detectFormat('./PHP.docset');
+ * const detector = new FormatDetector();
+ * const format = await detector.detectFormat('./PHP.docset');
  * if (format) {
  *   console.log(`Detected: ${format.getName()}`);
  *   // Use format to iterate entries...
  * }
  * ```
  */
-export class FormatRegistry {
+export class FormatDetector {
   private formats: DocsetFormat[] = [];
 
   /**
-   * Create a new FormatRegistry with default format handlers.
+   * Create a new FormatDetector with default format handlers.
    */
   constructor() {
     // Register formats in priority order (most specific first)

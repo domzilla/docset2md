@@ -7,8 +7,8 @@ A Node.js TypeScript CLI tool that converts documentation docsets to Markdown fi
 ```
 src/
 ├── index.ts                    # CLI entry point (commander-based)
-├── FormatRegistry.ts           # Format auto-detection
-├── ConverterRegistry.ts        # Maps formats to converters
+├── FormatDetector.ts           # Format auto-detection
+├── ConverterFactory.ts         # Creates format-specific converters
 ├── docc/                       # Apple DocC format (all DocC-specific code)
 │   ├── DocCFormat.ts           # DocC format handler
 │   ├── DocCConverter.ts        # DocC converter: language/framework/item.md
@@ -79,8 +79,8 @@ The `FormatRegistry` automatically detects the docset format:
 
 The conversion is orchestrated by format-specific converters:
 
-1. `FormatRegistry.detectFormat()` identifies the docset format
-2. `ConverterRegistry.createConverter()` creates the appropriate converter
+1. `FormatDetector.detectFormat()` identifies the docset format
+2. `ConverterFactory.createConverter()` creates the appropriate converter
 3. `converter.convert()` runs the conversion:
    - Iterates entries via `format.iterateEntries()`
    - Extracts content via `format.extractContent()`

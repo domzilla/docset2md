@@ -71,8 +71,8 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 ```
 src/
 ├── index.ts                 # CLI entry point and orchestration
-├── FormatRegistry.ts        # Format auto-detection
-├── ConverterRegistry.ts     # Maps formats to converters
+├── FormatDetector.ts        # Format auto-detection
+├── ConverterFactory.ts      # Creates format-specific converters
 ├── docc/                    # Apple DocC format (all DocC-specific code)
 │   ├── DocCFormat.ts        # DocC format handler
 │   ├── DocCConverter.ts     # DocC converter: language/framework/item.md
@@ -377,10 +377,10 @@ Detailed documentation content...
 
 ```typescript
 // 1. CLI detects format
-const format = await FormatRegistry.detectFormat(docsetPath);
+const format = await detector.detectFormat(docsetPath);
 
 // 2. Create appropriate converter
-const converter = ConverterRegistry.createConverter(format, docsetName);
+const converter = ConverterFactory.createConverter(format, docsetName);
 
 // 3. Run conversion (all logic delegated to converter)
 const result = await converter.convert(options, onProgress);
