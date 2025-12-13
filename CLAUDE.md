@@ -23,6 +23,8 @@ src/
 ├── writer/
 │   ├── FileWriter.ts           # Writes output files
 │   └── PathResolver.ts         # Resolves documentation paths to file paths
+├── validator/
+│   └── LinkValidator.ts        # Validates internal markdown links
 └── formats/                    # Format abstraction layer
     ├── types.ts                # DocsetFormat interface and types
     ├── FormatRegistry.ts       # Format auto-detection
@@ -78,6 +80,12 @@ npm run dev -- <docset-path> -o <output-dir> -f UIKit Foundation -t Class Protoc
 
 # Limit entries (for testing)
 npm run dev -- <docset-path> -o <output-dir> --limit 100
+
+# Convert with link validation
+npm run dev -- <docset-path> -o <output-dir> --validate
+
+# Download missing content from Apple API (for incomplete docsets)
+npm run dev -- <docset-path> -o <output-dir> --download
 
 # Show docset info
 npm run dev -- info <docset-path>
@@ -162,25 +170,18 @@ npm run test:watch       # Watch mode
 
 ### Link Validation
 
-To validate that all internal markdown links in a docset are correct, use the link validation script. This performs a **full conversion** (not sample-based) and checks every link:
+Use the `--validate` flag to validate internal markdown links after conversion:
 
 ```bash
-# Validate links in a specific docset
-npx tsx scripts/validate-links.ts <docset-path>
-
-# Keep the output directory for inspection
-npx tsx scripts/validate-links.ts <docset-path> --keep-output
-
-# Use custom output directory
-npx tsx scripts/validate-links.ts <docset-path> --output ./validation-output
+# Convert and validate links
+npm run dev -- <docset-path> -o <output-dir> --validate
 ```
 
-The script will:
-1. Perform a complete conversion of the docset
+This will:
+1. Perform the conversion
 2. Scan all generated markdown files for internal links
 3. Verify each link points to an existing file
 4. Report any broken or absolute links
-5. Exit with code 1 if validation fails, 0 if passes
 
 ## Test Data
 

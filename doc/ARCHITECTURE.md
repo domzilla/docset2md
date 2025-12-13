@@ -47,6 +47,12 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 │                          File Output                                    │
 │                   (writer/FileWriter, PathResolver)                     │
 └─────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼ (optional --validate)
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Link Validation                                  │
+│                     (validator/LinkValidator)                           │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Directory Structure
@@ -70,6 +76,8 @@ src/
 ├── writer/                  # File output
 │   ├── FileWriter.ts        # Writes files with statistics
 │   └── PathResolver.ts      # Resolves paths and sanitizes filenames
+├── validator/               # Post-conversion validation
+│   └── LinkValidator.ts     # Validates internal markdown links
 └── formats/                 # Format abstraction layer
     ├── types.ts             # DocsetFormat interface and types
     ├── FormatRegistry.ts    # Format auto-detection
@@ -212,6 +220,20 @@ Request Key: "ls/documentation/uikit/uiwindow"
 6. Parse as DocCDocument
 ```
 
+**On-Demand Download (--download flag):**
+
+Some Apple docsets use on-demand content downloading where the `fs/` directory is incomplete. When local extraction fails and `--download` is enabled:
+
+```
+1. Local extraction fails (missing fs file or cache entry)
+2. Convert request key to API URL:
+   "ls/documentation/photos/phvideorequestoptions"
+   → "https://developer.apple.com/tutorials/data/documentation/photos/phvideorequestoptions.json"
+3. Fetch JSON from Apple's public API
+4. Cache in memory for session
+5. Parse as DocCDocument
+```
+
 **Standard Dash / CoreData:**
 ```
 1. Get file path from database
@@ -343,6 +365,37 @@ output/
     ├── _index.md
     └── PHP_VERSION.md
 ```
+
+## Link Validation
+
+When the `--validate` flag is used, the `LinkValidator` performs post-conversion validation:
+
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│    Find      │───▶│   Extract    │───▶│   Resolve    │
+│  .md files   │    │    Links     │    │    Paths     │
+└──────────────┘    └──────────────┘    └──────────────┘
+                                               │
+                                               ▼
+                                        ┌──────────────┐
+                                        │   Check if   │
+                                        │ target exists│
+                                        └──────────────┘
+```
+
+**Validation Process:**
+1. Recursively find all `.md` files in output directory (iterative to avoid stack overflow)
+2. Build a set of all existing file paths for fast lookup
+3. Extract markdown links matching `[text](path.md)` pattern
+4. Resolve each link relative to its source file
+5. Check if resolved path exists in the file set
+6. Report broken links and absolute links (which should be relative)
+
+**Validation Results:**
+- Total links found
+- Valid links (target exists)
+- Broken links (target missing) with source file and expected path
+- Absolute links (should be converted to relative)
 
 ## Error Handling
 

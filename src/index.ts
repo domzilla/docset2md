@@ -30,6 +30,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, basename, join, dirname } from 'node:path';
 import { FormatRegistry } from './formats/FormatRegistry.js';
 import { MarkdownGenerator } from './generator/MarkdownGenerator.js';
+import { validateLinks, printValidationResults } from './validator/LinkValidator.js';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from './formats/types.js';
 import type { TopicItem, ParsedDocumentation } from './parser/types.js';
 
@@ -51,6 +52,8 @@ interface ConvertOptions {
   verbose?: boolean;
   /** Enable downloading missing content from Apple's API */
   download?: boolean;
+  /** Validate links after conversion */
+  validate?: boolean;
 }
 
 /**
@@ -72,6 +75,7 @@ async function main() {
     .option('--limit <n>', 'Limit number of entries to process')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--download', 'Download missing content from Apple API (Apple docsets only)')
+    .option('--validate', 'Validate internal links after conversion')
     .action(convert);
 
   program
@@ -273,6 +277,12 @@ async function convert(docsetPath: string, options: ConvertOptions) {
   console.log(`Files written: ${filesWritten.toLocaleString()}`);
   console.log(`Directories created: ${createdDirs.size}`);
   console.log(`Total size: ${(bytesWritten / 1024 / 1024).toFixed(1)} MB`);
+
+  // Run link validation if requested
+  if (options.validate) {
+    const validationResults = validateLinks(outputDir, options.verbose ?? false);
+    printValidationResults(validationResults);
+  }
 
   // Cleanup
   format.close();
