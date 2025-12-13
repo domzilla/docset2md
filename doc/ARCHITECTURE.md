@@ -26,8 +26,19 @@ This document describes the internal architecture of docset2md, a CLI tool that 
               └───────────────────────┼───────────────────────┘
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
+│                         Converter Layer                                 │
+│                      (converter/ConverterRegistry)                       │
+│              ┌──────────────┬──────────────┬──────────────┐             │
+│              │AppleConverter│StandardDash  │CoreData      │             │
+│              │              │Converter     │Converter     │             │
+│              └──────────────┴──────────────┴──────────────┘             │
+└─────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────┐
 │                         Content Extraction                              │
 │              (extractor/ContentExtractor, TarixExtractor)               │
+│                    (downloader/AppleApiDownloader)                      │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
@@ -60,30 +71,39 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 ```
 src/
 ├── index.ts                 # CLI entry point and orchestration
+├── converter/               # Conversion orchestration layer
+│   ├── types.ts             # DocsetConverter interface and types
+│   ├── BaseConverter.ts     # Abstract base with shared conversion logic
+│   ├── AppleConverter.ts    # Apple DocC: language/framework/item.md
+│   ├── StandardDashConverter.ts # Standard Dash: type/item.md
+│   ├── CoreDataConverter.ts # CoreData: extends StandardDashConverter
+│   └── ConverterRegistry.ts # Maps formats to converters
 ├── db/                      # Database readers for SQLite indexes
 │   ├── IndexReader.ts       # Reads docSet.dsidx searchIndex table
 │   └── CacheReader.ts       # Reads cache.db refs table (Apple only)
+├── downloader/              # External content fetching
+│   └── AppleApiDownloader.ts # Downloads missing content from Apple API
 ├── extractor/               # Content extraction from docsets
 │   ├── ContentExtractor.ts  # Brotli decompression for Apple DocC
 │   ├── TarixExtractor.ts    # Tarix archive extraction for Dash
 │   └── UuidGenerator.ts     # SHA-1 UUID generation for cache lookup
+├── formats/                 # Format abstraction layer
+│   ├── types.ts             # DocsetFormat interface and types
+│   ├── FormatRegistry.ts    # Format auto-detection
+│   ├── AppleDocCFormat.ts   # Apple DocC format handler
+│   ├── StandardDashFormat.ts # Generic Dash format handler
+│   └── CoreDataFormat.ts    # CoreData format handler
+├── generator/               # Output generation
+│   └── MarkdownGenerator.ts # Converts parsed docs to markdown
 ├── parser/                  # Content parsing
 │   ├── DocCParser.ts        # Parses Apple DocC JSON format
 │   ├── HtmlParser.ts        # Parses HTML using cheerio/turndown
 │   └── types.ts             # TypeScript interfaces for DocC schema
-├── generator/               # Output generation
-│   └── MarkdownGenerator.ts # Converts parsed docs to markdown
-├── writer/                  # File output
-│   ├── FileWriter.ts        # Writes files with statistics
-│   └── PathResolver.ts      # Resolves paths and sanitizes filenames
 ├── validator/               # Post-conversion validation
 │   └── LinkValidator.ts     # Validates internal markdown links
-└── formats/                 # Format abstraction layer
-    ├── types.ts             # DocsetFormat interface and types
-    ├── FormatRegistry.ts    # Format auto-detection
-    ├── AppleDocCFormat.ts   # Apple DocC format handler
-    ├── StandardDashFormat.ts # Generic Dash format handler
-    └── CoreDataFormat.ts    # CoreData format handler
+└── writer/                  # File output
+    ├── FileWriter.ts        # Writes files with statistics
+    └── PathResolver.ts      # Resolves paths and sanitizes filenames
 ```
 
 ## Supported Docset Formats
@@ -179,6 +199,55 @@ interface DocsetFormat {
 ```
 
 Detection priority: Apple DocC → CoreData → Standard Dash
+
+### ConverterRegistry
+
+The `ConverterRegistry` maps format handlers to format-specific converters:
+
+```typescript
+interface DocsetConverter {
+  getFormat(): DocsetFormat;
+  getFormatName(): string;
+  convert(options: ConverterOptions, onProgress?: ProgressCallback): Promise<ConversionResult>;
+  getOutputPath(entry: NormalizedEntry, content: ParsedContent, outputDir: string): string;
+  generateIndexes(outputDir: string, generator: MarkdownGenerator): void;
+  close(): void;
+}
+```
+
+**Converter Types:**
+
+| Converter | Format | Output Structure |
+|-----------|--------|------------------|
+| `AppleConverter` | Apple DocC | `language/framework/item.md` |
+| `StandardDashConverter` | Standard Dash | `type/item.md` |
+| `CoreDataConverter` | CoreData | `type/item.md` (extends StandardDash) |
+
+**BaseConverter** provides shared functionality:
+- Main conversion loop with progress tracking
+- Markdown generation via `MarkdownGenerator`
+- File writing with directory creation
+- Filename sanitization
+
+Each converter implements format-specific:
+- `getOutputPath()` - determines file location
+- `generateIndexes()` - creates `_index.md` files
+- `trackForIndex()` - tracks items for index generation
+
+### AppleApiDownloader
+
+Downloads missing content from Apple's public documentation API:
+
+```typescript
+class AppleApiDownloader {
+  download(requestKey: string): DocCDocument | null;
+  isCached(requestKey: string): boolean;
+  getStats(): DownloadStats;
+  clearCache(): void;
+}
+```
+
+Used when `--download` flag is enabled and local content extraction fails.
 
 ### UUID Generation (Apple DocC)
 
@@ -285,25 +354,46 @@ Detailed documentation content...
 ### Conversion Pipeline
 
 ```
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   CLI Args   │───▶│   Format     │───▶│  Initialize  │
-│              │    │  Detection   │    │   Format     │
-└──────────────┘    └──────────────┘    └──────────────┘
-                                               │
-                                               ▼
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│    Write     │◀───│   Generate   │◀───│   Extract    │
-│   Markdown   │    │   Markdown   │    │   Content    │
-└──────────────┘    └──────────────┘    └──────────────┘
-       │
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   CLI Args   │───▶│   Format     │───▶│   Create     │───▶│   Run        │
+│              │    │  Detection   │    │  Converter   │    │  Conversion  │
+└──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
+                                                                   │
+       ┌───────────────────────────────────────────────────────────┘
        ▼
-┌──────────────┐
-│   Generate   │
-│   Indexes    │
-└──────────────┘
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   Iterate    │───▶│   Extract    │───▶│   Generate   │───▶│    Write     │
+│   Entries    │    │   Content    │    │   Markdown   │    │    Files     │
+└──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
+                                                                   │
+                                                                   ▼
+                                                            ┌──────────────┐
+                                                            │   Generate   │
+                                                            │   Indexes    │
+                                                            └──────────────┘
 ```
 
-### Entry Processing Loop
+### Orchestration Flow
+
+```typescript
+// 1. CLI detects format
+const format = await FormatRegistry.detectFormat(docsetPath);
+
+// 2. Create appropriate converter
+const converter = ConverterRegistry.createConverter(format, docsetName);
+
+// 3. Run conversion (all logic delegated to converter)
+const result = await converter.convert(options, onProgress);
+
+// 4. Converter handles internally:
+//    - Entry iteration via format.iterateEntries()
+//    - Content extraction via format.extractContent()
+//    - Markdown generation via MarkdownGenerator
+//    - File writing with format-specific paths
+//    - Index generation
+```
+
+### Entry Processing Loop (inside BaseConverter)
 
 ```typescript
 for (const entry of format.iterateEntries(filters)) {
@@ -315,19 +405,22 @@ for (const entry of format.iterateEntries(filters)) {
   //    - Others: HtmlParser.parse() called internally
 
   // 3. Generate markdown from ParsedContent
-  const markdown = generateMarkdown(content, generator);
+  const markdown = this.generateMarkdown(content);
 
-  // 4. Write to appropriate path
-  //    - Apple: Language/Framework/Item.md
-  //    - Generic: Type/Item.md
-  writeEntry(outputDir, entry, content, markdown);
+  // 4. Get format-specific output path
+  //    - Apple: language/framework/item.md
+  //    - Generic: type/item.md
+  const outputPath = this.getOutputPath(entry, content, outputDir);
 
-  // 5. Track for index generation
-  trackForIndex(entry, content, filePath);
+  // 5. Write file
+  this.writeFile(outputPath, markdown);
+
+  // 6. Track for index generation
+  this.trackForIndex(entry, content, outputPath);
 }
 
-// 6. Generate index files after all entries processed
-generateIndexes(outputDir, trackedItems, generator);
+// 7. Generate index files after all entries processed
+this.generateIndexes(outputDir);
 ```
 
 ## Output Structure
@@ -336,16 +429,16 @@ generateIndexes(outputDir, trackedItems, generator);
 
 ```
 output/
-├── Swift/
+├── swift/
 │   ├── _index.md              # List of frameworks
-│   └── UIKit/
+│   └── uikit/
 │       ├── _index.md          # List of types
-│       ├── UIWindow.md
+│       ├── uiwindow.md
 │       └── uiwindow/
-│           ├── rootViewController.md
-│           └── makeKeyAndVisible.md
-└── Objective-C/
-    └── UIKit/
+│           ├── rootviewcontroller.md
+│           └── makekeyandvisible.md
+└── objective-c/
+    └── uikit/
         └── ...
 ```
 
@@ -354,16 +447,16 @@ output/
 ```
 output/
 ├── _index.md                  # List of types with counts
-├── Function/
+├── function/
 │   ├── _index.md
 │   ├── array_map.md
 │   └── json_encode.md
-├── Class/
+├── class/
 │   ├── _index.md
-│   └── DateTime.md
-└── Constant/
+│   └── datetime.md
+└── constant/
     ├── _index.md
-    └── PHP_VERSION.md
+    └── php_version.md
 ```
 
 ## Link Validation

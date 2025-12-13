@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { CacheReader } from '../db/CacheReader.js';
 import { generateUuid } from './UuidGenerator.js';
+import { AppleApiDownloader } from '../downloader/AppleApiDownloader.js';
 import type { DocCDocument } from '../parser/types.js';
 
 /**
@@ -50,8 +51,7 @@ export class ContentExtractor {
   private fsDir: string;
   private decompressedCache: Map<number, Buffer> = new Map();
   private brotliPath: string | null = null;
-  private enableDownload: boolean;
-  private downloadedCache: Map<string, DocCDocument | null> = new Map();
+  private downloader: AppleApiDownloader | null = null;
 
   /**
    * Create a new ContentExtractor.
@@ -62,7 +62,11 @@ export class ContentExtractor {
     const cacheDbPath = join(docsetPath, 'Contents/Resources/Documents/cache.db');
     this.cacheReader = new CacheReader(cacheDbPath);
     this.fsDir = join(docsetPath, 'Contents/Resources/Documents/fs');
-    this.enableDownload = options?.enableDownload ?? false;
+
+    // Create downloader if download is enabled
+    if (options?.enableDownload) {
+      this.downloader = new AppleApiDownloader();
+    }
 
     // Check for brotli CLI tool
     this.brotliPath = this.findBrotli();
@@ -93,8 +97,8 @@ export class ContentExtractor {
     const doc = this.extractByUuid(uuid);
 
     // If local extraction failed and downloading is enabled, try to fetch from Apple's API
-    if (doc === null && this.enableDownload) {
-      return this.downloadFromApi(requestKey);
+    if (doc === null && this.downloader) {
+      return this.downloader.download(requestKey);
     }
 
     return doc;
@@ -234,64 +238,13 @@ export class ContentExtractor {
   }
 
   /**
-   * Download documentation content from Apple's API.
-   * The API URL is constructed from the request key:
-   * - Request key: ls/documentation/photos/phvideorequestoptions
-   * - API URL: https://developer.apple.com/tutorials/data/documentation/photos/phvideorequestoptions.json
-   *
-   * @param requestKey - Request key to download
-   * @returns Parsed DocCDocument or null if download fails
-   */
-  private downloadFromApi(requestKey: string): DocCDocument | null {
-    // Check cache first
-    if (this.downloadedCache.has(requestKey)) {
-      return this.downloadedCache.get(requestKey) ?? null;
-    }
-
-    // Convert request key to API URL
-    // Remove language prefix (ls/ or lc/) and add .json extension
-    const match = requestKey.match(/^l[sc]\/(.+)$/);
-    if (!match) {
-      this.downloadedCache.set(requestKey, null);
-      return null;
-    }
-
-    const docPath = match[1];
-    const apiUrl = `https://developer.apple.com/tutorials/data/${docPath}.json`;
-
-    try {
-      // Use curl to download (synchronous, avoids async complexity)
-      const result = execSync(`curl -s -f "${apiUrl}"`, {
-        encoding: 'utf-8',
-        timeout: 30000, // 30 second timeout
-        maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-      });
-
-      const doc = JSON.parse(result) as DocCDocument;
-
-      // Validate it's a proper DocC document
-      if (doc.metadata || doc.schemaVersion) {
-        this.downloadedCache.set(requestKey, doc);
-        return doc;
-      }
-
-      this.downloadedCache.set(requestKey, null);
-      return null;
-    } catch {
-      // Download or parsing failed
-      this.downloadedCache.set(requestKey, null);
-      return null;
-    }
-  }
-
-  /**
    * Close the extractor and release resources.
    * Closes the cache reader and clears the decompression cache.
    */
   close(): void {
     this.cacheReader.close();
     this.clearCache();
-    this.downloadedCache.clear();
+    this.downloader?.clearCache();
   }
 
   /**
@@ -299,10 +252,14 @@ export class ContentExtractor {
    * @returns Number of documents fetched from Apple's API
    */
   getDownloadCount(): number {
-    let count = 0;
-    for (const doc of this.downloadedCache.values()) {
-      if (doc !== null) count++;
-    }
-    return count;
+    return this.downloader?.getDownloadCount() ?? 0;
+  }
+
+  /**
+   * Get the downloader instance for accessing download statistics.
+   * @returns The AppleApiDownloader instance or null if downloading is disabled
+   */
+  getDownloader(): AppleApiDownloader | null {
+    return this.downloader;
   }
 }

@@ -7,30 +7,39 @@ A Node.js TypeScript CLI tool that converts documentation docsets to Markdown fi
 ```
 src/
 ├── index.ts                    # CLI entry point (commander-based)
+├── converter/                  # Conversion orchestration layer
+│   ├── types.ts                # DocsetConverter interface and types
+│   ├── BaseConverter.ts        # Abstract base with shared conversion logic
+│   ├── AppleConverter.ts       # Apple DocC: Language/Framework/Item.md
+│   ├── StandardDashConverter.ts # Standard Dash: Type/Item.md
+│   ├── CoreDataConverter.ts    # CoreData: extends StandardDashConverter
+│   └── ConverterRegistry.ts    # Maps formats to converters
 ├── db/
 │   ├── IndexReader.ts          # Reads docSet.dsidx SQLite database
 │   └── CacheReader.ts          # Reads cache.db for content locations
+├── downloader/
+│   └── AppleApiDownloader.ts   # Downloads missing content from Apple API
 ├── extractor/
 │   ├── UuidGenerator.ts        # SHA-1 based UUID generation for cache lookup
 │   ├── ContentExtractor.ts     # Brotli decompression and JSON extraction
 │   └── TarixExtractor.ts       # Tarix archive extraction for Dash docsets
+├── formats/                    # Format abstraction layer
+│   ├── types.ts                # DocsetFormat interface and types
+│   ├── FormatRegistry.ts       # Format auto-detection
+│   ├── AppleDocCFormat.ts      # Apple DocC format handler
+│   ├── StandardDashFormat.ts   # Generic Dash format handler
+│   └── CoreDataFormat.ts       # CoreData format handler
+├── generator/
+│   └── MarkdownGenerator.ts    # Converts parsed docs to markdown
 ├── parser/
 │   ├── DocCParser.ts           # Parses DocC JSON into structured data
 │   ├── HtmlParser.ts           # Parses HTML using cheerio/turndown
 │   └── types.ts                # TypeScript interfaces for DocC schema
-├── generator/
-│   └── MarkdownGenerator.ts    # Converts parsed docs to markdown
-├── writer/
-│   ├── FileWriter.ts           # Writes output files
-│   └── PathResolver.ts         # Resolves documentation paths to file paths
 ├── validator/
 │   └── LinkValidator.ts        # Validates internal markdown links
-└── formats/                    # Format abstraction layer
-    ├── types.ts                # DocsetFormat interface and types
-    ├── FormatRegistry.ts       # Format auto-detection
-    ├── AppleDocCFormat.ts      # Apple DocC format handler
-    ├── StandardDashFormat.ts   # Generic Dash format handler
-    └── CoreDataFormat.ts       # CoreData format handler
+└── writer/
+    ├── FileWriter.ts           # Writes output files
+    └── PathResolver.ts         # Resolves documentation paths to file paths
 ```
 
 ## Supported Formats
@@ -65,6 +74,24 @@ The `FormatRegistry` automatically detects the docset format:
 2. Extract HTML from tarix.tgz archive or Documents/ folder
 3. Parse HTML with cheerio
 4. Convert to markdown with turndown
+
+### Conversion Pipeline
+
+The conversion is orchestrated by format-specific converters:
+
+1. `FormatRegistry.detectFormat()` identifies the docset format
+2. `ConverterRegistry.createConverter()` creates the appropriate converter
+3. `converter.convert()` runs the conversion:
+   - Iterates entries via `format.iterateEntries()`
+   - Extracts content via `format.extractContent()`
+   - Generates markdown via `MarkdownGenerator`
+   - Writes files using format-specific output paths
+   - Generates index files
+
+Each converter controls its own output structure:
+- **AppleConverter**: `language/framework/item.md` (e.g., `swift/uikit/uiwindow.md`)
+- **StandardDashConverter**: `type/item.md` (e.g., `function/array_map.md`)
+- **CoreDataConverter**: Same as StandardDashConverter
 
 ## Commands
 
@@ -101,15 +128,15 @@ npm run dev -- list-frameworks <docset-path>
 
 ```
 output/
-├── Swift/
+├── swift/
 │   ├── _index.md
-│   └── UIKit/
+│   └── uikit/
 │       ├── _index.md
-│       ├── UIWindow.md
+│       ├── uiwindow.md
 │       └── uiwindow/
-│           └── rootViewController.md
-└── Objective-C/
-    └── UIKit/
+│           └── rootviewcontroller.md
+└── objective-c/
+    └── uikit/
         └── ...
 ```
 
@@ -118,13 +145,13 @@ output/
 ```
 output/
 ├── _index.md
-├── Function/
+├── function/
 │   ├── _index.md
 │   └── array_map.md
-├── Class/
-│   └── DateTime.md
-└── Constant/
-    └── PHP_VERSION.md
+├── class/
+│   └── datetime.md
+└── constant/
+    └── php_version.md
 ```
 
 ## Key Implementation Details
