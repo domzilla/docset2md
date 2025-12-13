@@ -375,9 +375,21 @@ export class DocCParser {
       return null;
     }
 
+    // External Apple URLs without /documentation/ path cannot be resolved locally
+    // e.g., https://developer.apple.com/shareplay
+    if (url.includes('developer.apple.com') && !url.includes('/documentation/')) {
+      return null;
+    }
+
     // Extract target framework and path from URL
     const targetMatch = url.match(/\/documentation\/([^/]+)(?:\/(.*))?/);
     if (!targetMatch) {
+      // Non-documentation URLs that aren't external - treat as local relative link
+      // Only generate link if we have language lookup to validate
+      if (this.languageLookup) {
+        // Can't validate non-documentation URLs, render as plain text
+        return null;
+      }
       return `./${this.sanitizeFileName(title)}.md`;
     }
 
@@ -386,6 +398,23 @@ export class DocCParser {
     const targetPathParts = targetPathAfterFramework
       ? targetPathAfterFramework.split('/')
       : [];
+
+    // Check if target exists in docset before generating link
+    // Normalize URL: strip domain prefix if present to match language map format
+    let targetDocPath = url.toLowerCase();
+    if (targetDocPath.includes('developer.apple.com')) {
+      const docMatch = targetDocPath.match(/developer\.apple\.com(\/documentation\/.*)/);
+      if (docMatch) {
+        targetDocPath = docMatch[1];
+      }
+    }
+    if (this.languageLookup) {
+      const availableLangs = this.languageLookup(targetDocPath);
+      if (!availableLangs) {
+        // Target doesn't exist in docset - render as plain text
+        return null;
+      }
+    }
 
     // Use URL segment for filename (not title) to match actual file naming
     const urlFileName = targetPathParts.length > 0
@@ -421,17 +450,15 @@ export class DocCParser {
       );
     }
 
-    // Determine target language - check if target exists in current language
-    const targetDocPath = url.toLowerCase();
+    // Determine target language for cross-language link resolution
     let targetLanguage: 'swift' | 'objc' = this.sourceLanguage;
 
     if (this.languageLookup) {
+      // We already validated target exists; now check if it's in current language
       const availableLangs = this.languageLookup(targetDocPath);
-      if (availableLangs) {
-        if (!availableLangs.has(this.sourceLanguage)) {
-          // Target doesn't exist in source language - use the other language
-          targetLanguage = this.sourceLanguage === 'swift' ? 'objc' : 'swift';
-        }
+      if (availableLangs && !availableLangs.has(this.sourceLanguage)) {
+        // Target doesn't exist in source language - use the other language
+        targetLanguage = this.sourceLanguage === 'swift' ? 'objc' : 'swift';
       }
     }
 

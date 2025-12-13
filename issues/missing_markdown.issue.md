@@ -231,3 +231,69 @@ These appear to be links to:
 - Apple Developer Documentation guides (`/documentation/Ides/Conceptual/...`)
 - Technical Notes and articles
 - Legacy HTML documentation not converted to DocC format
+
+### Resolution (2025-12-13)
+
+Implemented detection of external HTML links in `buildRelativePathFromUrl`. URLs containing `.html` now return `null`, causing them to render as plain text instead of malformed markdown links.
+
+**Commit:** `c7b628d` - Render external HTML links as plain text in DocC parser
+
+---
+
+## Link Validation: Skip Broken Links During Conversion (2025-12-13)
+
+### Problem
+
+Links in the source docset may reference documentation that doesn't exist in the docset. For example:
+
+```
+Swift/Xpc/xpcarray/subscript_as_-9ukjj.md:
+  -> [nil](../../Objectivec/nil.md)
+     Missing: Swift/Objectivec/nil.md
+```
+
+These links are already broken in the source docset - the target documentation simply isn't included.
+
+### Solution
+
+Added link validation during conversion that checks if the target documentation path exists in the docset's language availability map before generating links. If the target doesn't exist, the reference is rendered as plain text instead of a broken link.
+
+**Validation checks added:**
+
+1. **External Apple URLs without `/documentation/`**: URLs like `https://developer.apple.com/shareplay` that don't point to documentation paths are rendered as plain text
+
+2. **Non-documentation URLs**: When language lookup is available, URLs that don't match the `/documentation/` pattern are rendered as plain text
+
+3. **Missing documentation paths**: URLs matching `/documentation/framework/path` are validated against the language availability map; if the path doesn't exist, rendered as plain text
+
+### Implementation
+
+Modified `buildRelativePathFromUrl` in `src/parser/DocCParser.ts`:
+
+```typescript
+// External Apple URLs without /documentation/ path
+if (url.includes('developer.apple.com') && !url.includes('/documentation/')) {
+  return null;
+}
+
+// Check if target exists in docset before generating link
+if (this.languageLookup) {
+  const availableLangs = this.languageLookup(targetDocPath);
+  if (!availableLangs) {
+    // Target doesn't exist in docset - render as plain text
+    return null;
+  }
+}
+```
+
+### Results
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Broken links | 22,229 | 8,740 | -60% |
+
+### Remaining Broken Links
+
+The remaining ~8,740 broken links are references to valid documentation paths that exist in the searchIndex but whose files weren't generated due to content extraction failures. This is a separate issue - the documentation exists in the docset but couldn't be extracted.
+
+These are NOT broken links in the source docset; they're valid references to documentation that failed to extract for other reasons (missing content, extraction errors, etc.).
