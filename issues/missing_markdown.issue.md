@@ -1,5 +1,7 @@
 # Issue: Missing Markdown Files After Conversion
 
+**Status: Partially Resolved**
+
 ## Problem
 
 When running `validate-links.ts` on `Apple_API_Reference.docset`, there is a significant discrepancy between generated and found files:
@@ -136,3 +138,96 @@ Document this as intentional - multiple index entries can point to the same docu
 Implement **Option A** (disambiguate method overloads) to preserve all documentation, combined with **Option B** (skip duplicate writes) for accurate counting and performance.
 
 The method overload collision issue is the real data loss problem - 48,088 potential unique pages are being collapsed. The duplicate entry issue (same content URL, different metadata) is expected and not data loss.
+
+## Resolution
+
+### Implemented: Option A (2025-12-13)
+
+Updated `sanitizeFileName` in all components to preserve method parameter labels:
+
+```typescript
+// Before: init(frame:) → init.md, init(coder:) → init.md (collision!)
+// After:  init(frame:) → init_frame.md, init(coder:) → init_coder.md
+```
+
+**Files modified:**
+- `src/writer/PathResolver.ts`
+- `src/index.ts`
+- `scripts/validate-links.ts`
+- `src/parser/DocCParser.ts`
+- `tests/unit/writer/PathResolver.test.ts`
+
+**Commit:** `f36939f` - Preserve method parameter labels in filenames to prevent overwrites
+
+### Results
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Files found | 446,637 | 493,620 | +46,983 (+10.5%) |
+| Broken links | ~27,567 | 29,577 | +2,010 |
+
+The increase in broken links is expected - more files means more files containing external references to documentation not included in the docset.
+
+### Remaining Issues
+
+The remaining ~181,000 overwrites are from duplicate entries (same content URL, different language/metadata tags). These are **not data loss** - they represent the same documentation page indexed multiple times for different contexts.
+
+Option B (skip duplicate writes) could still be implemented for:
+- More accurate file count reporting
+- Slight performance improvement (avoid redundant writes)
+
+---
+
+## New Issue: Malformed External HTML Links (2025-12-13)
+
+### Problem
+
+~349 broken links are caused by malformed external HTML references. Example:
+
+```
+[About Bundle IDs](../../Ides/Conceptual/AppDistributionGuide/ConfiguringYourApp/ConfiguringYourApp.html#//apple_ref/doc/uid/tp40012582-ch28-sw8.md)
+```
+
+### Root Cause
+
+DocC references contain URLs to external HTML documentation like:
+```
+/documentation/Ides/Conceptual/AppDistributionGuide/ConfiguringYourApp/ConfiguringYourApp.html#//apple_ref/doc/uid/tp40012582-ch28-sw8
+```
+
+The `buildRelativePathFromUrl` function in `DocCParser.ts`:
+1. Matches the `/documentation/` pattern (treating "Ides" as a framework name)
+2. Processes the `.html#//apple_ref/...` fragment as path segments
+3. Appends `.md` to the final segment, creating invalid paths
+
+### Impact
+
+- 349 occurrences across 287 files
+- Links point to non-existent files with `.html#...` in the path
+- External Apple documentation (guides, tech notes) cannot be resolved
+
+### Proposed Fix
+
+Detect external HTML links in `buildRelativePathFromUrl` and handle them appropriately:
+
+```typescript
+private buildRelativePathFromUrl(url: string, title: string): string {
+  // Detect external HTML links - don't convert to markdown paths
+  if (url.includes('.html')) {
+    // Option A: Return plain title (no link)
+    return null;  // Signal to caller to render as plain text
+
+    // Option B: Keep as external link (won't resolve locally)
+    // return url;
+  }
+
+  // ... existing documentation path handling
+}
+```
+
+### Affected Reference Types
+
+These appear to be links to:
+- Apple Developer Documentation guides (`/documentation/Ides/Conceptual/...`)
+- Technical Notes and articles
+- Legacy HTML documentation not converted to DocC format

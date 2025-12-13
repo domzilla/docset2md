@@ -332,14 +332,15 @@ export class DocCParser {
     }
 
     // Resolve the URL to actual file path
-    let url = ref.url;
+    let url: string | undefined = ref.url;
     if (url) {
       const resolvedPath = this.resolveUrl(url, ref.title);
       if (resolvedPath) {
         url = resolvedPath;
       } else if (ref.title) {
-        // Build relative path from URL structure
-        url = this.buildRelativePathFromUrl(url, ref.title);
+        // Build relative path from URL structure (returns null for external HTML links)
+        const relativePath = this.buildRelativePathFromUrl(url, ref.title);
+        url = relativePath ?? undefined;
       }
     }
 
@@ -366,9 +367,14 @@ export class DocCParser {
    *
    * @param url - Target documentation URL path (e.g., '/documentation/swift/equatable')
    * @param title - Display title for the filename
-   * @returns Relative path (e.g., './item.md', '../Swift/Equatable.md', or '../../Objective-C/Os/OS_object.md')
+   * @returns Relative path, or null for external HTML links that cannot be resolved
    */
-  private buildRelativePathFromUrl(url: string, title: string): string {
+  private buildRelativePathFromUrl(url: string, title: string): string | null {
+    // External HTML links (guides, tech notes, legacy docs) cannot be resolved locally
+    if (url.includes('.html')) {
+      return null;
+    }
+
     // Extract target framework and path from URL
     const targetMatch = url.match(/\/documentation\/([^/]+)(?:\/(.*))?/);
     if (!targetMatch) {
@@ -782,7 +788,10 @@ export class DocCParser {
       // Fallback: build relative path from URL structure
       if (ref.title) {
         const relativePath = this.buildRelativePathFromUrl(ref.url, ref.title);
-        return `[${title}](${relativePath})`;
+        if (relativePath) {
+          return `[${title}](${relativePath})`;
+        }
+        // External HTML link - render as plain text
       }
     }
 
