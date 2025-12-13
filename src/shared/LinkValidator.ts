@@ -130,6 +130,11 @@ export function validateLinks(outputDir: string, verbose: boolean = false): Vali
     const links = extractLinks(content);
 
     for (const link of links) {
+      // Skip external links (http/https URLs)
+      if (link.path.startsWith('http://') || link.path.startsWith('https://')) {
+        continue;
+      }
+
       totalLinks++;
 
       // Check for absolute links
