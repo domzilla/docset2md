@@ -342,6 +342,75 @@ if (Array.isArray(row)) {
 
 ### Remaining Broken Links
 
-The remaining ~882 broken links are references to valid documentation paths that exist in the searchIndex but whose content is not available in the cache.db. This is a data availability issue in the docset itself - the index references content that was never stored.
+The remaining ~882 broken links are references to valid documentation paths that exist in the searchIndex but whose content is not available in the local fs/ files. This is because Apple docsets use on-demand downloading - some content files are fetched from Apple's servers when accessed in Dash.
 
-Example: `PHVideoRequestOptions` class exists in the index but has no corresponding content in the cache.
+Example: `PHVideoRequestOptions` class exists in the index but its content file (`fs/150`) is not present in the docset.
+
+---
+
+## Missing fs Files - On-Demand Download Support (2025-12-13)
+
+### Problem
+
+Some Apple docsets use on-demand content downloading. The docset includes:
+- Complete searchIndex with all entries
+- Complete cache.db with UUID → (data_id, offset, length) mappings
+- **Incomplete** fs/ directory - some files are downloaded on-demand by Dash
+
+Investigation revealed:
+- 31 fs files missing (data IDs 150-179 and 355)
+- 947 cache entries reference these missing files
+- ~882 broken links result from this missing content
+
+### Root Cause
+
+Apple includes a helper binary (`Contents/Resources/Documents/bin/Apple Docs Helper`) that downloads missing content from `https://docs-assets.developer.apple.com/published/`. When Dash accesses documentation, the helper fetches any missing content.
+
+### Solution: On-Demand Download via Apple API (2025-12-13)
+
+Implemented direct downloading from Apple's public documentation API:
+
+```typescript
+// API URL pattern:
+// Request key: ls/documentation/photos/phvideorequestoptions
+// API URL: https://developer.apple.com/tutorials/data/documentation/photos/phvideorequestoptions.json
+```
+
+**Usage:**
+```bash
+# Enable downloading with --download flag
+docset2md ./Apple_API_Reference.docset -o ./output --download
+```
+
+**Implementation details:**
+- Added `enableDownload` option to `ContentExtractor`
+- When local extraction fails and download is enabled, fetches from Apple's API
+- Downloaded content is cached in memory for the conversion session
+- Falls back gracefully if download fails (network issues, content not available)
+
+**Files modified:**
+- `src/extractor/ContentExtractor.ts` - Added download functionality
+- `src/formats/types.ts` - Added `FormatInitOptions` interface
+- `src/formats/AppleDocCFormat.ts` - Pass options to extractor
+- `src/formats/FormatRegistry.ts` - Pass options through detection
+- `src/index.ts` - Added `--download` CLI flag
+
+### Verification
+
+```
+Testing WITHOUT download:
+  PHVideoRequestOptions: NOT FOUND
+
+Testing WITH download:
+  PHVideoRequestOptions: FOUND
+  Title: PHVideoRequestOptions
+  Framework: Photos
+  Downloads: 1
+```
+
+### Notes
+
+- Downloads require internet access
+- Apple's API is public and doesn't require authentication
+- Download mode is opt-in to avoid unexpected network requests
+- Each missing entry adds ~100-500ms for download (network latency)

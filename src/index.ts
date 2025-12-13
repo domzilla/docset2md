@@ -49,6 +49,8 @@ interface ConvertOptions {
   limit?: number;
   /** Enable verbose output */
   verbose?: boolean;
+  /** Enable downloading missing content from Apple's API */
+  download?: boolean;
 }
 
 /**
@@ -69,6 +71,7 @@ async function main() {
     .option('-t, --type <types...>', 'Filter by entry type(s)')
     .option('--limit <n>', 'Limit number of entries to process')
     .option('-v, --verbose', 'Enable verbose output')
+    .option('--download', 'Download missing content from Apple API (Apple docsets only)')
     .action(convert);
 
   program
@@ -112,7 +115,9 @@ async function convert(docsetPath: string, options: ConvertOptions) {
 
   // Detect format
   const registry = new FormatRegistry();
-  const format = await registry.detectFormat(resolvedPath);
+  const format = await registry.detectFormat(resolvedPath, {
+    enableDownload: options.download,
+  });
 
   if (!format) {
     console.error('Error: Unsupported docset format');
@@ -121,6 +126,9 @@ async function convert(docsetPath: string, options: ConvertOptions) {
   }
 
   console.log(`Detected format: ${format.getName()}`);
+  if (options.download) {
+    console.log('Download mode: ENABLED (will fetch missing content from Apple API)');
+  }
   console.log(`Converting docset: ${basename(resolvedPath)}`);
   console.log(`Output directory: ${resolve(options.output)}`);
 

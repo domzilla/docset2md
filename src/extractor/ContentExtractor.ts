@@ -16,6 +16,14 @@ import { generateUuid } from './UuidGenerator.js';
 import type { DocCDocument } from '../parser/types.js';
 
 /**
+ * Options for ContentExtractor.
+ */
+export interface ContentExtractorOptions {
+  /** Enable downloading missing content from Apple's API (default: false) */
+  enableDownload?: boolean;
+}
+
+/**
  * Extracts documentation content from Apple DocC docsets.
  *
  * The extraction process:
@@ -42,15 +50,19 @@ export class ContentExtractor {
   private fsDir: string;
   private decompressedCache: Map<number, Buffer> = new Map();
   private brotliPath: string | null = null;
+  private enableDownload: boolean;
+  private downloadedCache: Map<string, DocCDocument | null> = new Map();
 
   /**
    * Create a new ContentExtractor.
    * @param docsetPath - Path to the .docset directory
+   * @param options - Optional configuration
    */
-  constructor(docsetPath: string) {
+  constructor(docsetPath: string, options?: ContentExtractorOptions) {
     const cacheDbPath = join(docsetPath, 'Contents/Resources/Documents/cache.db');
     this.cacheReader = new CacheReader(cacheDbPath);
     this.fsDir = join(docsetPath, 'Contents/Resources/Documents/fs');
+    this.enableDownload = options?.enableDownload ?? false;
 
     // Check for brotli CLI tool
     this.brotliPath = this.findBrotli();
@@ -71,12 +83,21 @@ export class ContentExtractor {
 
   /**
    * Extract documentation content by request key.
+   * If the local fs file is missing and downloading is enabled, attempts to
+   * fetch the content from Apple's documentation API.
    * @param requestKey - Request key from the index (e.g., "ls/documentation/uikit/uiwindow")
    * @returns Parsed DocCDocument or null if not found
    */
   extractByRequestKey(requestKey: string): DocCDocument | null {
     const uuid = generateUuid(requestKey);
-    return this.extractByUuid(uuid);
+    const doc = this.extractByUuid(uuid);
+
+    // If local extraction failed and downloading is enabled, try to fetch from Apple's API
+    if (doc === null && this.enableDownload) {
+      return this.downloadFromApi(requestKey);
+    }
+
+    return doc;
   }
 
   /**
@@ -213,11 +234,75 @@ export class ContentExtractor {
   }
 
   /**
+   * Download documentation content from Apple's API.
+   * The API URL is constructed from the request key:
+   * - Request key: ls/documentation/photos/phvideorequestoptions
+   * - API URL: https://developer.apple.com/tutorials/data/documentation/photos/phvideorequestoptions.json
+   *
+   * @param requestKey - Request key to download
+   * @returns Parsed DocCDocument or null if download fails
+   */
+  private downloadFromApi(requestKey: string): DocCDocument | null {
+    // Check cache first
+    if (this.downloadedCache.has(requestKey)) {
+      return this.downloadedCache.get(requestKey) ?? null;
+    }
+
+    // Convert request key to API URL
+    // Remove language prefix (ls/ or lc/) and add .json extension
+    const match = requestKey.match(/^l[sc]\/(.+)$/);
+    if (!match) {
+      this.downloadedCache.set(requestKey, null);
+      return null;
+    }
+
+    const docPath = match[1];
+    const apiUrl = `https://developer.apple.com/tutorials/data/${docPath}.json`;
+
+    try {
+      // Use curl to download (synchronous, avoids async complexity)
+      const result = execSync(`curl -s -f "${apiUrl}"`, {
+        encoding: 'utf-8',
+        timeout: 30000, // 30 second timeout
+        maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+      });
+
+      const doc = JSON.parse(result) as DocCDocument;
+
+      // Validate it's a proper DocC document
+      if (doc.metadata || doc.schemaVersion) {
+        this.downloadedCache.set(requestKey, doc);
+        return doc;
+      }
+
+      this.downloadedCache.set(requestKey, null);
+      return null;
+    } catch {
+      // Download or parsing failed
+      this.downloadedCache.set(requestKey, null);
+      return null;
+    }
+  }
+
+  /**
    * Close the extractor and release resources.
    * Closes the cache reader and clears the decompression cache.
    */
   close(): void {
     this.cacheReader.close();
     this.clearCache();
+    this.downloadedCache.clear();
+  }
+
+  /**
+   * Get the number of downloaded documents.
+   * @returns Number of documents fetched from Apple's API
+   */
+  getDownloadCount(): number {
+    let count = 0;
+    for (const doc of this.downloadedCache.values()) {
+      if (doc !== null) count++;
+    }
+    return count;
   }
 }

@@ -16,6 +16,7 @@ import type {
   ParsedContent,
   EntryFilters,
   ContentItem,
+  FormatInitOptions,
 } from './types.js';
 import { IndexReader } from '../db/IndexReader.js';
 import { ContentExtractor } from '../extractor/ContentExtractor.js';
@@ -76,11 +77,13 @@ export class AppleDocCFormat implements DocsetFormat {
   }
 
   /** @inheritdoc */
-  async initialize(docsetPath: string): Promise<void> {
+  async initialize(docsetPath: string, options?: FormatInitOptions): Promise<void> {
     this.docsetPath = docsetPath;
     const indexPath = join(docsetPath, 'Contents/Resources/docSet.dsidx');
     this.indexReader = new IndexReader(indexPath);
-    this.extractor = new ContentExtractor(docsetPath);
+    this.extractor = new ContentExtractor(docsetPath, {
+      enableDownload: options?.enableDownload,
+    });
 
     // Build language availability map for cross-language link resolution
     this.languageMap = this.indexReader.buildLanguageAvailabilityMap();

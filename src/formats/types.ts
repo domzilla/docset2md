@@ -110,6 +110,16 @@ export interface EntryFilters {
 }
 
 /**
+ * Options for format initialization.
+ *
+ * Format-specific options that can be passed during initialization.
+ */
+export interface FormatInitOptions {
+  /** For Apple DocC: enable downloading missing content from Apple's API */
+  enableDownload?: boolean;
+}
+
+/**
  * Strategy interface for docset format handlers.
  *
  * Each docset format (Apple DocC, Standard Dash, CoreData) implements
@@ -147,8 +157,9 @@ export interface DocsetFormat {
    * Initialize format handler with docset path.
    * Opens databases and prepares for content extraction.
    * @param docsetPath - Path to the .docset directory
+   * @param options - Optional format-specific options
    */
-  initialize(docsetPath: string): Promise<void>;
+  initialize(docsetPath: string, options?: FormatInitOptions): Promise<void>;
 
   /**
    * Check if the format has been initialized.

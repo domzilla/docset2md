@@ -16,6 +16,7 @@ import type {
   NormalizedEntry,
   ParsedContent,
   EntryFilters,
+  FormatInitOptions,
 } from './types.js';
 import { TarixExtractor } from '../extractor/TarixExtractor.js';
 import { HtmlParser } from '../parser/HtmlParser.js';
@@ -96,7 +97,7 @@ export class StandardDashFormat implements DocsetFormat {
   }
 
   /** @inheritdoc */
-  async initialize(docsetPath: string): Promise<void> {
+  async initialize(docsetPath: string, _options?: FormatInitOptions): Promise<void> {
     this.docsetPath = docsetPath;
     this.docsetName = docsetPath.split('/').pop()?.replace('.docset', '') || 'Docset';
 
