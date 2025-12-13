@@ -12,6 +12,7 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
 import type { ParsedDocumentation, TopicItem } from '../parser/types.js';
+import { sanitizeFileName } from '../utils/sanitize.js';
 import { MarkdownGenerator } from '../generator/MarkdownGenerator.js';
 import type {
   DocsetConverter,
@@ -245,46 +246,11 @@ export abstract class BaseConverter implements DocsetConverter {
 
   /**
    * Sanitize a string for use as a filename.
-   *
-   * Removes/replaces invalid characters, truncates long names, and
-   * converts method signatures to unique filenames.
-   *
    * @param name - Raw name to sanitize
    * @returns Safe filename string
    */
   protected sanitizeFileName(name: string): string {
-    let sanitized = name;
-
-    // Handle method signatures: convert parameters to underscore-separated format
-    // e.g., init(frame:) → init_frame, perform(_:with:afterDelay:) → perform_with_afterdelay
-    if (sanitized.includes('(')) {
-      const parenIndex = sanitized.indexOf('(');
-      const methodName = sanitized.substring(0, parenIndex);
-      const paramsSection = sanitized.substring(parenIndex);
-
-      // Extract parameter labels from signature
-      const paramLabels = paramsSection
-        .replace(/[()]/g, '') // Remove parentheses
-        .split(':') // Split by colons
-        .map(p => p.trim().split(/\s+/).pop() || '') // Get the label (last word before colon)
-        .filter(p => p && p !== '_') // Remove empty and underscore-only labels
-        .join('_');
-
-      sanitized = paramLabels ? `${methodName}_${paramLabels}` : methodName;
-    }
-
-    sanitized = sanitized
-      .replace(/[<>:"/\\|?*]/g, '_')
-      .replace(/\s+/g, '_')
-      .replace(/__+/g, '_')
-      .replace(/^_+|_+$/g, '');
-
-    if (sanitized.length > 100) {
-      sanitized = sanitized.substring(0, 100);
-    }
-
-    // Lowercase for case-insensitive consistency across filesystems
-    return (sanitized || 'unnamed').toLowerCase();
+    return sanitizeFileName(name);
   }
 
   /**

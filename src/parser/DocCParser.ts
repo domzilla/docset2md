@@ -19,6 +19,7 @@ import type {
   Reference,
   Platform,
 } from './types.js';
+import { sanitizeFileName } from '../utils/sanitize.js';
 
 /**
  * Parses DocC JSON documents into ParsedDocumentation.
@@ -849,45 +850,6 @@ export class DocCParser {
    * Converts method signatures to unique filenames.
    */
   private sanitizeFileName(name: string): string {
-    let sanitized = name;
-
-    // Handle method signatures: convert parameters to underscore-separated format
-    // e.g., init(frame:) → init_frame, perform(_:with:afterDelay:) → perform_with_afterdelay
-    if (sanitized.includes('(')) {
-      const parenIndex = sanitized.indexOf('(');
-      const methodName = sanitized.substring(0, parenIndex);
-      const paramsSection = sanitized.substring(parenIndex);
-
-      // Extract parameter labels from signature
-      const paramLabels = paramsSection
-        .replace(/[()]/g, '')  // Remove parentheses
-        .split(':')            // Split by colons
-        .map(p => p.trim().split(/\s+/).pop() || '')  // Get the label (last word before colon)
-        .filter(p => p && p !== '_')  // Remove empty and underscore-only labels
-        .join('_');
-
-      sanitized = paramLabels ? `${methodName}_${paramLabels}` : methodName;
-    }
-
-    // Remove or replace invalid characters
-    sanitized = sanitized
-      .replace(/[<>:"/\\|?*]/g, '_')
-      .replace(/\s+/g, '_')
-      .replace(/__+/g, '_')
-      .replace(/^_+|_+$/g, '');
-
-    // Truncate very long names
-    if (sanitized.length > 100) {
-      sanitized = sanitized.substring(0, 100);
-    }
-
-    // Ensure non-empty
-    if (!sanitized) {
-      sanitized = 'unnamed';
-    }
-
-    // Lowercase for case-insensitive consistency across filesystems
-    // This ensures links and filenames match regardless of the data source
-    return sanitized.toLowerCase();
+    return sanitizeFileName(name);
   }
 }

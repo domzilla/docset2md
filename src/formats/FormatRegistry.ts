@@ -10,7 +10,7 @@
 
 import type { DocsetFormat, FormatInitOptions } from './types.js';
 import { AppleDocCFormat } from './AppleDocCFormat.js';
-import { StandardDashFormat } from './StandardDashFormat.js';
+import { StandardFormat } from './StandardFormat.js';
 import { CoreDataFormat } from './CoreDataFormat.js';
 
 /**
@@ -44,9 +44,9 @@ export class FormatRegistry {
   constructor() {
     // Register formats in priority order (most specific first)
     this.formats = [
-      new AppleDocCFormat(),    // Apple DocC with cache.db + fs/
-      new CoreDataFormat(),     // CoreData schema with ZTOKEN tables
-      new StandardDashFormat(), // Simple searchIndex + HTML (fallback)
+      new AppleDocCFormat(), // Apple DocC with cache.db + fs/
+      new CoreDataFormat(),  // CoreData schema with ZTOKEN tables
+      new StandardFormat(),  // Simple searchIndex + HTML (fallback)
     ];
   }
 

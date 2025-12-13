@@ -27,7 +27,7 @@ src/
 │   ├── types.ts                # DocsetFormat interface and types
 │   ├── FormatRegistry.ts       # Format auto-detection
 │   ├── AppleDocCFormat.ts      # Apple DocC format handler
-│   ├── StandardDashFormat.ts   # Generic Dash format handler
+│   ├── StandardFormat.ts       # Generic Dash format handler
 │   └── CoreDataFormat.ts       # CoreData format handler
 ├── generator/
 │   └── MarkdownGenerator.ts    # Converts parsed docs to markdown
@@ -35,6 +35,9 @@ src/
 │   ├── DocCParser.ts           # Parses DocC JSON into structured data
 │   ├── HtmlParser.ts           # Parses HTML using cheerio/turndown
 │   └── types.ts                # TypeScript interfaces for DocC schema
+├── utils/                      # Shared utilities
+│   ├── sanitize.ts             # Filename sanitization
+│   └── typeNormalizer.ts       # Type code normalization
 ├── validator/
 │   └── LinkValidator.ts        # Validates internal markdown links
 └── writer/

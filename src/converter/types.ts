@@ -10,18 +10,9 @@
 
 import type { DocsetFormat, NormalizedEntry, ParsedContent, EntryFilters } from '../formats/types.js';
 import type { MarkdownGenerator } from '../generator/MarkdownGenerator.js';
+import type { WriteStats } from '../writer/FileWriter.js';
 
-/**
- * Statistics for file write operations.
- */
-export interface WriteStats {
-  /** Number of files written */
-  filesWritten: number;
-  /** Number of directories created */
-  directoriesCreated: number;
-  /** Total bytes written */
-  bytesWritten: number;
-}
+export type { WriteStats };
 
 /**
  * Configuration options for a converter.

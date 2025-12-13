@@ -91,7 +91,7 @@ src/
 │   ├── types.ts             # DocsetFormat interface and types
 │   ├── FormatRegistry.ts    # Format auto-detection
 │   ├── AppleDocCFormat.ts   # Apple DocC format handler
-│   ├── StandardDashFormat.ts # Generic Dash format handler
+│   ├── StandardFormat.ts     # Generic Dash format handler
 │   └── CoreDataFormat.ts    # CoreData format handler
 ├── generator/               # Output generation
 │   └── MarkdownGenerator.ts # Converts parsed docs to markdown

@@ -1,6 +1,6 @@
 /**
- * @file StandardDashFormat.ts
- * @module formats/StandardDashFormat
+ * @file StandardFormat.ts
+ * @module formats/StandardFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
@@ -20,11 +20,12 @@ import type {
 } from './types.js';
 import { TarixExtractor } from '../extractor/TarixExtractor.js';
 import { HtmlParser } from '../parser/HtmlParser.js';
+import { normalizeType, denormalizeTypes } from '../utils/typeNormalizer.js';
 
 /**
  * Format handler for standard Dash/Kapeli docsets.
  *
- * Standard Dash docsets use a simpler format:
+ * Standard docsets use a simpler format:
  * 1. Index entries stored in searchIndex table (id, name, type, path)
  * 2. HTML content stored either in Documents/ folder or tarix.tgz archive
  * 3. No language variants or complex cache system
@@ -33,7 +34,7 @@ import { HtmlParser } from '../parser/HtmlParser.js';
  *
  * @example
  * ```typescript
- * const format = new StandardDashFormat();
+ * const format = new StandardFormat();
  * if (await format.detect('./PHP.docset')) {
  *   await format.initialize('./PHP.docset');
  *   for (const entry of format.iterateEntries({ types: ['Function'] })) {
@@ -44,7 +45,7 @@ import { HtmlParser } from '../parser/HtmlParser.js';
  * }
  * ```
  */
-export class StandardDashFormat implements DocsetFormat {
+export class StandardFormat implements DocsetFormat {
   private docsetPath: string = '';
   private db: Database.Database | null = null;
   private tarix: TarixExtractor | null = null;
@@ -163,7 +164,7 @@ export class StandardDashFormat implements DocsetFormat {
       yield {
         id: row.id,
         name: row.name,
-        type: this.normalizeType(row.type),
+        type: normalizeType(row.type),
         path: row.path,
       };
     }
@@ -213,7 +214,7 @@ export class StandardDashFormat implements DocsetFormat {
       'SELECT DISTINCT type FROM searchIndex ORDER BY type'
     ).all() as Array<{ type: string }>;
 
-    return rows.map(r => this.normalizeType(r.type));
+    return rows.map(r => normalizeType(r.type));
   }
 
   /** @inheritdoc */
@@ -254,7 +255,7 @@ export class StandardDashFormat implements DocsetFormat {
 
     if (filters?.types?.length) {
       // Map normalized types back to potential original types
-      const originalTypes = filters.types.flatMap(t => this.denormalizeType(t));
+      const originalTypes = filters.types.flatMap(t => denormalizeTypes(t));
       const placeholders = originalTypes.map(() => '?').join(',');
       conditions.push(`type IN (${placeholders})`);
       params.push(...originalTypes);
@@ -314,64 +315,4 @@ export class StandardDashFormat implements DocsetFormat {
     return withoutFragment;
   }
 
-  /**
-   * Normalize type names to standard format.
-   *
-   * Converts short type codes (func, cl, clm) to full names (Function, Class, Method).
-   *
-   * @param type - Raw type from searchIndex
-   * @returns Normalized type name
-   */
-  private normalizeType(type: string): string {
-    // Map common short forms to full names
-    const typeMap: Record<string, string> = {
-      'func': 'Function',
-      'cl': 'Class',
-      'clm': 'Method',
-      'clconst': 'Constant',
-      'tdef': 'Type',
-      'macro': 'Macro',
-      'cat': 'Category',
-      'instm': 'Method',
-      'instp': 'Property',
-      'intf': 'Interface',
-      'struct': 'Struct',
-      'enum': 'Enum',
-      'union': 'Union',
-      'var': 'Variable',
-      'const': 'Constant',
-    };
-
-    const lower = type.toLowerCase();
-    return typeMap[lower] || type;
-  }
-
-  /**
-   * Convert normalized type back to possible original forms.
-   *
-   * Used when building SQL queries to match entries with either
-   * the normalized or original type name.
-   *
-   * @param type - Normalized type name
-   * @returns Array of possible original type names
-   */
-  private denormalizeType(type: string): string[] {
-    const reverseMap: Record<string, string[]> = {
-      'Function': ['Function', 'func'],
-      'Class': ['Class', 'cl'],
-      'Method': ['Method', 'clm', 'instm'],
-      'Constant': ['Constant', 'clconst', 'const'],
-      'Type': ['Type', 'tdef'],
-      'Macro': ['Macro', 'macro'],
-      'Category': ['Category', 'cat'],
-      'Property': ['Property', 'instp'],
-      'Interface': ['Interface', 'intf'],
-      'Struct': ['Struct', 'struct'],
-      'Enum': ['Enum', 'enum'],
-      'Union': ['Union', 'union'],
-      'Variable': ['Variable', 'var'],
-    };
-
-    return reverseMap[type] || [type];
-  }
 }

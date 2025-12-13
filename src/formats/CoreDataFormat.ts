@@ -20,6 +20,7 @@ import type {
 } from './types.js';
 import { TarixExtractor } from '../extractor/TarixExtractor.js';
 import { HtmlParser } from '../parser/HtmlParser.js';
+import { normalizeType, denormalizeType } from '../utils/typeNormalizer.js';
 
 /**
  * Format handler for CoreData-based docsets.
@@ -170,7 +171,7 @@ export class CoreDataFormat implements DocsetFormat {
       yield {
         id: row.id,
         name: row.name,
-        type: this.normalizeType(row.type),
+        type: normalizeType(row.type),
         path: this.cleanPath(row.path),
       };
     }
@@ -217,7 +218,7 @@ export class CoreDataFormat implements DocsetFormat {
       'SELECT DISTINCT ZTYPENAME FROM ZTOKENTYPE ORDER BY ZTYPENAME'
     ).all() as Array<{ ZTYPENAME: string }>;
 
-    return rows.map(r => this.normalizeType(r.ZTYPENAME));
+    return rows.map(r => normalizeType(r.ZTYPENAME));
   }
 
   /** @inheritdoc */
@@ -268,7 +269,7 @@ export class CoreDataFormat implements DocsetFormat {
     if (filters?.types?.length) {
       const placeholders = filters.types.map(() => '?').join(',');
       conditions.push(`tt.ZTYPENAME IN (${placeholders})`);
-      params.push(...filters.types.map(t => this.denormalizeType(t)));
+      params.push(...filters.types.map(t => denormalizeType(t)));
     }
 
     return { conditions, params };
@@ -294,43 +295,5 @@ export class CoreDataFormat implements DocsetFormat {
 
     // Remove HTML anchors for path lookup
     return path.split('#')[0];
-  }
-
-  /**
-   * Normalize type names to standard format.
-   * @param type - Raw type from ZTOKENTYPE table
-   * @returns Normalized type name
-   */
-  private normalizeType(type: string): string {
-    const typeMap: Record<string, string> = {
-      'func': 'Function',
-      'macro': 'Macro',
-      'tdef': 'Type',
-      'Struct': 'Struct',
-      'Enum': 'Enum',
-      'clconst': 'Constant',
-      'File': 'File',
-      'Keyword': 'Keyword',
-      'Attribute': 'Attribute',
-      'Guide': 'Guide',
-    };
-
-    return typeMap[type] || type;
-  }
-
-  /**
-   * Denormalize type for SQL query.
-   * @param type - Normalized type name
-   * @returns Original type code for database query
-   */
-  private denormalizeType(type: string): string {
-    const reverseMap: Record<string, string> = {
-      'Function': 'func',
-      'Macro': 'macro',
-      'Type': 'tdef',
-      'Constant': 'clconst',
-    };
-
-    return reverseMap[type] || type;
   }
 }

@@ -8,6 +8,14 @@
  * @fileoverview TypeScript interfaces for Apple DocC JSON schema.
  */
 
+import type { ContentItem } from '../formats/types.js';
+
+/**
+ * Item in a topics or relationships section.
+ * @deprecated Use ContentItem from formats/types.js instead.
+ */
+export type TopicItem = ContentItem;
+
 /**
  * Root document structure for a DocC documentation page.
  * Contains all sections of a documentation entry including metadata,
@@ -456,13 +464,7 @@ export interface TableCell {
 /** Definition/term list (dl/dt/dd). */
 export interface TermListContent {
   type: 'termList';
-  items: TermListItem[];
-}
-
-/** Item in a term list. */
-export interface TermListItem {
-  term: InlineContent;
-  definition: InlineContent;
+  items: DefinitionListItem[];
 }
 
 /** Grid row for multi-column layouts. */
@@ -709,20 +711,3 @@ export interface ParsedDocumentation {
   beta?: boolean;
 }
 
-/**
- * Item in a topics or relationships section.
- */
-export interface TopicItem {
-  /** Display title */
-  title: string;
-  /** Link URL */
-  url?: string;
-  /** Brief description */
-  abstract?: string;
-  /** Whether required (for protocol members) */
-  required?: boolean;
-  /** Whether deprecated */
-  deprecated?: boolean;
-  /** Whether beta */
-  beta?: boolean;
-}
