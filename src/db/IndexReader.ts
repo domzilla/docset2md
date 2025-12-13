@@ -212,6 +212,50 @@ export class IndexReader {
   }
 
   /**
+   * Build a map of documentation paths to their available languages.
+   *
+   * This is used for cross-language link resolution: when a Swift document
+   * links to a type that only exists in Objective-C (or vice versa), we need
+   * to know which languages each documentation path is available in.
+   *
+   * @returns Map from normalized doc path to set of available languages
+   *
+   * @example
+   * ```typescript
+   * const langMap = reader.buildLanguageAvailabilityMap();
+   * const langs = langMap.get('/documentation/os/os_object');
+   * // Set { 'objc' } - only available in Objective-C
+   * ```
+   */
+  buildLanguageAvailabilityMap(): Map<string, Set<'swift' | 'objc'>> {
+    const map = new Map<string, Set<'swift' | 'objc'>>();
+
+    const stmt = this.db.prepare('SELECT path FROM searchIndex');
+    for (const row of stmt.iterate() as Iterable<{ path: string }>) {
+      // Parse the path to extract request_key
+      // Format: dash-apple-api://load?request_key=ls/documentation/...#<metadata>
+      const match = row.path.match(/request_key=(l[sc]\/documentation\/[^#]+)/);
+      if (!match) continue;
+
+      const requestKey = decodeURIComponent(match[1]);
+      const language: 'swift' | 'objc' = requestKey.startsWith('ls/') ? 'swift' : 'objc';
+
+      // Normalize to just the documentation path (without language prefix)
+      // ls/documentation/uikit/uiwindow -> /documentation/uikit/uiwindow
+      const docPath = '/' + requestKey.substring(3); // Remove 'ls/' or 'lc/'
+
+      const existing = map.get(docPath);
+      if (existing) {
+        existing.add(language);
+      } else {
+        map.set(docPath, new Set([language]));
+      }
+    }
+
+    return map;
+  }
+
+  /**
    * Close the database connection.
    * Should be called when done reading to release resources.
    */

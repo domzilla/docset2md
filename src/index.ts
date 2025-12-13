@@ -357,7 +357,8 @@ function sanitizeFileName(name: string): string {
     sanitized = sanitized.substring(0, 100);
   }
 
-  return sanitized || 'unnamed';
+  // Lowercase for case-insensitive consistency across filesystems
+  return (sanitized || 'unnamed').toLowerCase();
 }
 
 /**
@@ -408,7 +409,8 @@ function writeAppleEntry(
     } else {
       const dirParts = parts.slice(0, -1);
       dirParts[0] = frameworkCapitalized;
-      const fileName = sanitizeFileName(entry.name) + '.md';
+      // Use URL path segment for filename to match link generation in DocCParser
+      const fileName = sanitizeFileName(parts[parts.length - 1]) + '.md';
       filePath = join(outputDir, langDir, ...dirParts, fileName);
     }
   } else {

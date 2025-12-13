@@ -48,6 +48,7 @@ export class AppleDocCFormat implements DocsetFormat {
   private extractor: ContentExtractor | null = null;
   private parser: DocCParser = new DocCParser();
   private initialized = false;
+  private languageMap: Map<string, Set<'swift' | 'objc'>> | null = null;
 
   /** @inheritdoc */
   getName(): string {
@@ -80,6 +81,15 @@ export class AppleDocCFormat implements DocsetFormat {
     const indexPath = join(docsetPath, 'Contents/Resources/docSet.dsidx');
     this.indexReader = new IndexReader(indexPath);
     this.extractor = new ContentExtractor(docsetPath);
+
+    // Build language availability map for cross-language link resolution
+    this.languageMap = this.indexReader.buildLanguageAvailabilityMap();
+
+    // Pass the lookup function to the parser
+    this.parser.setLanguageAvailabilityLookup((docPath: string) => {
+      return this.languageMap?.get(docPath);
+    });
+
     this.initialized = true;
   }
 
@@ -124,10 +134,11 @@ export class AppleDocCFormat implements DocsetFormat {
     const doc = this.extractor.extractByRequestKey(entry.path);
     if (!doc) return null;
 
-    // Set source document path for correct relative link resolution
-    this.parser.setSourceDocumentPath(entry.path);
-
     const lang = (entry.language as 'swift' | 'objc') ?? 'swift';
+
+    // Set source document path and language for correct relative link resolution
+    this.parser.setSourceDocumentPath(entry.path, lang);
+
     const parsed = this.parser.parse(doc, lang);
 
     // Clear source path after parsing
@@ -162,6 +173,7 @@ export class AppleDocCFormat implements DocsetFormat {
   close(): void {
     this.indexReader?.close();
     this.extractor?.close();
+    this.languageMap = null;
     this.initialized = false;
   }
 

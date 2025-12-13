@@ -41,17 +41,35 @@ import type {
  * console.log(parsed.title, parsed.declaration);
  * ```
  */
+/**
+ * Lookup function to determine which languages a documentation path is available in.
+ * Returns a Set of languages ('swift', 'objc') or undefined if not found.
+ */
+export type LanguageAvailabilityLookup = (docPath: string) => Set<'swift' | 'objc'> | undefined;
+
 export class DocCParser {
   private urlToPathMap: Map<string, string> = new Map();
   private sourceDocumentPath: string | null = null;
+  private sourceLanguage: 'swift' | 'objc' = 'swift';
+  private languageLookup: LanguageAvailabilityLookup | null = null;
+
+  /**
+   * Set the language availability lookup function for cross-language link resolution.
+   * @param lookup - Function that returns available languages for a doc path
+   */
+  setLanguageAvailabilityLookup(lookup: LanguageAvailabilityLookup): void {
+    this.languageLookup = lookup;
+  }
 
   /**
    * Set the source document path for correct relative link resolution.
    * Call this before parsing each document.
    * @param path - Request key path (e.g., 'ls/documentation/xpc/os_xpc_listener')
+   * @param language - Source document's language
    */
-  setSourceDocumentPath(path: string): void {
+  setSourceDocumentPath(path: string, language: 'swift' | 'objc' = 'swift'): void {
     this.sourceDocumentPath = path;
+    this.sourceLanguage = language;
   }
 
   /**
@@ -59,6 +77,7 @@ export class DocCParser {
    */
   clearSourceDocumentPath(): void {
     this.sourceDocumentPath = null;
+    this.sourceLanguage = 'swift';
   }
 
   /**
@@ -337,12 +356,17 @@ export class DocCParser {
   /**
    * Build a relative path from a documentation URL.
    *
-   * Handles both same-framework and cross-framework links by comparing
-   * the source and target frameworks and computing the appropriate relative path.
+   * Handles same-framework, cross-framework, and cross-language links by:
+   * 1. Checking if target exists in current language
+   * 2. If not, checking if it exists in another language
+   * 3. Computing the appropriate relative path accounting for language directories
+   *
+   * Directory structure: Language/Framework/path/Item.md
+   *   e.g., Swift/UIKit/UIWindow.md or Objective-C/Os/OS_object.md
    *
    * @param url - Target documentation URL path (e.g., '/documentation/swift/equatable')
    * @param title - Display title for the filename
-   * @returns Relative path (e.g., './item.md' or '../Swift/Equatable.md')
+   * @returns Relative path (e.g., './item.md', '../Swift/Equatable.md', or '../../Objective-C/Os/OS_object.md')
    */
   private buildRelativePathFromUrl(url: string, title: string): string {
     // Extract target framework and path from URL
@@ -356,6 +380,11 @@ export class DocCParser {
     const targetPathParts = targetPathAfterFramework
       ? targetPathAfterFramework.split('/')
       : [];
+
+    // Use URL segment for filename (not title) to match actual file naming
+    const urlFileName = targetPathParts.length > 0
+      ? this.sanitizeFileName(targetPathParts[targetPathParts.length - 1]) + '.md'
+      : this.sanitizeFileName(title) + '.md';
 
     // Extract source framework and path from source document
     let sourceFramework: string | null = null;
@@ -375,29 +404,68 @@ export class DocCParser {
       }
     }
 
-    const fileName = this.sanitizeFileName(title) + '.md';
-
     // If we don't have source context, fall back to simple relative path
     if (!sourceFramework) {
       if (targetPathParts.length === 0) {
-        return `./${fileName}`;
+        return `./${urlFileName}`;
       }
-      return `./${targetPathParts.slice(0, -1).join('/')}/${fileName}`.replace(
+      return `./${targetPathParts.slice(0, -1).join('/')}/${urlFileName}`.replace(
         /\/+/g,
         '/'
       );
     }
 
-    // Cross-framework link: need to go up to framework level and into target framework
-    if (sourceFramework !== targetFramework) {
-      // Calculate how many levels to go up from source path to reach framework level
-      // Source is at: Framework/path/to/source.md
-      // Need: ../...Framework/ then into target framework
-      const levelsUp = sourcePathParts.length; // Number of dirs above source file
-      const upPath = levelsUp > 0 ? '../'.repeat(levelsUp) : './';
+    // Determine target language - check if target exists in current language
+    const targetDocPath = url.toLowerCase();
+    let targetLanguage: 'swift' | 'objc' = this.sourceLanguage;
 
-      // Capitalize target framework name for directory
-      const targetFrameworkDir = this.capitalizeFrameworkName(targetFramework);
+    if (this.languageLookup) {
+      const availableLangs = this.languageLookup(targetDocPath);
+      if (availableLangs) {
+        if (!availableLangs.has(this.sourceLanguage)) {
+          // Target doesn't exist in source language - use the other language
+          targetLanguage = this.sourceLanguage === 'swift' ? 'objc' : 'swift';
+        }
+      }
+    }
+
+    // Capitalize framework names for directory paths
+    const targetFrameworkDir = this.capitalizeFrameworkName(targetFramework);
+
+    // Cross-language link: need to go up to root and into other language
+    if (targetLanguage !== this.sourceLanguage) {
+      // Source is at: Language/Framework/path/to/source.md
+      // Target is at: OtherLanguage/Framework/path/to/target.md
+      // Directory depth within framework = sourcePathParts.length - 1 (excluding filename)
+      // Need to go up: directory depth + 1 (to framework) + 1 (to language/root)
+      const sourceDirDepth = Math.max(0, sourcePathParts.length - 1);
+      const levelsUp = sourceDirDepth + 2;
+      const upPath = '../'.repeat(levelsUp);
+
+      // Get target language directory name
+      const targetLangDir = targetLanguage === 'swift' ? 'Swift' : 'Objective-C';
+
+      if (targetPathParts.length === 0) {
+        // Link to framework root (_index.md)
+        return `${upPath}${targetLangDir}/${targetFrameworkDir}/_index.md`;
+      }
+
+      // Link to item within target framework in other language
+      const targetSubPath = targetPathParts.slice(0, -1).join('/');
+      if (targetSubPath) {
+        return `${upPath}${targetLangDir}/${targetFrameworkDir}/${targetSubPath}/${urlFileName}`;
+      }
+      return `${upPath}${targetLangDir}/${targetFrameworkDir}/${urlFileName}`;
+    }
+
+    // Same language - cross-framework link
+    if (sourceFramework !== targetFramework) {
+      // Calculate how many levels to go up from source path to reach Language level
+      // Source is at: Language/Framework/path/to/source.md
+      // Directory depth within framework = sourcePathParts.length - 1 (excluding filename)
+      // Need to go up: directory depth + 1 (to exit current framework into Language level)
+      const sourceDirDepth = Math.max(0, sourcePathParts.length - 1);
+      const upPath = '../'.repeat(sourceDirDepth + 1);
 
       if (targetPathParts.length === 0) {
         // Link to framework root (_index.md)
@@ -407,41 +475,48 @@ export class DocCParser {
       // Link to item within target framework
       const targetSubPath = targetPathParts.slice(0, -1).join('/');
       if (targetSubPath) {
-        return `${upPath}${targetFrameworkDir}/${targetSubPath}/${fileName}`;
+        return `${upPath}${targetFrameworkDir}/${targetSubPath}/${urlFileName}`;
       }
-      return `${upPath}${targetFrameworkDir}/${fileName}`;
+      return `${upPath}${targetFrameworkDir}/${urlFileName}`;
     }
 
-    // Same framework: compute relative path within framework
+    // Same framework, same language: compute relative path within framework
+    // Note: sourcePathParts includes the source item name, so directory depth = length - 1
+    const sourceDirDepth = Math.max(0, sourcePathParts.length - 1);
+
     if (targetPathParts.length === 0) {
-      // Link to framework root
-      const levelsUp = sourcePathParts.length;
-      return levelsUp > 0 ? '../'.repeat(levelsUp) + '_index.md' : './_index.md';
+      // Link to framework root (_index.md)
+      return sourceDirDepth > 0 ? '../'.repeat(sourceDirDepth) + '_index.md' : './_index.md';
     }
 
-    // Find common path prefix
+    // Find common directory prefix (excluding file names)
+    // sourcePathParts = ['dir1', 'dir2', 'sourceFile']
+    // targetPathParts = ['dir1', 'dir2', 'targetFile']
+    // We compare directories only: slice(0, -1) for both
+    const sourceDirs = sourcePathParts.slice(0, -1);
+    const targetDirs = targetPathParts.slice(0, -1);
+
     let commonPrefixLength = 0;
-    const minLen = Math.min(sourcePathParts.length, targetPathParts.length - 1);
+    const minLen = Math.min(sourceDirs.length, targetDirs.length);
     for (let i = 0; i < minLen; i++) {
-      if (
-        sourcePathParts[i].toLowerCase() ===
-        targetPathParts[i].toLowerCase()
-      ) {
+      if (sourceDirs[i].toLowerCase() === targetDirs[i].toLowerCase()) {
         commonPrefixLength++;
       } else {
         break;
       }
     }
 
-    // Calculate path: go up from source, then down to target
-    const levelsUp = sourcePathParts.length - commonPrefixLength;
+    // Calculate path: go up from source directory, then down to target directory
+    const levelsUp = sourceDirs.length - commonPrefixLength;
+    const downDirs = targetDirs.slice(commonPrefixLength);
+
     const upPath = levelsUp > 0 ? '../'.repeat(levelsUp) : './';
-    const downPath = targetPathParts.slice(commonPrefixLength, -1).join('/');
+    const downPath = downDirs.join('/');
 
     if (downPath) {
-      return `${upPath}${downPath}/${fileName}`;
+      return `${upPath}${downPath}/${urlFileName}`;
     }
-    return `${upPath}${fileName}`;
+    return `${upPath}${urlFileName}`;
   }
 
   /**
@@ -766,6 +841,8 @@ export class DocCParser {
       sanitized = 'unnamed';
     }
 
-    return sanitized;
+    // Lowercase for case-insensitive consistency across filesystems
+    // This ensures links and filenames match regardless of the data source
+    return sanitized.toLowerCase();
   }
 }

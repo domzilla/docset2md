@@ -186,7 +186,9 @@ export class PathResolver {
       sanitized = 'unnamed';
     }
 
-    return sanitized;
+    // Lowercase for case-insensitive consistency across filesystems
+    // This ensures links and filenames match regardless of the data source
+    return sanitized.toLowerCase();
   }
 
   /**

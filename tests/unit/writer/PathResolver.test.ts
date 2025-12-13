@@ -66,7 +66,7 @@ describe('PathResolver', () => {
       );
 
       expect(path).toContain('/UIKit/uiwindow/');
-      expect(path).toMatch(/rootViewController\.md$/);
+      expect(path).toMatch(/rootviewcontroller\.md$/); // lowercase for filesystem consistency
     });
 
     it('should sanitize filename', () => {
@@ -83,7 +83,7 @@ describe('PathResolver', () => {
     it('should handle invalid request keys', () => {
       const path = resolver.resolveFilePath('invalid', 'swift', 'Test');
 
-      expect(path).toMatch(/Test\.md$/);
+      expect(path).toMatch(/test\.md$/); // lowercase for filesystem consistency
       expect(path).toContain('/Swift/');
     });
   });
@@ -132,12 +132,12 @@ describe('PathResolver', () => {
   });
 
   describe('sanitizeFileName', () => {
-    it('should remove invalid characters', () => {
-      expect(resolver.sanitizeFileName('Test<>:"/\\|?*File')).toBe('Test_File');
+    it('should remove invalid characters and lowercase', () => {
+      expect(resolver.sanitizeFileName('Test<>:"/\\|?*File')).toBe('test_file');
     });
 
-    it('should replace spaces with underscores', () => {
-      expect(resolver.sanitizeFileName('Test File Name')).toBe('Test_File_Name');
+    it('should replace spaces with underscores and lowercase', () => {
+      expect(resolver.sanitizeFileName('Test File Name')).toBe('test_file_name');
     });
 
     it('should truncate method signatures at parenthesis', () => {
@@ -145,12 +145,12 @@ describe('PathResolver', () => {
       expect(resolver.sanitizeFileName('perform(_:with:afterDelay:)')).toBe('perform');
     });
 
-    it('should collapse multiple underscores', () => {
-      expect(resolver.sanitizeFileName('Test___Name')).toBe('Test_Name');
+    it('should collapse multiple underscores and lowercase', () => {
+      expect(resolver.sanitizeFileName('Test___Name')).toBe('test_name');
     });
 
-    it('should remove leading and trailing underscores', () => {
-      expect(resolver.sanitizeFileName('_Test_')).toBe('Test');
+    it('should remove leading and trailing underscores and lowercase', () => {
+      expect(resolver.sanitizeFileName('_Test_')).toBe('test');
     });
 
     it('should truncate very long names', () => {
@@ -173,8 +173,8 @@ describe('PathResolver', () => {
       expect(resolver.sanitizeFileName('encode(to:)')).toBe('encode');
     });
 
-    it('should preserve valid characters', () => {
-      expect(resolver.sanitizeFileName('validFileName123')).toBe('validFileName123');
+    it('should lowercase valid characters for filesystem consistency', () => {
+      expect(resolver.sanitizeFileName('validFileName123')).toBe('validfilename123');
     });
   });
 });

@@ -328,8 +328,8 @@ describe('DocCParser', () => {
 
       const result = parser.parse(doc, 'swift');
 
-      // Should build relative path, not use the registered one
-      expect(result.topics![0].items[0].url).toContain('UIWindow.md');
+      // Should build relative path, not use the registered one (lowercased for filesystem consistency)
+      expect(result.topics![0].items[0].url).toContain('uiwindow.md');
     });
   });
 });
