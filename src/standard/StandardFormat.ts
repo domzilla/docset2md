@@ -17,10 +17,10 @@ import type {
   ParsedContent,
   EntryFilters,
   FormatInitOptions,
-} from './types.js';
-import { TarixExtractor } from '../extractor/TarixExtractor.js';
-import { HtmlParser } from '../parser/HtmlParser.js';
-import { normalizeType, denormalizeTypes } from '../utils/typeNormalizer.js';
+} from '../shared/formats/types.js';
+import { TarixExtractor } from '../shared/TarixExtractor.js';
+import { HtmlParser } from '../shared/HtmlParser.js';
+import { normalizeType, denormalizeTypes } from '../shared/utils/typeNormalizer.js';
 
 /**
  * Format handler for standard Dash/Kapeli docsets.

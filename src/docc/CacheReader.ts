@@ -9,7 +9,7 @@
  */
 
 import Database from 'better-sqlite3';
-import type { CacheRef } from '../parser/types.js';
+import type { CacheRef } from './types.js';
 
 /**
  * Reads cache references from the cache.db SQLite database.

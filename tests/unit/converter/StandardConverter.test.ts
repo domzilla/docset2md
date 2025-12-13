@@ -1,18 +1,18 @@
 /**
- * @file StandardDashConverter.test.ts
- * @module tests/unit/converter/StandardDashConverter
+ * @file StandardConverter.test.ts
+ * @module tests/unit/converter/StandardConverter
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
  *
- * @fileoverview Unit tests for StandardDashConverter.
+ * @fileoverview Unit tests for StandardConverter.
  */
 
-import { StandardDashConverter } from '../../../src/converter/StandardDashConverter.js';
-import type { DocsetFormat, NormalizedEntry, ParsedContent } from '../../../src/formats/types.js';
+import { StandardConverter } from '../../../src/standard/StandardConverter.js';
+import type { DocsetFormat, NormalizedEntry, ParsedContent } from '../../../src/shared/formats/types.js';
 
-describe('StandardDashConverter', () => {
-  let converter: StandardDashConverter;
+describe('StandardConverter', () => {
+  let converter: StandardConverter;
   let mockFormat: DocsetFormat;
 
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('StandardDashConverter', () => {
       close: () => {},
     } as DocsetFormat;
 
-    converter = new StandardDashConverter(mockFormat, 'PHP');
+    converter = new StandardConverter(mockFormat, 'PHP');
   });
 
   afterEach(() => {

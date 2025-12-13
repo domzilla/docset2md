@@ -8,7 +8,7 @@
  * @fileoverview Unit tests for UUID generation and request key parsing.
  */
 
-import { generateUuid, getDocPath, extractFramework, getLanguage } from '../../../src/extractor/UuidGenerator.js';
+import { generateUuid, getDocPath, extractFramework, getLanguage } from '../../../src/docc/UuidGenerator.js';
 
 describe('UuidGenerator', () => {
   describe('generateUuid', () => {

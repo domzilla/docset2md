@@ -9,7 +9,7 @@
  */
 
 import Database from 'better-sqlite3';
-import type { IndexEntry } from '../parser/types.js';
+import type { IndexEntry } from './types.js';
 
 /**
  * Options for filtering index queries.

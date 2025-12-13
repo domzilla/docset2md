@@ -8,7 +8,7 @@
  * @fileoverview TypeScript interfaces for Apple DocC JSON schema.
  */
 
-import type { ContentItem } from '../formats/types.js';
+import type { ContentItem } from '../shared/formats/types.js';
 
 /**
  * Item in a topics or relationships section.

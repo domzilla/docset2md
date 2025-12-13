@@ -10,9 +10,9 @@
 
 import type { DocsetFormat } from '../formats/types.js';
 import type { DocsetConverter } from './types.js';
-import { AppleConverter } from './AppleConverter.js';
-import { StandardDashConverter } from './StandardDashConverter.js';
-import { CoreDataConverter } from './CoreDataConverter.js';
+import { DocCConverter } from '../../docc/DocCConverter.js';
+import { StandardConverter } from '../../standard/StandardConverter.js';
+import { CoreDataConverter } from '../../coredata/CoreDataConverter.js';
 
 /**
  * Factory for creating converters based on format handlers.
@@ -37,14 +37,14 @@ export class ConverterRegistry {
 
     switch (formatName) {
       case 'Apple DocC':
-        return new AppleConverter(format);
+        return new DocCConverter(format);
       case 'Standard Dash':
-        return new StandardDashConverter(format, docsetName);
+        return new StandardConverter(format, docsetName);
       case 'CoreData':
         return new CoreDataConverter(format, docsetName);
       default:
-        // Fallback to StandardDash for unknown formats
-        return new StandardDashConverter(format, docsetName);
+        // Fallback to Standard for unknown formats
+        return new StandardConverter(format, docsetName);
     }
   }
 }

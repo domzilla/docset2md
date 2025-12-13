@@ -11,7 +11,7 @@
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { IndexReader } from '../../../src/db/IndexReader.js';
+import { IndexReader } from '../../../src/docc/IndexReader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

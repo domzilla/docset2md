@@ -1,17 +1,17 @@
 /**
- * @file AppleConverter.ts
- * @module converter/AppleConverter
+ * @file DocCConverter.ts
+ * @module docc/DocCConverter
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
  *
- * @fileoverview Converter for Apple DocC docsets with Language/Framework/Item.md structure.
+ * @fileoverview Converter for DocC docsets with Language/Framework/Item.md structure.
  */
 
 import { join } from 'node:path';
-import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
-import type { MarkdownGenerator } from '../generator/MarkdownGenerator.js';
-import { BaseConverter } from './BaseConverter.js';
+import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
+import type { MarkdownGenerator } from '../shared/MarkdownGenerator.js';
+import { BaseConverter } from '../shared/converter/BaseConverter.js';
 
 /**
  * Converter for Apple DocC format docsets.
@@ -27,19 +27,19 @@ import { BaseConverter } from './BaseConverter.js';
  * @example
  * ```typescript
  * const format = await registry.detectFormat('/path/to/Apple.docset');
- * const converter = new AppleConverter(format);
+ * const converter = new DocCConverter(format);
  * const result = await converter.convert({ outputDir: './output' });
  * ```
  */
-export class AppleConverter extends BaseConverter {
+export class DocCConverter extends BaseConverter {
   /** Track items for index generation: framework -> language -> items */
   private frameworkItems: Map<string, Map<string, ContentItem[]>> = new Map();
   /** Track seen entries to avoid duplicates */
   private seenEntries: Set<string> = new Set();
 
   /**
-   * Create a new AppleConverter.
-   * @param format - The initialized Apple DocC format handler
+   * Create a new DocCConverter.
+   * @param format - The initialized DocC format handler
    */
   constructor(format: DocsetFormat) {
     super(format);

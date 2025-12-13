@@ -28,11 +28,11 @@
 import { program } from 'commander';
 import { existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
-import { FormatRegistry } from './formats/FormatRegistry.js';
-import { ConverterRegistry } from './converter/ConverterRegistry.js';
-import { validateLinks, printValidationResults } from './validator/LinkValidator.js';
-import type { NormalizedEntry } from './formats/types.js';
-import type { ProgressCallback } from './converter/types.js';
+import { FormatRegistry } from './shared/formats/FormatRegistry.js';
+import { ConverterRegistry } from './shared/converter/ConverterRegistry.js';
+import { validateLinks, printValidationResults } from './shared/LinkValidator.js';
+import type { NormalizedEntry } from './shared/formats/types.js';
+import type { ProgressCallback } from './shared/converter/types.js';
 
 /**
  * Command-line options for the convert command.

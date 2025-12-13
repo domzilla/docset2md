@@ -8,8 +8,8 @@
  * @fileoverview Unit tests for MarkdownGenerator output formatting.
  */
 
-import { MarkdownGenerator } from '../../../src/generator/MarkdownGenerator.js';
-import type { ParsedDocumentation } from '../../../src/parser/types.js';
+import { MarkdownGenerator } from '../../../src/shared/MarkdownGenerator.js';
+import type { ParsedDocumentation } from '../../../src/docc/types.js';
 
 describe('MarkdownGenerator', () => {
   let generator: MarkdownGenerator;

@@ -8,7 +8,7 @@
  * @fileoverview Unit tests for PathResolver path resolution and sanitization.
  */
 
-import { PathResolver } from '../../../src/writer/PathResolver.js';
+import { PathResolver } from '../../../src/shared/PathResolver.js';
 
 describe('PathResolver', () => {
   let resolver: PathResolver;

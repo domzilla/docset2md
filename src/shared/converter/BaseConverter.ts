@@ -11,9 +11,9 @@
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
-import type { ParsedDocumentation, TopicItem } from '../parser/types.js';
+import type { ParsedDocumentation, TopicItem } from '../../docc/types.js';
 import { sanitizeFileName } from '../utils/sanitize.js';
-import { MarkdownGenerator } from '../generator/MarkdownGenerator.js';
+import { MarkdownGenerator } from '../MarkdownGenerator.js';
 import type {
   DocsetConverter,
   ConverterOptions,

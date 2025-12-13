@@ -13,7 +13,7 @@ This document describes the internal architecture of docset2md, a CLI tool that 
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Format Detection Layer                          │
-│                          (formats/FormatRegistry)                        │
+│                       (shared/formats/FormatRegistry)                    │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
               ┌───────────────────────┼───────────────────────┐
@@ -27,9 +27,9 @@ This document describes the internal architecture of docset2md, a CLI tool that 
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Converter Layer                                 │
-│                      (converter/ConverterRegistry)                       │
+│                   (shared/converter/ConverterRegistry)                   │
 │              ┌──────────────┬──────────────┬──────────────┐             │
-│              │AppleConverter│StandardDash  │CoreData      │             │
+│              │DocCConverter │Standard      │CoreData      │             │
 │              │              │Converter     │Converter     │             │
 │              └──────────────┴──────────────┴──────────────┘             │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -37,32 +37,32 @@ This document describes the internal architecture of docset2md, a CLI tool that 
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Content Extraction                              │
-│              (extractor/ContentExtractor, TarixExtractor)               │
-│                    (downloader/AppleApiDownloader)                      │
+│           (docc/ContentExtractor, shared/TarixExtractor)                │
+│                     (docc/AppleApiDownloader)                           │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                            Parsing Layer                                │
-│                    (parser/DocCParser, HtmlParser)                      │
+│                  (docc/DocCParser, shared/HtmlParser)                   │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        Markdown Generation                              │
-│                     (generator/MarkdownGenerator)                       │
+│                     (shared/MarkdownGenerator)                          │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          File Output                                    │
-│                   (writer/FileWriter, PathResolver)                     │
+│                  (shared/FileWriter, PathResolver)                      │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼ (optional --validate)
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        Link Validation                                  │
-│                     (validator/LinkValidator)                           │
+│                      (shared/LinkValidator)                             │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -71,39 +71,39 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 ```
 src/
 ├── index.ts                 # CLI entry point and orchestration
-├── converter/               # Conversion orchestration layer
-│   ├── types.ts             # DocsetConverter interface and types
-│   ├── BaseConverter.ts     # Abstract base with shared conversion logic
-│   ├── AppleConverter.ts    # Apple DocC: language/framework/item.md
-│   ├── StandardDashConverter.ts # Standard Dash: type/item.md
-│   ├── CoreDataConverter.ts # CoreData: extends StandardDashConverter
-│   └── ConverterRegistry.ts # Maps formats to converters
-├── db/                      # Database readers for SQLite indexes
+├── docc/                    # Apple DocC format (all DocC-specific code)
+│   ├── DocCFormat.ts        # DocC format handler
+│   ├── DocCConverter.ts     # DocC converter: language/framework/item.md
+│   ├── DocCParser.ts        # Parses DocC JSON format
 │   ├── IndexReader.ts       # Reads docSet.dsidx searchIndex table
-│   └── CacheReader.ts       # Reads cache.db refs table (Apple only)
-├── downloader/              # External content fetching
-│   └── AppleApiDownloader.ts # Downloads missing content from Apple API
-├── extractor/               # Content extraction from docsets
-│   ├── ContentExtractor.ts  # Brotli decompression for Apple DocC
-│   ├── TarixExtractor.ts    # Tarix archive extraction for Dash
-│   └── UuidGenerator.ts     # SHA-1 UUID generation for cache lookup
-├── formats/                 # Format abstraction layer
-│   ├── types.ts             # DocsetFormat interface and types
-│   ├── FormatRegistry.ts    # Format auto-detection
-│   ├── AppleDocCFormat.ts   # Apple DocC format handler
-│   ├── StandardFormat.ts     # Generic Dash format handler
-│   └── CoreDataFormat.ts    # CoreData format handler
-├── generator/               # Output generation
-│   └── MarkdownGenerator.ts # Converts parsed docs to markdown
-├── parser/                  # Content parsing
-│   ├── DocCParser.ts        # Parses Apple DocC JSON format
-│   ├── HtmlParser.ts        # Parses HTML using cheerio/turndown
+│   ├── CacheReader.ts       # Reads cache.db refs table
+│   ├── ContentExtractor.ts  # Brotli decompression for DocC content
+│   ├── UuidGenerator.ts     # SHA-1 UUID generation for cache lookup
+│   ├── AppleApiDownloader.ts # Downloads missing content from Apple API
 │   └── types.ts             # TypeScript interfaces for DocC schema
-├── validator/               # Post-conversion validation
-│   └── LinkValidator.ts     # Validates internal markdown links
-└── writer/                  # File output
+├── standard/                # Standard Dash format
+│   ├── StandardFormat.ts    # Standard Dash format handler
+│   └── StandardConverter.ts # Standard converter: type/item.md
+├── coredata/                # CoreData format
+│   ├── CoreDataFormat.ts    # CoreData format handler
+│   └── CoreDataConverter.ts # CoreData converter (extends StandardConverter)
+└── shared/                  # Shared infrastructure
+    ├── formats/             # Format abstraction layer
+    │   ├── types.ts         # DocsetFormat interface and types
+    │   └── FormatRegistry.ts # Format auto-detection
+    ├── converter/           # Converter abstraction layer
+    │   ├── types.ts         # DocsetConverter interface and types
+    │   ├── BaseConverter.ts # Abstract base with shared conversion logic
+    │   └── ConverterRegistry.ts # Maps formats to converters
+    ├── utils/               # Shared utilities
+    │   ├── sanitize.ts      # Filename sanitization
+    │   └── typeNormalizer.ts # Type code normalization
+    ├── TarixExtractor.ts    # Tarix archive extraction for Dash
+    ├── HtmlParser.ts        # Parses HTML using cheerio/turndown
+    ├── MarkdownGenerator.ts # Converts parsed docs to markdown
     ├── FileWriter.ts        # Writes files with statistics
-    └── PathResolver.ts      # Resolves paths and sanitizes filenames
+    ├── PathResolver.ts      # Resolves paths and sanitizes filenames
+    └── LinkValidator.ts     # Validates internal markdown links
 ```
 
 ## Supported Docset Formats
@@ -219,9 +219,9 @@ interface DocsetConverter {
 
 | Converter | Format | Output Structure |
 |-----------|--------|------------------|
-| `AppleConverter` | Apple DocC | `language/framework/item.md` |
-| `StandardDashConverter` | Standard Dash | `type/item.md` |
-| `CoreDataConverter` | CoreData | `type/item.md` (extends StandardDash) |
+| `DocCConverter` | Apple DocC | `language/framework/item.md` |
+| `StandardConverter` | Standard Dash | `type/item.md` |
+| `CoreDataConverter` | CoreData | `type/item.md` (extends Standard) |
 
 **BaseConverter** provides shared functionality:
 - Main conversion loop with progress tracking

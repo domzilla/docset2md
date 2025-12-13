@@ -10,7 +10,7 @@
 
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
-import type { ParsedContent } from '../formats/types.js';
+import type { ParsedContent } from './formats/types.js';
 
 /**
  * Parses HTML documentation pages into ParsedContent.

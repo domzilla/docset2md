@@ -11,10 +11,10 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
-import { CacheReader } from '../db/CacheReader.js';
+import { CacheReader } from './CacheReader.js';
 import { generateUuid } from './UuidGenerator.js';
-import { AppleApiDownloader } from '../downloader/AppleApiDownloader.js';
-import type { DocCDocument } from '../parser/types.js';
+import { AppleApiDownloader } from './AppleApiDownloader.js';
+import type { DocCDocument } from './types.js';
 
 /**
  * Options for ContentExtractor.

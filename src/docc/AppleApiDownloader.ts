@@ -1,6 +1,6 @@
 /**
- * @file AppleApiDownloader.ts
- * @module downloader/AppleApiDownloader
+ * @file AppleAppleApiDownloader.ts
+ * @module docc/AppleAppleApiDownloader
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
@@ -9,7 +9,7 @@
  */
 
 import { execSync } from 'node:child_process';
-import type { DocCDocument } from '../parser/types.js';
+import type { DocCDocument } from './types.js';
 
 /**
  * Statistics for download operations.

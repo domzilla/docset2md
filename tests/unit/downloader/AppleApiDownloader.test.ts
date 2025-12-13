@@ -8,7 +8,7 @@
  * @fileoverview Unit tests for AppleApiDownloader.
  */
 
-import { AppleApiDownloader } from '../../../src/downloader/AppleApiDownloader.js';
+import { AppleApiDownloader } from '../../../src/docc/AppleApiDownloader.js';
 
 describe('AppleApiDownloader', () => {
   let downloader: AppleApiDownloader;

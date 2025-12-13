@@ -8,8 +8,8 @@
  * @fileoverview Unit tests for DocCParser JSON parsing.
  */
 
-import { DocCParser } from '../../../src/parser/DocCParser.js';
-import type { DocCDocument } from '../../../src/parser/types.js';
+import { DocCParser } from '../../../src/docc/DocCParser.js';
+import type { DocCDocument } from '../../../src/docc/types.js';
 
 describe('DocCParser', () => {
   let parser: DocCParser;

@@ -11,7 +11,7 @@
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ContentExtractor } from '../../../src/extractor/ContentExtractor.js';
+import { ContentExtractor } from '../../../src/docc/ContentExtractor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

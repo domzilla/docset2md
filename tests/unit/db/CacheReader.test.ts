@@ -11,8 +11,8 @@
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CacheReader } from '../../../src/db/CacheReader.js';
-import { generateUuid } from '../../../src/extractor/UuidGenerator.js';
+import { CacheReader } from '../../../src/docc/CacheReader.js';
+import { generateUuid } from '../../../src/docc/UuidGenerator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

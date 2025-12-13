@@ -1,18 +1,18 @@
 /**
- * @file AppleConverter.test.ts
- * @module tests/unit/converter/AppleConverter
+ * @file DocCConverter.test.ts
+ * @module tests/unit/converter/DocCConverter
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
  *
- * @fileoverview Unit tests for AppleConverter.
+ * @fileoverview Unit tests for DocCConverter.
  */
 
-import { AppleConverter } from '../../../src/converter/AppleConverter.js';
-import type { DocsetFormat, NormalizedEntry, ParsedContent } from '../../../src/formats/types.js';
+import { DocCConverter } from '../../../src/docc/DocCConverter.js';
+import type { DocsetFormat, NormalizedEntry, ParsedContent } from '../../../src/shared/formats/types.js';
 
-describe('AppleConverter', () => {
-  let converter: AppleConverter;
+describe('DocCConverter', () => {
+  let converter: DocCConverter;
   let mockFormat: DocsetFormat;
 
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('AppleConverter', () => {
       close: () => {},
     } as DocsetFormat;
 
-    converter = new AppleConverter(mockFormat);
+    converter = new DocCConverter(mockFormat);
   });
 
   afterEach(() => {

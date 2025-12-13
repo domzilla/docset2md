@@ -9,8 +9,8 @@
  */
 
 import type { DocsetFormat, NormalizedEntry, ParsedContent, EntryFilters } from '../formats/types.js';
-import type { MarkdownGenerator } from '../generator/MarkdownGenerator.js';
-import type { WriteStats } from '../writer/FileWriter.js';
+import type { MarkdownGenerator } from '../MarkdownGenerator.js';
+import type { WriteStats } from '../FileWriter.js';
 
 export type { WriteStats };
 

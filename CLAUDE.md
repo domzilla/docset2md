@@ -7,42 +7,39 @@ A Node.js TypeScript CLI tool that converts documentation docsets to Markdown fi
 ```
 src/
 ├── index.ts                    # CLI entry point (commander-based)
-├── converter/                  # Conversion orchestration layer
-│   ├── types.ts                # DocsetConverter interface and types
-│   ├── BaseConverter.ts        # Abstract base with shared conversion logic
-│   ├── AppleConverter.ts       # Apple DocC: Language/Framework/Item.md
-│   ├── StandardDashConverter.ts # Standard Dash: Type/Item.md
-│   ├── CoreDataConverter.ts    # CoreData: extends StandardDashConverter
-│   └── ConverterRegistry.ts    # Maps formats to converters
-├── db/
-│   ├── IndexReader.ts          # Reads docSet.dsidx SQLite database
-│   └── CacheReader.ts          # Reads cache.db for content locations
-├── downloader/
-│   └── AppleApiDownloader.ts   # Downloads missing content from Apple API
-├── extractor/
-│   ├── UuidGenerator.ts        # SHA-1 based UUID generation for cache lookup
-│   ├── ContentExtractor.ts     # Brotli decompression and JSON extraction
-│   └── TarixExtractor.ts       # Tarix archive extraction for Dash docsets
-├── formats/                    # Format abstraction layer
-│   ├── types.ts                # DocsetFormat interface and types
-│   ├── FormatRegistry.ts       # Format auto-detection
-│   ├── AppleDocCFormat.ts      # Apple DocC format handler
-│   ├── StandardFormat.ts       # Generic Dash format handler
-│   └── CoreDataFormat.ts       # CoreData format handler
-├── generator/
-│   └── MarkdownGenerator.ts    # Converts parsed docs to markdown
-├── parser/
+├── docc/                       # Apple DocC format (all DocC-specific code)
+│   ├── DocCFormat.ts           # DocC format handler
+│   ├── DocCConverter.ts        # DocC converter: language/framework/item.md
 │   ├── DocCParser.ts           # Parses DocC JSON into structured data
-│   ├── HtmlParser.ts           # Parses HTML using cheerio/turndown
+│   ├── IndexReader.ts          # Reads docSet.dsidx SQLite database
+│   ├── CacheReader.ts          # Reads cache.db for content locations
+│   ├── ContentExtractor.ts     # Brotli decompression and JSON extraction
+│   ├── UuidGenerator.ts        # SHA-1 based UUID generation for cache lookup
+│   ├── AppleApiDownloader.ts   # Downloads missing content from Apple API
 │   └── types.ts                # TypeScript interfaces for DocC schema
-├── utils/                      # Shared utilities
-│   ├── sanitize.ts             # Filename sanitization
-│   └── typeNormalizer.ts       # Type code normalization
-├── validator/
-│   └── LinkValidator.ts        # Validates internal markdown links
-└── writer/
+├── standard/                   # Standard Dash format
+│   ├── StandardFormat.ts       # Standard Dash format handler
+│   └── StandardConverter.ts    # Standard converter: type/item.md
+├── coredata/                   # CoreData format
+│   ├── CoreDataFormat.ts       # CoreData format handler
+│   └── CoreDataConverter.ts    # CoreData converter (extends StandardConverter)
+└── shared/                     # Shared infrastructure
+    ├── formats/                # Format abstraction layer
+    │   ├── types.ts            # DocsetFormat interface and types
+    │   └── FormatRegistry.ts   # Format auto-detection
+    ├── converter/              # Converter abstraction layer
+    │   ├── types.ts            # DocsetConverter interface and types
+    │   ├── BaseConverter.ts    # Abstract base with shared conversion logic
+    │   └── ConverterRegistry.ts # Maps formats to converters
+    ├── utils/                  # Shared utilities
+    │   ├── sanitize.ts         # Filename sanitization
+    │   └── typeNormalizer.ts   # Type code normalization
+    ├── TarixExtractor.ts       # Tarix archive extraction for Dash docsets
+    ├── HtmlParser.ts           # Parses HTML using cheerio/turndown
+    ├── MarkdownGenerator.ts    # Converts parsed docs to markdown
     ├── FileWriter.ts           # Writes output files
-    └── PathResolver.ts         # Resolves documentation paths to file paths
+    ├── PathResolver.ts         # Resolves documentation paths to file paths
+    └── LinkValidator.ts        # Validates internal markdown links
 ```
 
 ## Supported Formats
@@ -92,9 +89,9 @@ The conversion is orchestrated by format-specific converters:
    - Generates index files
 
 Each converter controls its own output structure:
-- **AppleConverter**: `language/framework/item.md` (e.g., `swift/uikit/uiwindow.md`)
-- **StandardDashConverter**: `type/item.md` (e.g., `function/array_map.md`)
-- **CoreDataConverter**: Same as StandardDashConverter
+- **DocCConverter**: `language/framework/item.md` (e.g., `swift/uikit/uiwindow.md`)
+- **StandardConverter**: `type/item.md` (e.g., `function/array_map.md`)
+- **CoreDataConverter**: Same as StandardConverter
 
 ## Commands
 

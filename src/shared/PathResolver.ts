@@ -9,7 +9,7 @@
  */
 
 import { join, dirname, basename } from 'node:path';
-import { sanitizeFileName } from '../utils/sanitize.js';
+import { sanitizeFileName } from './utils/sanitize.js';
 
 /**
  * Resolves documentation paths to output file paths.

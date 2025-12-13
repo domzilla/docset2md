@@ -1,6 +1,6 @@
 /**
- * @file AppleDocCFormat.ts
- * @module formats/AppleDocCFormat
+ * @file DocCFormat.ts
+ * @module docc/DocCFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
@@ -17,11 +17,11 @@ import type {
   EntryFilters,
   ContentItem,
   FormatInitOptions,
-} from './types.js';
-import { IndexReader } from '../db/IndexReader.js';
-import { ContentExtractor } from '../extractor/ContentExtractor.js';
-import { DocCParser } from '../parser/DocCParser.js';
-import type { ParsedDocumentation, TopicItem } from '../parser/types.js';
+} from '../shared/formats/types.js';
+import { IndexReader } from './IndexReader.js';
+import { ContentExtractor } from './ContentExtractor.js';
+import { DocCParser } from './DocCParser.js';
+import type { ParsedDocumentation, TopicItem } from './types.js';
 
 /**
  * Format handler for Apple DocC docsets.
@@ -35,7 +35,7 @@ import type { ParsedDocumentation, TopicItem } from '../parser/types.js';
  *
  * @example
  * ```typescript
- * const format = new AppleDocCFormat();
+ * const format = new DocCFormat();
  * if (await format.detect('./Apple_UIKit_Reference.docset')) {
  *   await format.initialize('./Apple_UIKit_Reference.docset');
  *   console.log(`Found ${format.getEntryCount()} entries`);
@@ -43,7 +43,7 @@ import type { ParsedDocumentation, TopicItem } from '../parser/types.js';
  * }
  * ```
  */
-export class AppleDocCFormat implements DocsetFormat {
+export class DocCFormat implements DocsetFormat {
   private docsetPath: string = '';
   private indexReader: IndexReader | null = null;
   private extractor: ContentExtractor | null = null;

@@ -1,17 +1,17 @@
 /**
- * @file StandardDashConverter.ts
- * @module converter/StandardDashConverter
+ * @file StandardConverter.ts
+ * @module standard/StandardConverter
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
  *
- * @fileoverview Converter for Standard Dash docsets with Type/Item.md structure.
+ * @fileoverview Converter for Standard docsets with Type/Item.md structure.
  */
 
 import { join } from 'node:path';
-import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
-import type { MarkdownGenerator } from '../generator/MarkdownGenerator.js';
-import { BaseConverter } from './BaseConverter.js';
+import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
+import type { MarkdownGenerator } from '../shared/MarkdownGenerator.js';
+import { BaseConverter } from '../shared/converter/BaseConverter.js';
 
 /**
  * Converter for Standard Dash format docsets.
@@ -27,19 +27,19 @@ import { BaseConverter } from './BaseConverter.js';
  * @example
  * ```typescript
  * const format = await registry.detectFormat('/path/to/PHP.docset');
- * const converter = new StandardDashConverter(format, 'PHP');
+ * const converter = new StandardConverter(format, 'PHP');
  * const result = await converter.convert({ outputDir: './output' });
  * ```
  */
-export class StandardDashConverter extends BaseConverter {
+export class StandardConverter extends BaseConverter {
   /** Track items by type for index generation */
   protected typeItems: Map<string, ContentItem[]> = new Map();
   /** Name of the docset for root index title */
   protected docsetName: string;
 
   /**
-   * Create a new StandardDashConverter.
-   * @param format - The initialized Standard Dash format handler
+   * Create a new StandardConverter.
+   * @param format - The initialized Standard format handler
    * @param docsetName - Name of the docset for index titles
    */
   constructor(format: DocsetFormat, docsetName: string) {

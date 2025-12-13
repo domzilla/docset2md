@@ -19,7 +19,7 @@ import type {
   Reference,
   Platform,
 } from './types.js';
-import { sanitizeFileName } from '../utils/sanitize.js';
+import { sanitizeFileName } from '../shared/utils/sanitize.js';
 
 /**
  * Parses DocC JSON documents into ParsedDocumentation.

@@ -8,11 +8,11 @@
  * @fileoverview Unit tests for ConverterRegistry.
  */
 
-import { ConverterRegistry } from '../../../src/converter/ConverterRegistry.js';
-import { AppleConverter } from '../../../src/converter/AppleConverter.js';
-import { StandardDashConverter } from '../../../src/converter/StandardDashConverter.js';
-import { CoreDataConverter } from '../../../src/converter/CoreDataConverter.js';
-import type { DocsetFormat } from '../../../src/formats/types.js';
+import { ConverterRegistry } from '../../../src/shared/converter/ConverterRegistry.js';
+import { DocCConverter } from '../../../src/docc/DocCConverter.js';
+import { StandardConverter } from '../../../src/standard/StandardConverter.js';
+import { CoreDataConverter } from '../../../src/coredata/CoreDataConverter.js';
+import type { DocsetFormat } from '../../../src/shared/formats/types.js';
 
 describe('ConverterRegistry', () => {
   // Mock format handler factory
@@ -34,19 +34,19 @@ describe('ConverterRegistry', () => {
   }
 
   describe('createConverter', () => {
-    it('should create AppleConverter for Apple DocC format', () => {
+    it('should create DocCConverter for Apple DocC format', () => {
       const format = createMockFormat('Apple DocC');
       const converter = ConverterRegistry.createConverter(format, 'TestDocset');
 
-      expect(converter).toBeInstanceOf(AppleConverter);
+      expect(converter).toBeInstanceOf(DocCConverter);
       expect(converter.getFormatName()).toBe('Apple DocC');
     });
 
-    it('should create StandardDashConverter for Standard Dash format', () => {
+    it('should create StandardConverter for Standard Dash format', () => {
       const format = createMockFormat('Standard Dash');
       const converter = ConverterRegistry.createConverter(format, 'TestDocset');
 
-      expect(converter).toBeInstanceOf(StandardDashConverter);
+      expect(converter).toBeInstanceOf(StandardConverter);
       expect(converter.getFormatName()).toBe('Standard Dash');
     });
 
@@ -58,11 +58,11 @@ describe('ConverterRegistry', () => {
       expect(converter.getFormatName()).toBe('CoreData');
     });
 
-    it('should fallback to StandardDashConverter for unknown format', () => {
+    it('should fallback to StandardConverter for unknown format', () => {
       const format = createMockFormat('Unknown Format');
       const converter = ConverterRegistry.createConverter(format, 'TestDocset');
 
-      expect(converter).toBeInstanceOf(StandardDashConverter);
+      expect(converter).toBeInstanceOf(StandardConverter);
     });
   });
 });

@@ -11,7 +11,7 @@
 import { existsSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { FileWriter } from '../../../src/writer/FileWriter.js';
+import { FileWriter } from '../../../src/shared/FileWriter.js';
 
 describe('FileWriter', () => {
   let writer: FileWriter;

@@ -8,8 +8,8 @@
  * @fileoverview Converter for CoreData-based docsets with Type/Item.md structure.
  */
 
-import type { DocsetFormat } from '../formats/types.js';
-import { StandardDashConverter } from './StandardDashConverter.js';
+import type { DocsetFormat } from '../shared/formats/types.js';
+import { StandardConverter } from '../standard/StandardConverter.js';
 
 /**
  * Converter for CoreData format docsets.
@@ -28,7 +28,7 @@ import { StandardDashConverter } from './StandardDashConverter.js';
  * const result = await converter.convert({ outputDir: './output' });
  * ```
  */
-export class CoreDataConverter extends StandardDashConverter {
+export class CoreDataConverter extends StandardConverter {
   /**
    * Create a new CoreDataConverter.
    * @param format - The initialized CoreData format handler
