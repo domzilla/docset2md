@@ -12,7 +12,7 @@ import type { ContentItem } from '../shared/formats/types.js';
 
 /**
  * Item in a topics or relationships section.
- * @deprecated Use ContentItem from formats/types.js instead.
+ * @deprecated Use ContentItem from shared/formats/types.js instead.
  */
 export type TopicItem = ContentItem;
 

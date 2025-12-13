@@ -15,7 +15,7 @@ import { StandardConverter } from '../standard/StandardConverter.js';
  * Converter for CoreData format docsets.
  *
  * CoreData docsets use the same output structure as Standard Dash,
- * so this class extends StandardDashConverter.
+ * so this class extends StandardConverter.
  *
  * Output structure: Type/Item.md
  * - function/array_map.md

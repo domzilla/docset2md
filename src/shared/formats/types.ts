@@ -128,7 +128,7 @@ export interface FormatInitOptions {
  *
  * @example
  * ```typescript
- * const format: DocsetFormat = new AppleDocCFormat();
+ * const format: DocsetFormat = new DocCFormat();
  * if (await format.detect(docsetPath)) {
  *   await format.initialize(docsetPath);
  *   for (const entry of format.iterateEntries()) {
