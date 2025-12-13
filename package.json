@@ -1,6 +1,6 @@
 {
   "name": "docset2md",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Convert Apple Documentation docsets to Markdown for AI agents",
   "type": "module",
   "main": "dist/index.js",
