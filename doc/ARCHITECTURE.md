@@ -7,13 +7,13 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                              CLI (index.ts)                             │
-│                         Command parsing & orchestration                  │
+│                         Command parsing & orchestration                 │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Format Detection Layer                          │
-│                       (shared/formats/FormatRegistry)                    │
+│                       (shared/formats/FormatRegistry)                   │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
               ┌───────────────────────┼───────────────────────┐
@@ -27,7 +27,7 @@ This document describes the internal architecture of docset2md, a CLI tool that 
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Converter Layer                                 │
-│                   (shared/converter/ConverterRegistry)                   │
+│                   (shared/converter/ConverterRegistry)                  │
 │              ┌──────────────┬──────────────┬──────────────┐             │
 │              │DocCConverter │Standard      │CoreData      │             │
 │              │              │Converter     │Converter     │             │
