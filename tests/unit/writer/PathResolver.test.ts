@@ -18,44 +18,37 @@ describe('PathResolver', () => {
   });
 
   describe('resolveFilePath', () => {
-    it('should create Swift directory for swift language', () => {
+    it('should create swift directory for swift language', () => {
       const path = resolver.resolveFilePath('ls/documentation/uikit/uiwindow', 'swift', 'UIWindow');
 
-      expect(path).toContain('/Swift/');
+      expect(path).toContain('/swift/');
     });
 
-    it('should create Objective-C directory for objc language', () => {
+    it('should create objective-c directory for objc language', () => {
       const path = resolver.resolveFilePath('lc/documentation/uikit/uiwindow', 'objc', 'UIWindow');
 
-      expect(path).toContain('/Objective-C/');
+      expect(path).toContain('/objective-c/');
     });
 
-    it('should capitalize framework names correctly', () => {
-      const tests = [
-        { input: 'uikit', expected: 'UIKit' },
-        { input: 'appkit', expected: 'AppKit' },
-        { input: 'swiftui', expected: 'SwiftUI' },
-        { input: 'foundation', expected: 'Foundation' },
-        { input: 'coregraphics', expected: 'CoreGraphics' },
-        { input: 'avfoundation', expected: 'AVFoundation' },
-      ];
+    it('should use lowercase framework names', () => {
+      const tests = ['uikit', 'appkit', 'swiftui', 'foundation', 'coregraphics', 'avfoundation'];
 
-      for (const { input, expected } of tests) {
+      for (const input of tests) {
         const path = resolver.resolveFilePath(`ls/documentation/${input}/someclass`, 'swift', 'SomeClass');
-        expect(path).toContain(`/${expected}/`);
+        expect(path).toContain(`/${input}/`);
       }
     });
 
-    it('should handle unknown frameworks with default capitalization', () => {
+    it('should handle custom frameworks with lowercase', () => {
       const path = resolver.resolveFilePath('ls/documentation/customframework/item', 'swift', 'Item');
 
-      expect(path).toContain('/Customframework/');
+      expect(path).toContain('/customframework/');
     });
 
     it('should create index file for framework root', () => {
       const path = resolver.resolveFilePath('ls/documentation/uikit', 'swift', 'UIKit');
 
-      expect(path).toMatch(/\/Swift\/UIKit\/_index\.md$/);
+      expect(path).toMatch(/\/swift\/uikit\/_index\.md$/);
     });
 
     it('should handle nested paths', () => {
@@ -65,7 +58,7 @@ describe('PathResolver', () => {
         'rootViewController'
       );
 
-      expect(path).toContain('/UIKit/uiwindow/');
+      expect(path).toContain('/uikit/uiwindow/');
       expect(path).toMatch(/rootviewcontroller\.md$/); // lowercase for filesystem consistency
     });
 
@@ -84,21 +77,21 @@ describe('PathResolver', () => {
       const path = resolver.resolveFilePath('invalid', 'swift', 'Test');
 
       expect(path).toMatch(/test\.md$/); // lowercase for filesystem consistency
-      expect(path).toContain('/Swift/');
+      expect(path).toContain('/swift/');
     });
   });
 
   describe('resolveFrameworkDir', () => {
-    it('should resolve framework directory for Swift', () => {
+    it('should resolve framework directory for swift', () => {
       const dir = resolver.resolveFrameworkDir('uikit', 'swift');
 
-      expect(dir).toBe('/output/Swift/UIKit');
+      expect(dir).toBe('/output/swift/uikit');
     });
 
-    it('should resolve framework directory for Objective-C', () => {
+    it('should resolve framework directory for objective-c', () => {
       const dir = resolver.resolveFrameworkDir('uikit', 'objc');
 
-      expect(dir).toBe('/output/Objective-C/UIKit');
+      expect(dir).toBe('/output/objective-c/uikit');
     });
   });
 

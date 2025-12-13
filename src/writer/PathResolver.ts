@@ -53,11 +53,12 @@ export class PathResolver {
    * @example
    * ```typescript
    * resolver.resolveFilePath('ls/documentation/accelerate/vdsp', 'swift', 'vDSP');
-   * // Returns: "./output/Swift/Accelerate/vDSP.md"
+   * // Returns: "./output/swift/accelerate/vdsp.md"
    * ```
    */
   resolveFilePath(requestKey: string, language: 'swift' | 'objc', name: string): string {
-    const langDir = language === 'swift' ? 'Swift' : 'Objective-C';
+    // Use lowercase for all directory names
+    const langDir = language === 'swift' ? 'swift' : 'objective-c';
 
     // Extract path after "documentation/"
     const match = requestKey.match(/l[sc]\/documentation\/(.+)/);
@@ -66,12 +67,7 @@ export class PathResolver {
     }
 
     const docPath = match[1];
-    const parts = docPath.split('/');
-
-    // Capitalize framework name
-    if (parts.length > 0) {
-      parts[0] = this.capitalizeFramework(parts[0]);
-    }
+    const parts = docPath.split('/').map(p => p.toLowerCase());
 
     // Use the entry name for the filename (last part)
     const fileName = this.sanitizeFileName(name) + '.md';
@@ -81,20 +77,20 @@ export class PathResolver {
       return join(this.outputDir, langDir, parts[0], '_index.md');
     }
 
-    // Build path: Framework/path/to/item.md
+    // Build path: framework/path/to/item.md (all lowercase)
     const dirParts = parts.slice(0, -1);
     return join(this.outputDir, langDir, ...dirParts, fileName);
   }
 
   /**
    * Resolve directory path for a framework.
-   * @param framework - Framework name (will be capitalized)
+   * @param framework - Framework name (will be lowercased)
    * @param language - Target language ('swift' or 'objc')
    * @returns Full directory path for the framework
    */
   resolveFrameworkDir(framework: string, language: 'swift' | 'objc'): string {
-    const langDir = language === 'swift' ? 'Swift' : 'Objective-C';
-    return join(this.outputDir, langDir, this.capitalizeFramework(framework));
+    const langDir = language === 'swift' ? 'swift' : 'objective-c';
+    return join(this.outputDir, langDir, framework.toLowerCase());
   }
 
   /**
@@ -206,58 +202,4 @@ export class PathResolver {
     return sanitized.toLowerCase();
   }
 
-  /**
-   * Capitalize framework name properly.
-   *
-   * Uses a lookup table of known Apple framework names to ensure correct
-   * capitalization (e.g., "uikit" -> "UIKit", "corefoundation" -> "CoreFoundation").
-   * Falls back to capitalizing the first letter for unknown frameworks.
-   *
-   * @param name - Framework name (case-insensitive)
-   * @returns Properly capitalized framework name
-   */
-  private capitalizeFramework(name: string): string {
-    // Common framework name mappings
-    const knownFrameworks: Record<string, string> = {
-      accelerate: 'Accelerate',
-      foundation: 'Foundation',
-      uikit: 'UIKit',
-      appkit: 'AppKit',
-      swiftui: 'SwiftUI',
-      corefoundation: 'CoreFoundation',
-      coredata: 'CoreData',
-      coregraphics: 'CoreGraphics',
-      coreanimation: 'CoreAnimation',
-      corelocation: 'CoreLocation',
-      avfoundation: 'AVFoundation',
-      webkit: 'WebKit',
-      mapkit: 'MapKit',
-      healthkit: 'HealthKit',
-      homekit: 'HomeKit',
-      cloudkit: 'CloudKit',
-      gamekit: 'GameKit',
-      spritekit: 'SpriteKit',
-      scenekit: 'SceneKit',
-      metalkit: 'MetalKit',
-      realitykit: 'RealityKit',
-      arkit: 'ARKit',
-      vision: 'Vision',
-      naturallanguage: 'NaturalLanguage',
-      createml: 'CreateML',
-      coreml: 'CoreML',
-      combine: 'Combine',
-      swift: 'Swift',
-      dispatch: 'Dispatch',
-      os: 'os',
-      xcode: 'Xcode',
-    };
-
-    const lower = name.toLowerCase();
-    if (knownFrameworks[lower]) {
-      return knownFrameworks[lower];
-    }
-
-    // Default: capitalize first letter
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  }
 }

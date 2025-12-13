@@ -50,19 +50,19 @@ describe('FileWriter', () => {
         '# rootViewController'
       );
 
-      expect(existsSync(join(testOutputDir, 'Swift', 'UIKit', 'uiwindow'))).toBe(true);
+      expect(existsSync(join(testOutputDir, 'swift', 'uikit', 'uiwindow'))).toBe(true);
     });
 
-    it('should write Swift entries to Swift directory', () => {
+    it('should write Swift entries to swift directory', () => {
       const filePath = writer.writeEntry('ls/documentation/uikit/uiview', 'swift', 'UIView', '# UIView');
 
-      expect(filePath).toContain('/Swift/');
+      expect(filePath).toContain('/swift/');
     });
 
-    it('should write Objective-C entries to Objective-C directory', () => {
+    it('should write Objective-C entries to objective-c directory', () => {
       const filePath = writer.writeEntry('lc/documentation/uikit/uiview', 'objc', 'UIView', '# UIView');
 
-      expect(filePath).toContain('/Objective-C/');
+      expect(filePath).toContain('/objective-c/');
     });
   });
 
@@ -78,7 +78,7 @@ describe('FileWriter', () => {
     it('should create framework directory', () => {
       writer.writeFrameworkIndex('foundation', 'objc', '# Foundation');
 
-      expect(existsSync(join(testOutputDir, 'Objective-C', 'Foundation'))).toBe(true);
+      expect(existsSync(join(testOutputDir, 'objective-c', 'foundation'))).toBe(true);
     });
   });
 
@@ -87,14 +87,14 @@ describe('FileWriter', () => {
       const filePath = writer.writeLanguageIndex('swift', '# Swift Documentation');
 
       expect(existsSync(filePath)).toBe(true);
-      expect(filePath).toMatch(/Swift\/_index\.md$/);
+      expect(filePath).toMatch(/swift\/_index\.md$/);
       expect(readFileSync(filePath, 'utf-8')).toBe('# Swift Documentation');
     });
 
-    it('should write to Objective-C directory', () => {
+    it('should write to objective-c directory', () => {
       const filePath = writer.writeLanguageIndex('objc', '# Objective-C');
 
-      expect(filePath).toContain('/Objective-C/');
+      expect(filePath).toContain('/objective-c/');
     });
   });
 
@@ -167,15 +167,15 @@ describe('FileWriter', () => {
   });
 
   describe('ensureOutputDirs', () => {
-    it('should create Swift and Objective-C directories', () => {
+    it('should create swift and objective-c directories', () => {
       writer.ensureOutputDirs();
 
-      expect(existsSync(join(testOutputDir, 'Swift'))).toBe(true);
-      expect(existsSync(join(testOutputDir, 'Objective-C'))).toBe(true);
+      expect(existsSync(join(testOutputDir, 'swift'))).toBe(true);
+      expect(existsSync(join(testOutputDir, 'objective-c'))).toBe(true);
     });
 
     it('should not fail if directories already exist', () => {
-      mkdirSync(join(testOutputDir, 'Swift'), { recursive: true });
+      mkdirSync(join(testOutputDir, 'swift'), { recursive: true });
 
       expect(() => writer.ensureOutputDirs()).not.toThrow();
     });

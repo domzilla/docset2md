@@ -106,7 +106,7 @@ export class FileWriter {
    * @returns Full path to the written index file
    */
   writeLanguageIndex(language: 'swift' | 'objc', content: string): string {
-    const langDir = language === 'swift' ? 'Swift' : 'Objective-C';
+    const langDir = language === 'swift' ? 'swift' : 'objective-c';
     const filePath = join(this.outputDir, langDir, '_index.md');
     this.writeFile(filePath, content);
     return filePath;
@@ -173,8 +173,8 @@ export class FileWriter {
    * Call this before writing any files.
    */
   ensureOutputDirs(): void {
-    const swiftDir = join(this.outputDir, 'Swift');
-    const objcDir = join(this.outputDir, 'Objective-C');
+    const swiftDir = join(this.outputDir, 'swift');
+    const objcDir = join(this.outputDir, 'objective-c');
 
     for (const dir of [swiftDir, objcDir]) {
       if (!existsSync(dir)) {

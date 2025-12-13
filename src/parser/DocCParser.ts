@@ -395,12 +395,16 @@ export class DocCParser {
 
     const targetFramework = targetMatch[1].toLowerCase();
     const targetPathAfterFramework = targetMatch[2] || '';
-    const targetPathParts = targetPathAfterFramework
-      ? targetPathAfterFramework.split('/')
+    // Convert dots to slashes for nested types (e.g., XPCListener.IncomingSessionRequest -> xpclistener/incomingsessionrequest)
+    // This matches how files are written based on database paths which use slashes for nesting
+    const normalizedPath = targetPathAfterFramework.toLowerCase().replace(/\./g, '/');
+    const targetPathParts = normalizedPath
+      ? normalizedPath.split('/')
       : [];
 
     // Check if target exists in docset before generating link
-    // Normalize URL: strip domain prefix if present to match language map format
+    // Normalize URL: strip domain prefix if present and convert dots to slashes
+    // to match database path format used in language map
     let targetDocPath = url.toLowerCase();
     if (targetDocPath.includes('developer.apple.com')) {
       const docMatch = targetDocPath.match(/developer\.apple\.com(\/documentation\/.*)/);
@@ -408,6 +412,8 @@ export class DocCParser {
         targetDocPath = docMatch[1];
       }
     }
+    // Convert dots to slashes for nested types to match database format
+    targetDocPath = targetDocPath.replace(/\./g, '/');
     if (this.languageLookup) {
       const availableLangs = this.languageLookup(targetDocPath);
       if (!availableLangs) {
@@ -462,8 +468,8 @@ export class DocCParser {
       }
     }
 
-    // Capitalize framework names for directory paths
-    const targetFrameworkDir = this.capitalizeFrameworkName(targetFramework);
+    // Use lowercase for all directory paths
+    const targetFrameworkDir = targetFramework.toLowerCase();
 
     // Cross-language link: need to go up to root and into other language
     if (targetLanguage !== this.sourceLanguage) {
@@ -475,8 +481,8 @@ export class DocCParser {
       const levelsUp = sourceDirDepth + 2;
       const upPath = '../'.repeat(levelsUp);
 
-      // Get target language directory name
-      const targetLangDir = targetLanguage === 'swift' ? 'Swift' : 'Objective-C';
+      // Get target language directory name (lowercase)
+      const targetLangDir = targetLanguage === 'swift' ? 'swift' : 'objective-c';
 
       if (targetPathParts.length === 0) {
         // Link to framework root (_index.md)
@@ -550,36 +556,6 @@ export class DocCParser {
       return `${upPath}${downPath}/${urlFileName}`;
     }
     return `${upPath}${urlFileName}`;
-  }
-
-  /**
-   * Capitalize framework name for directory path.
-   * Must match the capitalization used by PathResolver and validate-links.ts.
-   */
-  private capitalizeFrameworkName(name: string): string {
-    const knownFrameworks: Record<string, string> = {
-      accelerate: 'Accelerate',
-      foundation: 'Foundation',
-      uikit: 'UIKit',
-      appkit: 'AppKit',
-      swiftui: 'SwiftUI',
-      corefoundation: 'CoreFoundation',
-      coredata: 'CoreData',
-      coregraphics: 'CoreGraphics',
-      coreanimation: 'CoreAnimation',
-      corelocation: 'CoreLocation',
-      avfoundation: 'AVFoundation',
-      webkit: 'WebKit',
-      mapkit: 'MapKit',
-      healthkit: 'HealthKit',
-      homekit: 'HomeKit',
-      cloudkit: 'CloudKit',
-      gamekit: 'GameKit',
-      spritekit: 'SpriteKit',
-      scenekit: 'SceneKit',
-      metalkit: 'MetalKit',
-    };
-    return knownFrameworks[name] || name.charAt(0).toUpperCase() + name.slice(1);
   }
 
   /**

@@ -396,13 +396,12 @@ function sanitizeFileName(name: string): string {
 }
 
 /**
- * Capitalize the first letter of a type name.
- * @param type - Type name to capitalize
- * @returns Capitalized type name
+ * Normalize type name to lowercase for consistent directory naming.
+ * @param type - Type name to normalize
+ * @returns Lowercase type name
  */
-function capitalizeType(type: string): string {
-  // Capitalize first letter
-  return type.charAt(0).toUpperCase() + type.slice(1);
+function normalizeType(type: string): string {
+  return type.toLowerCase();
 }
 
 /**
@@ -424,8 +423,9 @@ function writeAppleEntry(
   markdown: string,
   createdDirs: Set<string>
 ): string {
-  const langDir = entry.language === 'swift' ? 'Swift' : 'Objective-C';
-  const framework = content.framework || 'Other';
+  // Use lowercase for all directory names for consistency
+  const langDir = entry.language === 'swift' ? 'swift' : 'objective-c';
+  const framework = (content.framework || 'other').toLowerCase();
 
   // Build path from entry.path (request key)
   const match = entry.path.match(/l[sc]\/documentation\/(.+)/);
@@ -433,16 +433,12 @@ function writeAppleEntry(
 
   if (match) {
     const docPath = match[1];
-    const parts = docPath.split('/');
-
-    // Capitalize framework name
-    const frameworkCapitalized = capitalizeFramework(parts[0]);
+    const parts = docPath.split('/').map(p => p.toLowerCase());
 
     if (parts.length === 1) {
-      filePath = join(outputDir, langDir, frameworkCapitalized, '_index.md');
+      filePath = join(outputDir, langDir, parts[0], '_index.md');
     } else {
       const dirParts = parts.slice(0, -1);
-      dirParts[0] = frameworkCapitalized;
       // Use URL path segment for filename to match link generation in DocCParser
       const fileName = sanitizeFileName(parts[parts.length - 1]) + '.md';
       filePath = join(outputDir, langDir, ...dirParts, fileName);
@@ -476,8 +472,8 @@ function writeGenericEntry(
   markdown: string,
   createdDirs: Set<string>
 ): string {
-  // Generic format: Type/Name.md
-  const typeDir = capitalizeType(entry.type);
+  // Generic format: type/name.md (all lowercase)
+  const typeDir = normalizeType(entry.type);
   const fileName = sanitizeFileName(entry.name) + '.md';
   const filePath = join(outputDir, typeDir, fileName);
 
@@ -531,7 +527,17 @@ function trackForIndex(
   seenEntries.add(key);
 
   // Calculate relative URL from the type/framework index
-  const relativeUrl = `./${sanitizeFileName(entry.name)}.md`;
+  // For Apple docsets, derive URL from path to handle nested types correctly
+  // e.g., path "ls/documentation/xpc/xpclistener/incomingsessionrequest" -> "./xpclistener/incomingsessionrequest.md"
+  let relativeUrl: string;
+  const pathMatch = entry.path.match(/l[sc]\/documentation\/[^/]+\/(.+)/);
+  if (pathMatch) {
+    // Use path-based URL for Apple docsets (handles nested types with slashes)
+    relativeUrl = `./${pathMatch[1].toLowerCase()}.md`;
+  } else {
+    // Fallback for non-Apple docsets
+    relativeUrl = `./${sanitizeFileName(entry.name)}.md`;
+  }
 
   const item: ContentItem = {
     title: entry.name,
@@ -542,8 +548,12 @@ function trackForIndex(
   };
 
   if (format.supportsMultipleLanguages() && entry.language) {
-    // Track by framework and language
-    const framework = content.framework || 'Other';
+    // Track by framework and language (all lowercase)
+    let framework = (content.framework || 'other').toLowerCase();
+    const pathMatch = entry.path.match(/l[sc]\/documentation\/([^/]+)/);
+    if (pathMatch) {
+      framework = pathMatch[1].toLowerCase();
+    }
     if (!frameworkItems.has(framework)) {
       frameworkItems.set(framework, new Map());
     }
@@ -553,13 +563,13 @@ function trackForIndex(
       langItems.set(lang, []);
     }
 
-    // Only add top-level items
-    if (['Class', 'Struct', 'Protocol', 'Enum', 'Framework'].includes(entry.type)) {
+    // Only add top-level items (exclude 'Framework' as it's represented by _index.md)
+    if (['Class', 'Struct', 'Protocol', 'Enum'].includes(entry.type)) {
       langItems.get(lang)!.push(item);
     }
   } else {
-    // Track by type
-    const type = capitalizeType(entry.type);
+    // Track by type (lowercase)
+    const type = normalizeType(entry.type);
     if (!typeItems.has(type)) {
       typeItems.set(type, []);
     }
@@ -583,19 +593,19 @@ function generateAppleIndexes(
   generator: MarkdownGenerator,
   createdDirs: Set<string>
 ): void {
-  // Generate framework indexes
+  // Generate framework indexes (all lowercase paths)
   for (const [framework, langItems] of frameworkItems) {
     for (const [lang, items] of langItems) {
       if (items.length === 0) continue;
 
-      const langDir = lang === 'swift' ? 'Swift' : 'Objective-C';
+      const langDir = lang === 'swift' ? 'swift' : 'objective-c';
       const indexContent = generator.generateIndex(
         framework,
         `Documentation for the ${framework} framework.`,
         items.sort((a, b) => a.title.localeCompare(b.title)).map(convertToTopicItem)
       );
 
-      const indexPath = join(outputDir, langDir, capitalizeFramework(framework.toLowerCase()), '_index.md');
+      const indexPath = join(outputDir, langDir, framework, '_index.md');
       ensureDir(dirname(indexPath), createdDirs);
       writeFileSync(indexPath, indexContent, 'utf-8');
     }
@@ -603,13 +613,13 @@ function generateAppleIndexes(
 
   // Generate language indexes
   for (const lang of ['swift', 'objc'] as const) {
-    const langDir = lang === 'swift' ? 'Swift' : 'Objective-C';
+    const langDir = lang === 'swift' ? 'swift' : 'objective-c';
     const frameworks = Array.from(frameworkItems.keys())
       .filter(fw => frameworkItems.get(fw)?.has(lang))
       .sort()
       .map(fw => ({
         title: fw,
-        url: `./${capitalizeFramework(fw.toLowerCase())}/_index.md`,
+        url: `./${fw}/_index.md`,
       }));
 
     if (frameworks.length === 0) continue;
@@ -645,7 +655,7 @@ function generateGenericIndexes(
   docsetName: string,
   createdDirs: Set<string>
 ): void {
-  // Generate type indexes
+  // Generate type indexes (all lowercase paths)
   for (const [type, items] of typeItems) {
     if (items.length === 0) continue;
 
@@ -679,32 +689,6 @@ function generateGenericIndexes(
     const rootPath = join(outputDir, '_index.md');
     writeFileSync(rootPath, rootIndex, 'utf-8');
   }
-}
-
-/**
- * Capitalize framework name properly.
- *
- * Uses a lookup table for known Apple framework names.
- *
- * @param name - Framework name (case-insensitive)
- * @returns Properly capitalized framework name
- */
-function capitalizeFramework(name: string): string {
-  const knownFrameworks: Record<string, string> = {
-    accelerate: 'Accelerate',
-    foundation: 'Foundation',
-    uikit: 'UIKit',
-    appkit: 'AppKit',
-    swiftui: 'SwiftUI',
-    corefoundation: 'CoreFoundation',
-    coredata: 'CoreData',
-    coregraphics: 'CoreGraphics',
-    webkit: 'WebKit',
-    mapkit: 'MapKit',
-  };
-
-  const lower = name.toLowerCase();
-  return knownFrameworks[lower] || name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /**
