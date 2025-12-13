@@ -377,6 +377,7 @@ Detailed documentation content...
 
 ```typescript
 // 1. CLI detects format
+const detector = new FormatDetector();
 const format = await detector.detectFormat(docsetPath);
 
 // 2. Create appropriate converter
