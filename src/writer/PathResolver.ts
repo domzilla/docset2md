@@ -155,7 +155,7 @@ export class PathResolver {
    * Applies the following transformations:
    * - Replaces invalid characters (`<>:"/\|?*`) with underscores
    * - Collapses whitespace and multiple underscores
-   * - Truncates method signatures at opening parenthesis
+   * - Converts method signatures to unique filenames (e.g., `init(frame:)` → `init_frame`)
    * - Limits length to 100 characters
    * - Ensures non-empty result (returns 'unnamed' if empty)
    *
@@ -163,18 +163,33 @@ export class PathResolver {
    * @returns Safe filename string
    */
   sanitizeFileName(name: string): string {
+    let sanitized = name;
+
+    // Handle method signatures: convert parameters to underscore-separated format
+    // e.g., init(frame:) → init_frame, perform(_:with:afterDelay:) → perform_with_afterdelay
+    if (sanitized.includes('(')) {
+      const parenIndex = sanitized.indexOf('(');
+      const methodName = sanitized.substring(0, parenIndex);
+      const paramsSection = sanitized.substring(parenIndex);
+
+      // Extract parameter labels from signature
+      // Matches patterns like: (frame:), (_:with:afterDelay:), (to encoder:)
+      const paramLabels = paramsSection
+        .replace(/[()]/g, '')  // Remove parentheses
+        .split(':')            // Split by colons
+        .map(p => p.trim().split(/\s+/).pop() || '')  // Get the label (last word before colon)
+        .filter(p => p && p !== '_')  // Remove empty and underscore-only labels
+        .join('_');
+
+      sanitized = paramLabels ? `${methodName}_${paramLabels}` : methodName;
+    }
+
     // Remove or replace invalid characters
-    let sanitized = name
+    sanitized = sanitized
       .replace(/[<>:"/\\|?*]/g, '_')
       .replace(/\s+/g, '_')
       .replace(/__+/g, '_')
       .replace(/^_+|_+$/g, '');
-
-    // Handle special method signatures
-    if (sanitized.includes('(')) {
-      // Simplify method signatures: methodName(_ param: Type) -> simplify
-      sanitized = sanitized.split('(')[0];
-    }
 
     // Truncate very long names
     if (sanitized.length > 100) {

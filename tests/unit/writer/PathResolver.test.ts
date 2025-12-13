@@ -69,14 +69,14 @@ describe('PathResolver', () => {
       expect(path).toMatch(/rootviewcontroller\.md$/); // lowercase for filesystem consistency
     });
 
-    it('should sanitize filename', () => {
+    it('should sanitize filename with method signatures', () => {
       const path = resolver.resolveFilePath(
         'ls/documentation/uikit/init',
         'swift',
         'init(frame:)'
       );
 
-      expect(path).toMatch(/init\.md$/);
+      expect(path).toMatch(/init_frame\.md$/);
       expect(path).not.toContain('(');
     });
 
@@ -140,9 +140,10 @@ describe('PathResolver', () => {
       expect(resolver.sanitizeFileName('Test File Name')).toBe('test_file_name');
     });
 
-    it('should truncate method signatures at parenthesis', () => {
-      expect(resolver.sanitizeFileName('init(frame:)')).toBe('init');
-      expect(resolver.sanitizeFileName('perform(_:with:afterDelay:)')).toBe('perform');
+    it('should convert method signatures to unique filenames', () => {
+      expect(resolver.sanitizeFileName('init(frame:)')).toBe('init_frame');
+      expect(resolver.sanitizeFileName('init(coder:)')).toBe('init_coder');
+      expect(resolver.sanitizeFileName('perform(_:with:afterDelay:)')).toBe('perform_with_afterdelay');
     });
 
     it('should collapse multiple underscores and lowercase', () => {
@@ -170,7 +171,8 @@ describe('PathResolver', () => {
 
     it('should handle complex method signatures', () => {
       expect(resolver.sanitizeFileName('subscript(_:)')).toBe('subscript');
-      expect(resolver.sanitizeFileName('encode(to:)')).toBe('encode');
+      expect(resolver.sanitizeFileName('encode(to:)')).toBe('encode_to');
+      expect(resolver.sanitizeFileName('application(_:didFinishLaunchingWithOptions:)')).toBe('application_didfinishlaunchingwithoptions');
     });
 
     it('should lowercase valid characters for filesystem consistency', () => {

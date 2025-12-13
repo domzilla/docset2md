@@ -817,19 +817,35 @@ export class DocCParser {
 
   /**
    * Sanitize a string for use as a filename.
+   * Converts method signatures to unique filenames.
    */
   private sanitizeFileName(name: string): string {
+    let sanitized = name;
+
+    // Handle method signatures: convert parameters to underscore-separated format
+    // e.g., init(frame:) → init_frame, perform(_:with:afterDelay:) → perform_with_afterdelay
+    if (sanitized.includes('(')) {
+      const parenIndex = sanitized.indexOf('(');
+      const methodName = sanitized.substring(0, parenIndex);
+      const paramsSection = sanitized.substring(parenIndex);
+
+      // Extract parameter labels from signature
+      const paramLabels = paramsSection
+        .replace(/[()]/g, '')  // Remove parentheses
+        .split(':')            // Split by colons
+        .map(p => p.trim().split(/\s+/).pop() || '')  // Get the label (last word before colon)
+        .filter(p => p && p !== '_')  // Remove empty and underscore-only labels
+        .join('_');
+
+      sanitized = paramLabels ? `${methodName}_${paramLabels}` : methodName;
+    }
+
     // Remove or replace invalid characters
-    let sanitized = name
+    sanitized = sanitized
       .replace(/[<>:"/\\|?*]/g, '_')
       .replace(/\s+/g, '_')
       .replace(/__+/g, '_')
       .replace(/^_+|_+$/g, '');
-
-    // Handle method signatures: methodName(_ param: Type) -> methodName
-    if (sanitized.includes('(')) {
-      sanitized = sanitized.split('(')[0];
-    }
 
     // Truncate very long names
     if (sanitized.length > 100) {

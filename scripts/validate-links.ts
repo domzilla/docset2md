@@ -89,18 +89,35 @@ function extractLinks(content: string): Array<{ text: string; path: string }> {
 }
 
 /**
- * Sanitize a string for use as a filename
+ * Sanitize a string for use as a filename.
+ * Converts method signatures to unique filenames.
  */
 function sanitizeFileName(name: string): string {
-  let sanitized = name
+  let sanitized = name;
+
+  // Handle method signatures: convert parameters to underscore-separated format
+  // e.g., init(frame:) → init_frame, perform(_:with:afterDelay:) → perform_with_afterdelay
+  if (sanitized.includes('(')) {
+    const parenIndex = sanitized.indexOf('(');
+    const methodName = sanitized.substring(0, parenIndex);
+    const paramsSection = sanitized.substring(parenIndex);
+
+    // Extract parameter labels from signature
+    const paramLabels = paramsSection
+      .replace(/[()]/g, '')  // Remove parentheses
+      .split(':')            // Split by colons
+      .map(p => p.trim().split(/\s+/).pop() || '')  // Get the label (last word before colon)
+      .filter(p => p && p !== '_')  // Remove empty and underscore-only labels
+      .join('_');
+
+    sanitized = paramLabels ? `${methodName}_${paramLabels}` : methodName;
+  }
+
+  sanitized = sanitized
     .replace(/[<>:"/\\|?*]/g, '_')
     .replace(/\s+/g, '_')
     .replace(/__+/g, '_')
     .replace(/^_+|_+$/g, '');
-
-  if (sanitized.includes('(')) {
-    sanitized = sanitized.split('(')[0];
-  }
 
   if (sanitized.length > 100) {
     sanitized = sanitized.substring(0, 100);
