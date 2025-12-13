@@ -112,16 +112,16 @@ npx docset2md list-frameworks <docset-path>
 
 ```
 output/
-├── Swift/
+├── swift/
 │   ├── _index.md              # List of frameworks
-│   └── UIKit/
+│   └── uikit/
 │       ├── _index.md          # List of types in UIKit
-│       ├── UIWindow.md
+│       ├── uiwindow.md
 │       └── uiwindow/
-│           ├── rootViewController.md
-│           └── makeKeyAndVisible.md
-└── Objective-C/
-    └── UIKit/
+│           ├── rootviewcontroller.md
+│           └── makekeyandvisible.md
+└── objective-c/
+    └── uikit/
         └── ...
 ```
 
@@ -130,15 +130,15 @@ output/
 ```
 output/
 ├── _index.md                  # List of types with counts
-├── Function/
+├── function/
 │   ├── _index.md
 │   ├── array_map.md
 │   └── json_encode.md
-├── Class/
+├── class/
 │   ├── _index.md
-│   └── DateTime.md
-└── Constant/
-    └── PHP_VERSION.md
+│   └── datetime.md
+└── constant/
+    └── php_version.md
 ```
 
 ## CLI Options
@@ -150,6 +150,8 @@ output/
 | `-f, --framework <names...>` | Filter by framework names |
 | `-t, --type <types...>` | Filter by entry types |
 | `--limit <n>` | Limit number of entries to convert |
+| `--download` | Download missing content from Apple API (Apple docsets) |
+| `--validate` | Validate internal links after conversion |
 | `-v, --verbose` | Enable verbose output |
 | `-h, --help` | Show help |
 | `-V, --version` | Show version |
