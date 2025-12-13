@@ -151,10 +151,10 @@ Updated `sanitizeFileName` in all components to preserve method parameter labels
 ```
 
 **Files modified:**
-- `src/writer/PathResolver.ts`
+- `src/shared/PathResolver.ts`
 - `src/index.ts`
 - `scripts/validate-links.ts`
-- `src/parser/DocCParser.ts`
+- `src/docc/DocCParser.ts`
 - `tests/unit/writer/PathResolver.test.ts`
 
 **Commit:** `f36939f` - Preserve method parameter labels in filenames to prevent overwrites
@@ -268,7 +268,7 @@ Added link validation during conversion that checks if the target documentation 
 
 ### Implementation
 
-Modified `buildRelativePathFromUrl` in `src/parser/DocCParser.ts`:
+Modified `buildRelativePathFromUrl` in `src/docc/DocCParser.ts`:
 
 ```typescript
 // External Apple URLs without /documentation/ path
@@ -389,10 +389,10 @@ docset2md ./Apple_API_Reference.docset -o ./output --download
 - Falls back gracefully if download fails (network issues, content not available)
 
 **Files modified:**
-- `src/extractor/ContentExtractor.ts` - Added download functionality
-- `src/formats/types.ts` - Added `FormatInitOptions` interface
-- `src/formats/AppleDocCFormat.ts` - Pass options to extractor
-- `src/formats/FormatRegistry.ts` - Pass options through detection
+- `src/docc/ContentExtractor.ts` - Added download functionality
+- `src/shared/formats/types.ts` - Added `FormatInitOptions` interface
+- `src/docc/DocCFormat.ts` - Pass options to extractor
+- `src/FormatDetector.ts` - Pass options through detection
 - `src/index.ts` - Added `--download` CLI flag
 
 ### Verification

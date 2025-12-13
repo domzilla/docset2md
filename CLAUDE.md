@@ -54,7 +54,7 @@ src/
 
 ### Format Detection
 
-The `FormatRegistry` automatically detects the docset format:
+The `FormatDetector` automatically detects the docset format:
 1. **Apple DocC**: Has `cache.db` and `fs/` directory
 2. **CoreData**: Has `ZTOKEN` table in SQLite
 3. **Standard Dash**: Has `searchIndex` table (fallback)
