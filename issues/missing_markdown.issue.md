@@ -297,3 +297,51 @@ if (this.languageLookup) {
 The remaining ~8,740 broken links are references to valid documentation paths that exist in the searchIndex but whose files weren't generated due to content extraction failures. This is a separate issue - the documentation exists in the docset but couldn't be extracted.
 
 These are NOT broken links in the source docset; they're valid references to documentation that failed to extract for other reasons (missing content, extraction errors, etc.).
+
+---
+
+## Table Parsing Fix (2025-12-13)
+
+### Problem
+
+Some documents with tables failed to parse, causing content extraction failures:
+
+```
+Parse ERROR: Cannot read properties of undefined (reading 'map')
+    at DocCParser.renderTable
+```
+
+### Root Cause
+
+The DocC JSON schema has two different table formats:
+
+1. **Object format**: `rows: [{ cells: [{ content: [...] }] }]`
+2. **Array format**: `rows: [[[...], [...]], [[...], [...]]]` (rows as arrays of cell arrays)
+
+The parser only handled the object format, failing when encountering the array format.
+
+### Solution
+
+Updated `renderTable` in `DocCParser.ts` to handle both formats:
+
+```typescript
+if (Array.isArray(row)) {
+  // Array format - row is directly an array of cells
+  cells = row;
+} else if (row.cells) {
+  // Object format - extract content from each cell
+  cells = row.cells.map(cell => cell.content);
+}
+```
+
+### Results
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Broken links | 8,740 | 882 | -90% |
+
+### Remaining Broken Links
+
+The remaining ~882 broken links are references to valid documentation paths that exist in the searchIndex but whose content is not available in the cache.db. This is a data availability issue in the docset itself - the index references content that was never stored.
+
+Example: `PHVideoRequestOptions` class exists in the index but has no corresponding content in the cache.

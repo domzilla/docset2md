@@ -710,20 +710,37 @@ export class DocCParser {
     block: {
       type: 'table';
       header: string;
-      rows: Array<{ cells: Array<{ content: BlockContent[] }> }>;
+      rows: Array<{ cells: Array<{ content: BlockContent[] }> } | BlockContent[][]>;
     },
     references?: Record<string, Reference>
   ): string {
     if (block.rows.length === 0) return '';
 
-    const rows = block.rows.map(row =>
-      '| ' +
-      row.cells.map(cell => this.renderBlockContent(cell.content, references).replace(/\|/g, '\\|')).join(' | ') +
-      ' |'
-    );
+    const rows = block.rows.map(row => {
+      // Handle both table formats:
+      // 1. Object format: { cells: [{ content: [...] }] }
+      // 2. Array format: [[...], [...]] (array of cells, each cell is array of BlockContent)
+      let cells: BlockContent[][];
+      if (Array.isArray(row)) {
+        // Array format - row is directly an array of cells
+        cells = row;
+      } else if (row.cells) {
+        // Object format - extract content from each cell
+        cells = row.cells.map(cell => cell.content);
+      } else {
+        return '| |';
+      }
 
-    // Create header separator
-    const colCount = block.rows[0]?.cells.length ?? 1;
+      return '| ' +
+        cells.map(cellContent => this.renderBlockContent(cellContent, references).replace(/\|/g, '\\|')).join(' | ') +
+        ' |';
+    });
+
+    // Create header separator - get column count from first row
+    const firstRow = block.rows[0];
+    const colCount = Array.isArray(firstRow)
+      ? firstRow.length
+      : (firstRow?.cells?.length ?? 1);
     const separator = '| ' + Array(colCount).fill('---').join(' | ') + ' |';
 
     // If there's a header row, use first row as header
