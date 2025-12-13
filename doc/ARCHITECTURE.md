@@ -13,7 +13,7 @@ This document describes the internal architecture of docset2md, a CLI tool that 
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Format Detection Layer                          │
-│                       (shared/formats/FormatRegistry)                   │
+│                            (FormatDetector.ts)                          │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
               ┌───────────────────────┼───────────────────────┐
@@ -27,7 +27,7 @@ This document describes the internal architecture of docset2md, a CLI tool that 
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Converter Layer                                 │
-│                   (shared/converter/ConverterRegistry)                  │
+│                          (ConverterFactory.ts)                          │
 │              ┌──────────────┬──────────────┬──────────────┐             │
 │              │DocCConverter │Standard      │CoreData      │             │
 │              │              │Converter     │Converter     │             │
@@ -71,7 +71,7 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 ```
 src/
 ├── index.ts                 # CLI entry point and orchestration
-├── FormatDetector.ts        # Format auto-detection
+├── FormatDetector.ts        # Format auto-detection (detects docset format)
 ├── ConverterFactory.ts      # Creates format-specific converters
 ├── docc/                    # Apple DocC format (all DocC-specific code)
 │   ├── DocCFormat.ts        # DocC format handler
@@ -178,9 +178,9 @@ docset.docset/
 
 ## Core Components
 
-### FormatRegistry
+### FormatDetector
 
-The `FormatRegistry` manages format detection and instantiation:
+The `FormatDetector` manages format detection and instantiation:
 
 ```typescript
 interface DocsetFormat {
@@ -200,9 +200,9 @@ interface DocsetFormat {
 
 Detection priority: Apple DocC → CoreData → Standard Dash
 
-### ConverterRegistry
+### ConverterFactory
 
-The `ConverterRegistry` maps format handlers to format-specific converters:
+The `ConverterFactory` creates format-specific converters based on the detected format:
 
 ```typescript
 interface DocsetConverter {
