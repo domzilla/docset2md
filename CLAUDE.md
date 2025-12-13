@@ -7,6 +7,8 @@ A Node.js TypeScript CLI tool that converts documentation docsets to Markdown fi
 ```
 src/
 ├── index.ts                    # CLI entry point (commander-based)
+├── FormatRegistry.ts           # Format auto-detection
+├── ConverterRegistry.ts        # Maps formats to converters
 ├── docc/                       # Apple DocC format (all DocC-specific code)
 │   ├── DocCFormat.ts           # DocC format handler
 │   ├── DocCConverter.ts        # DocC converter: language/framework/item.md
@@ -25,12 +27,10 @@ src/
 │   └── CoreDataConverter.ts    # CoreData converter (extends StandardConverter)
 └── shared/                     # Shared infrastructure
     ├── formats/                # Format abstraction layer
-    │   ├── types.ts            # DocsetFormat interface and types
-    │   └── FormatRegistry.ts   # Format auto-detection
+    │   └── types.ts            # DocsetFormat interface and types
     ├── converter/              # Converter abstraction layer
     │   ├── types.ts            # DocsetConverter interface and types
-    │   ├── BaseConverter.ts    # Abstract base with shared conversion logic
-    │   └── ConverterRegistry.ts # Maps formats to converters
+    │   └── BaseConverter.ts    # Abstract base with shared conversion logic
     ├── utils/                  # Shared utilities
     │   ├── sanitize.ts         # Filename sanitization
     │   └── typeNormalizer.ts   # Type code normalization

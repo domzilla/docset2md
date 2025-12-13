@@ -8,7 +8,7 @@
  * @fileoverview Unit tests for ConverterRegistry.
  */
 
-import { ConverterRegistry } from '../../../src/shared/converter/ConverterRegistry.js';
+import { ConverterRegistry } from '../../../src/ConverterRegistry.js';
 import { DocCConverter } from '../../../src/docc/DocCConverter.js';
 import { StandardConverter } from '../../../src/standard/StandardConverter.js';
 import { CoreDataConverter } from '../../../src/coredata/CoreDataConverter.js';

@@ -8,10 +8,10 @@
  * @fileoverview Manages registration and auto-detection of docset format handlers.
  */
 
-import type { DocsetFormat, FormatInitOptions } from './types.js';
-import { DocCFormat } from '../../docc/DocCFormat.js';
-import { StandardFormat } from '../../standard/StandardFormat.js';
-import { CoreDataFormat } from '../../coredata/CoreDataFormat.js';
+import type { DocsetFormat, FormatInitOptions } from './shared/formats/types.js';
+import { DocCFormat } from './docc/DocCFormat.js';
+import { StandardFormat } from './standard/StandardFormat.js';
+import { CoreDataFormat } from './coredata/CoreDataFormat.js';
 
 /**
  * Registry for docset format detection and instantiation.

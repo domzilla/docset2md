@@ -11,8 +11,8 @@
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { FormatRegistry } from '../../src/shared/formats/FormatRegistry.js';
-import { ConverterRegistry } from '../../src/shared/converter/ConverterRegistry.js';
+import { FormatRegistry } from '../../src/FormatRegistry.js';
+import { ConverterRegistry } from '../../src/ConverterRegistry.js';
 
 // Test data paths
 const TEST_DATA_DIR = join(process.cwd(), 'test_data', 'input');

@@ -8,11 +8,11 @@
  * @fileoverview Maps format handlers to their corresponding converters.
  */
 
-import type { DocsetFormat } from '../formats/types.js';
-import type { DocsetConverter } from './types.js';
-import { DocCConverter } from '../../docc/DocCConverter.js';
-import { StandardConverter } from '../../standard/StandardConverter.js';
-import { CoreDataConverter } from '../../coredata/CoreDataConverter.js';
+import type { DocsetFormat } from './shared/formats/types.js';
+import type { DocsetConverter } from './shared/converter/types.js';
+import { DocCConverter } from './docc/DocCConverter.js';
+import { StandardConverter } from './standard/StandardConverter.js';
+import { CoreDataConverter } from './coredata/CoreDataConverter.js';
 
 /**
  * Factory for creating converters based on format handlers.
