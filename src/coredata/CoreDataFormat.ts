@@ -1,6 +1,6 @@
 /**
  * @file CoreDataFormat.ts
- * @module formats/CoreDataFormat
+ * @module coredata/CoreDataFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

@@ -1,6 +1,6 @@
 /**
  * @file ContentExtractor.ts
- * @module extractor/ContentExtractor
+ * @module docc/ContentExtractor
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

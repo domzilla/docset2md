@@ -1,6 +1,6 @@
 /**
  * @file FileWriter.ts
- * @module writer/FileWriter
+ * @module shared/FileWriter
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

@@ -1,6 +1,6 @@
 /**
  * @file CacheReader.ts
- * @module db/CacheReader
+ * @module docc/CacheReader
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

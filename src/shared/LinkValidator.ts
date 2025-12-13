@@ -1,6 +1,6 @@
 /**
  * @file LinkValidator.ts
- * @module validator/LinkValidator
+ * @module shared/LinkValidator
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT

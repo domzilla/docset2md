@@ -1,6 +1,6 @@
 /**
  * @file BaseConverter.ts
- * @module converter/BaseConverter
+ * @module shared/converter/BaseConverter
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT

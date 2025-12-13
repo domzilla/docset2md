@@ -1,6 +1,6 @@
 /**
  * @file HtmlParser.ts
- * @module parser/HtmlParser
+ * @module shared/HtmlParser
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

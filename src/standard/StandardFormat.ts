@@ -1,6 +1,6 @@
 /**
  * @file StandardFormat.ts
- * @module formats/StandardFormat
+ * @module standard/StandardFormat
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

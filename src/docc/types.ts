@@ -1,6 +1,6 @@
 /**
  * @file types.ts
- * @module parser/types
+ * @module docc/types
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

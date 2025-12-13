@@ -1,6 +1,6 @@
 /**
  * @file TarixExtractor.ts
- * @module extractor/TarixExtractor
+ * @module shared/TarixExtractor
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

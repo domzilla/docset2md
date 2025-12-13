@@ -1,6 +1,6 @@
 /**
  * @file types.ts
- * @module converter/types
+ * @module shared/converter/types
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT

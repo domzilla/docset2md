@@ -1,6 +1,6 @@
 /**
  * @file types.ts
- * @module formats/types
+ * @module shared/formats/types
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

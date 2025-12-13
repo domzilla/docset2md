@@ -1,6 +1,6 @@
 /**
  * @file UuidGenerator.ts
- * @module extractor/UuidGenerator
+ * @module docc/UuidGenerator
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

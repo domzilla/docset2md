@@ -1,6 +1,6 @@
 /**
  * @file CoreDataConverter.ts
- * @module converter/CoreDataConverter
+ * @module coredata/CoreDataConverter
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT

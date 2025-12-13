@@ -1,6 +1,6 @@
 /**
  * @file IndexReader.ts
- * @module db/IndexReader
+ * @module docc/IndexReader
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT

@@ -1,6 +1,6 @@
 /**
  * @file DocCParser.ts
- * @module parser/DocCParser
+ * @module docc/DocCParser
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
