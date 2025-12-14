@@ -117,10 +117,14 @@ export class DocCConverter extends BaseConverter {
 
     // Calculate relative URL from the framework index
     // e.g., path "ls/documentation/xpc/xpclistener/incomingsessionrequest" -> "./xpclistener/incomingsessionrequest.md"
+    // IMPORTANT: Sanitize path segments to match actual file paths
     let relativeUrl: string;
     const pathMatch = entry.path.match(/l[sc]\/documentation\/[^/]+\/(.+)/);
     if (pathMatch) {
-      relativeUrl = `./${pathMatch[1].toLowerCase()}.md`;
+      // Sanitize each path segment to match getOutputPath() behavior
+      const segments = pathMatch[1].split('/');
+      const sanitizedSegments = segments.map(s => this.sanitizeFileName(s));
+      relativeUrl = `./${sanitizedSegments.join('/')}.md`;
     } else {
       relativeUrl = `./${this.sanitizeFileName(entry.name)}.md`;
     }
@@ -185,10 +189,14 @@ export class DocCConverter extends BaseConverter {
     }
 
     // Generate language root indexes
+    // Only include frameworks that have items (i.e., their _index.md was written)
     for (const lang of ['swift', 'objc'] as const) {
       const langDir = lang === 'swift' ? 'swift' : 'objective-c';
       const frameworks = Array.from(this.frameworkItems.keys())
-        .filter(fw => this.frameworkItems.get(fw)?.has(lang))
+        .filter(fw => {
+          const langItems = this.frameworkItems.get(fw)?.get(lang);
+          return langItems && langItems.length > 0; // Only include if _index.md was created
+        })
         .sort()
         .map(fw => ({
           title: fw,
