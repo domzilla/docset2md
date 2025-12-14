@@ -11,8 +11,8 @@
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { FormatDetector } from '../../src/FormatDetector.js';
-import { ConverterFactory } from '../../src/ConverterFactory.js';
+import { FormatDetector } from '../../src/factory/FormatDetector.js';
+import { ConverterFactory } from '../../src/factory/ConverterFactory.js';
 
 // Test data paths
 const TEST_DATA_DIR = join(process.cwd(), 'test_data', 'input');

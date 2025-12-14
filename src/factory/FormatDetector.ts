@@ -1,6 +1,6 @@
 /**
  * @file FormatDetector.ts
- * @module FormatDetector
+ * @module factory/FormatDetector
  * @author Dominic Rodemer
  * @created 2025-12-11
  * @license MIT
@@ -8,10 +8,10 @@
  * @fileoverview Auto-detection of docset format handlers.
  */
 
-import type { DocsetFormat, FormatInitOptions } from './shared/formats/types.js';
-import { DocCFormat } from './docc/DocCFormat.js';
-import { StandardFormat } from './standard/StandardFormat.js';
-import { CoreDataFormat } from './coredata/CoreDataFormat.js';
+import type { DocsetFormat, FormatInitOptions } from '../shared/formats/types.js';
+import { DocCFormat } from '../docc/DocCFormat.js';
+import { StandardFormat } from '../standard/StandardFormat.js';
+import { CoreDataFormat } from '../coredata/CoreDataFormat.js';
 
 /**
  * Detector for docset format identification and instantiation.

@@ -8,7 +8,7 @@
  * @fileoverview Unit tests for ConverterFactory.
  */
 
-import { ConverterFactory } from '../../../src/ConverterFactory.js';
+import { ConverterFactory } from '../../../src/factory/ConverterFactory.js';
 import { DocCConverter } from '../../../src/docc/DocCConverter.js';
 import { StandardConverter } from '../../../src/standard/StandardConverter.js';
 import { CoreDataConverter } from '../../../src/coredata/CoreDataConverter.js';

@@ -7,8 +7,9 @@ A Node.js TypeScript CLI tool that converts documentation docsets to Markdown fi
 ```
 src/
 ├── index.ts                    # CLI entry point (commander-based)
-├── FormatDetector.ts           # Format auto-detection
-├── ConverterFactory.ts         # Creates format-specific converters
+├── factory/                    # Factory classes
+│   ├── FormatDetector.ts       # Format auto-detection
+│   └── ConverterFactory.ts     # Creates format-specific converters
 ├── docc/                       # Apple DocC format (all DocC-specific code)
 │   ├── DocCFormat.ts           # DocC format handler
 │   ├── DocCConverter.ts        # DocC converter: language/framework/item.md

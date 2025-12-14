@@ -28,8 +28,8 @@
 import { program } from 'commander';
 import { existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
-import { FormatDetector } from './FormatDetector.js';
-import { ConverterFactory } from './ConverterFactory.js';
+import { FormatDetector } from './factory/FormatDetector.js';
+import { ConverterFactory } from './factory/ConverterFactory.js';
 import { validateLinks, printValidationResults } from './shared/LinkValidator.js';
 import type { NormalizedEntry } from './shared/formats/types.js';
 import type { ProgressCallback } from './shared/converter/types.js';

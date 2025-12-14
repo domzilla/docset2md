@@ -11,7 +11,7 @@
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FormatDetector } from '../../src/FormatDetector.js';
+import { FormatDetector } from '../../src/factory/FormatDetector.js';
 import type { DocsetFormat } from '../../src/shared/formats/types.js';
 
 const __filename = fileURLToPath(import.meta.url);

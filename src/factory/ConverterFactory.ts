@@ -1,6 +1,6 @@
 /**
  * @file ConverterFactory.ts
- * @module ConverterFactory
+ * @module factory/ConverterFactory
  * @author Dominic Rodemer
  * @created 2025-12-13
  * @license MIT
@@ -8,11 +8,11 @@
  * @fileoverview Factory for creating format-specific converters.
  */
 
-import type { DocsetFormat } from './shared/formats/types.js';
-import type { DocsetConverter } from './shared/converter/types.js';
-import { DocCConverter } from './docc/DocCConverter.js';
-import { StandardConverter } from './standard/StandardConverter.js';
-import { CoreDataConverter } from './coredata/CoreDataConverter.js';
+import type { DocsetFormat } from '../shared/formats/types.js';
+import type { DocsetConverter } from '../shared/converter/types.js';
+import { DocCConverter } from '../docc/DocCConverter.js';
+import { StandardConverter } from '../standard/StandardConverter.js';
+import { CoreDataConverter } from '../coredata/CoreDataConverter.js';
 
 /**
  * Factory for creating converters based on format handlers.
