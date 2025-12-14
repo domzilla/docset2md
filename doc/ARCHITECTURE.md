@@ -59,11 +59,18 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 │                  (shared/FileWriter, PathResolver)                      │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
-                                      ▼ (optional --validate)
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        Link Validation                                  │
-│                      (shared/LinkValidator)                             │
-└─────────────────────────────────────────────────────────────────────────┘
+              ┌───────────────────────┴───────────────────────┐
+              ▼ (optional --validate)                         ▼ (optional --index)
+┌─────────────────────────────────┐         ┌─────────────────────────────────┐
+│        Link Validation          │         │      Search Index Generation    │
+│     (shared/LinkValidator)      │         │   (search/SearchIndexWriter)    │
+└─────────────────────────────────┘         └─────────────────────────────────┘
+                                                              │
+                                                              ▼ (requires Bun)
+                                            ┌─────────────────────────────────┐
+                                            │    Search Binary Building       │
+                                            │     (search/BunBuilder)         │
+                                            └─────────────────────────────────┘
 ```
 
 ## Directory Structure
@@ -71,8 +78,9 @@ This document describes the internal architecture of docset2md, a CLI tool that 
 ```
 src/
 ├── index.ts                 # CLI entry point and orchestration
-├── FormatDetector.ts        # Format auto-detection (detects docset format)
-├── ConverterFactory.ts      # Creates format-specific converters
+├── factory/                 # Factory classes
+│   ├── FormatDetector.ts    # Format auto-detection (detects docset format)
+│   └── ConverterFactory.ts  # Creates format-specific converters
 ├── docc/                    # Apple DocC format (all DocC-specific code)
 │   ├── DocCFormat.ts        # DocC format handler
 │   ├── DocCConverter.ts     # DocC converter: language/framework/item.md
@@ -89,6 +97,15 @@ src/
 ├── coredata/                # CoreData format
 │   ├── CoreDataFormat.ts    # CoreData format handler
 │   └── CoreDataConverter.ts # CoreData converter (extends StandardConverter)
+├── search/                  # Search index generation
+│   ├── types.ts             # Search entry interfaces
+│   ├── schema.ts            # SQLite FTS5 schema definitions
+│   ├── SearchIndexWriter.ts # Creates search.db during conversion
+│   └── BunBuilder.ts        # Bun detection and binary building
+├── search-cli/              # Standalone search CLI (Bun-based)
+│   ├── index.ts             # CLI entry point (finds search.db in own dir)
+│   ├── SearchIndexReader.ts # Queries search index with bun:sqlite
+│   └── formatters.ts        # Output formatters (simple, table, JSON)
 └── shared/                  # Shared infrastructure
     ├── formats/             # Format abstraction layer
     │   └── types.ts         # DocsetFormat interface and types
@@ -491,6 +508,127 @@ When the `--validate` flag is used, the `LinkValidator` performs post-conversion
 - Broken links (target missing) with source file and expected path
 - Absolute links (should be converted to relative)
 
+## Search Index
+
+When the `--index` flag is used, a searchable SQLite index with FTS5 full-text search is generated alongside the markdown output.
+
+### Output Files
+
+```
+output/
+├── swift/
+│   └── uikit/
+│       └── *.md
+├── search.db          # SQLite FTS5 search index
+└── search             # Standalone search binary (built by Bun)
+```
+
+### Database Schema
+
+**search.db** uses SQLite FTS5 for full-text search with BM25 ranking:
+
+```sql
+-- Main entries table
+CREATE TABLE entries (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,           -- Symbol name (UIWindow)
+    type TEXT NOT NULL,           -- Entry type (Class, Method, etc.)
+    language TEXT,                -- swift, objc, or NULL
+    framework TEXT,               -- Framework name (UIKit)
+    path TEXT NOT NULL,           -- Relative file path
+    abstract TEXT,                -- Brief description
+    declaration TEXT,             -- Code signature
+    deprecated INTEGER DEFAULT 0,
+    beta INTEGER DEFAULT 0
+);
+
+-- FTS5 virtual table for full-text search
+CREATE VIRTUAL TABLE entries_fts USING fts5(
+    name, type, framework, abstract, declaration,
+    content='entries',
+    content_rowid='id'
+);
+
+-- Triggers keep FTS in sync automatically
+-- Indexes for filtering by type, framework, language
+```
+
+### Search Flow
+
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   Conversion │───▶│  SearchIndex │───▶│  BunBuilder  │
+│   (--index)  │    │    Writer    │    │ (if Bun avail)│
+└──────────────┘    └──────────────┘    └──────────────┘
+                           │                    │
+                           ▼                    ▼
+                    ┌──────────────┐    ┌──────────────┐
+                    │  search.db   │    │    search    │
+                    │  (SQLite)    │    │   (binary)   │
+                    └──────────────┘    └──────────────┘
+```
+
+**Index Generation (during conversion):**
+1. `SearchIndexWriter` creates `search.db` with FTS5 schema
+2. Each successful entry is added to the index
+3. On close: FTS is optimized, WAL is checkpointed
+4. `BunBuilder` compiles the search CLI to a standalone binary
+5. Binary is placed in output directory alongside `search.db`
+
+**Bun Requirement:**
+- The search binary is compiled using `bun build --compile`
+- If Bun is not installed, `search.db` is still created (usable with any SQLite client)
+- User sees helpful installation instructions
+
+### Search Binary Usage
+
+The binary automatically finds `search.db` in its own directory:
+
+```bash
+# Basic search
+./output/search "UIWindow"
+
+# Prefix search
+./output/search "view*"
+
+# Filter by type and framework
+./output/search "window" --type Class --framework UIKit
+
+# List available types or frameworks
+./output/search --list-types
+./output/search --list-frameworks
+
+# Output formats
+./output/search "window" --format simple   # default
+./output/search "window" --format table
+./output/search "window" --format json
+```
+
+### FTS5 Query Features
+
+The search index supports FTS5 query syntax:
+
+| Query | Description |
+|-------|-------------|
+| `UIWindow` | Exact term match |
+| `view*` | Prefix match |
+| `"make key"` | Phrase match |
+| `view AND window` | Boolean AND |
+| `view OR window` | Boolean OR |
+| `view NOT controller` | Boolean NOT |
+
+### BM25 Ranking
+
+Search results are ranked using BM25 with weighted columns:
+
+| Column | Weight | Rationale |
+|--------|--------|-----------|
+| `name` | 10.0 | Symbol name is most important |
+| `type` | 5.0 | Entry type is significant |
+| `framework` | 2.0 | Framework context |
+| `abstract` | 1.0 | Description content |
+| `declaration` | 1.0 | Code signature |
+
 ## Error Handling
 
 - Missing content: Logged as failed, processing continues
@@ -510,9 +648,11 @@ When the `--validate` flag is used, the `LinkValidator` performs post-conversion
 
 | Package | Purpose |
 |---------|---------|
-| `better-sqlite3` | SQLite database access |
+| `better-sqlite3` | SQLite database access (index writing) |
 | `commander` | CLI argument parsing |
 | `cheerio` | HTML parsing |
 | `turndown` | HTML to Markdown conversion |
 | `tar-stream` | Tarix archive extraction |
 | `brotli` (system) | Decompression via CLI |
+| `bun` (optional) | Compiles search CLI binary (--index flag) |
+| `bun:sqlite` | Search CLI uses Bun's built-in SQLite |

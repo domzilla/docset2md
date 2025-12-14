@@ -9,11 +9,17 @@
  */
 
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
 import type { ParsedDocumentation, TopicItem } from '../../docc/types.js';
 import { sanitizeFileName } from '../utils/sanitize.js';
 import { MarkdownGenerator } from '../MarkdownGenerator.js';
+import { SearchIndexWriter } from '../../search/SearchIndexWriter.js';
+import {
+  buildSearchBinary,
+  BunNotInstalledError,
+  printBunInstallInstructions,
+} from '../../search/BunBuilder.js';
 import type {
   DocsetConverter,
   ConverterOptions,
@@ -53,6 +59,7 @@ export abstract class BaseConverter implements DocsetConverter {
   protected createdDirs: Set<string> = new Set();
   protected filesWritten = 0;
   protected bytesWritten = 0;
+  protected searchIndexWriter: SearchIndexWriter | null = null;
 
   /**
    * Create a new BaseConverter.
@@ -104,6 +111,12 @@ export abstract class BaseConverter implements DocsetConverter {
       mkdirSync(options.outputDir, { recursive: true });
     }
 
+    // Initialize search index if requested
+    if (options.generateIndex) {
+      const indexPath = join(options.outputDir, 'search.db');
+      this.searchIndexWriter = new SearchIndexWriter(indexPath);
+    }
+
     const totalCount = this.format.getEntryCount(options.filters);
     const limit = options.filters?.limit;
 
@@ -131,6 +144,22 @@ export abstract class BaseConverter implements DocsetConverter {
         this.writeFile(filePath, markdown);
         this.trackForIndex(entry, content, filePath, options.outputDir);
 
+        // Add to search index if enabled
+        if (this.searchIndexWriter) {
+          const relativePath = filePath.replace(options.outputDir + '/', '');
+          this.searchIndexWriter.addEntry({
+            name: entry.name,
+            type: entry.type,
+            language: entry.language,
+            framework: content.framework,
+            path: relativePath,
+            abstract: content.abstract,
+            declaration: content.declaration,
+            deprecated: content.deprecated,
+            beta: content.beta,
+          });
+        }
+
         successful++;
       } catch (error) {
         if (options.verbose) {
@@ -143,6 +172,27 @@ export abstract class BaseConverter implements DocsetConverter {
     // Generate index files
     this.generateIndexes(options.outputDir, this.generator);
 
+    // Close search index and get entry count
+    let indexEntries: number | undefined;
+    let searchBinaryBuilt = false;
+
+    if (this.searchIndexWriter) {
+      indexEntries = this.searchIndexWriter.getEntryCount();
+      this.searchIndexWriter.close();
+      this.searchIndexWriter = null;
+
+      // Try to build the search binary
+      try {
+        searchBinaryBuilt = buildSearchBinary(options.outputDir);
+      } catch (error) {
+        if (error instanceof BunNotInstalledError) {
+          printBunInstallInstructions();
+        } else {
+          console.error('Failed to build search binary:', error);
+        }
+      }
+    }
+
     return {
       processed,
       successful,
@@ -153,6 +203,8 @@ export abstract class BaseConverter implements DocsetConverter {
         bytesWritten: this.bytesWritten,
       },
       elapsedMs: Date.now() - startTime,
+      indexEntries,
+      searchBinaryBuilt,
     };
   }
 

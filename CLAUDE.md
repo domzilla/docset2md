@@ -26,6 +26,15 @@ src/
 ├── coredata/                   # CoreData format
 │   ├── CoreDataFormat.ts       # CoreData format handler
 │   └── CoreDataConverter.ts    # CoreData converter (extends StandardConverter)
+├── search/                     # Search index generation
+│   ├── types.ts                # Search entry interfaces
+│   ├── schema.ts               # SQLite FTS5 schema
+│   ├── SearchIndexWriter.ts    # Creates search.db during conversion
+│   └── BunBuilder.ts           # Bun detection and binary building
+├── search-cli/                 # Standalone search CLI (Bun)
+│   ├── index.ts                # CLI entry point
+│   ├── SearchIndexReader.ts    # Queries search index with bun:sqlite
+│   └── formatters.ts           # Output formatters (simple, table, JSON)
 └── shared/                     # Shared infrastructure
     ├── formats/                # Format abstraction layer
     │   └── types.ts            # DocsetFormat interface and types
@@ -115,6 +124,9 @@ npm run dev -- <docset-path> -o <output-dir> --validate
 # Download missing content from Apple API (for incomplete docsets)
 npm run dev -- <docset-path> -o <output-dir> --download
 
+# Generate searchable index (search.db)
+npm run dev -- <docset-path> -o <output-dir> --index
+
 # Show docset info
 npm run dev -- info <docset-path>
 
@@ -122,6 +134,75 @@ npm run dev -- info <docset-path>
 npm run dev -- list-types <docset-path>
 npm run dev -- list-frameworks <docset-path>
 ```
+
+## Search Index
+
+When using the `--index` flag, a searchable SQLite database (`search.db`) and a standalone search binary are created in the output directory. This provides full-text search capabilities similar to the original docset's searchIndex.
+
+### Output Structure with Search
+
+```
+output/
+├── swift/
+│   └── uikit/...
+├── search.db          # SQLite FTS5 search index
+└── search             # Standalone binary (requires Bun to build)
+```
+
+### Features
+
+- **SQLite FTS5**: Full-text search with BM25 ranking
+- **Prefix search**: `UIWin*` matches `UIWindow`, `UIWindowScene`, etc.
+- **Phrase search**: `"view controller"` for exact matches
+- **Boolean operators**: `UIKit AND view`, `window OR scene`
+- **Filtering**: By type, framework, or language
+
+### Bun Requirement
+
+The search binary is built using [Bun](https://bun.sh/). If Bun is not installed when you run with `--index`, you'll see instructions to install it:
+
+```bash
+# Install Bun
+curl -fsSL https://bun.sh/install | bash
+
+# Then run the conversion again with --index
+```
+
+The `search.db` file is always created, even if Bun is not installed. You can query it directly with any SQLite client.
+
+### Search CLI Usage
+
+The search binary automatically finds `search.db` in its own directory:
+
+```bash
+# From the output directory
+cd ./output
+./search "UIWindow"
+./search "window*" --type Class
+./search "view" --framework UIKit --limit 10
+./search --list-types
+./search --list-frameworks
+./search "init*" --format json
+
+# Or specify a different database
+./search "query" --db /path/to/search.db
+```
+
+### Schema
+
+The search index contains the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| name | TEXT | Symbol name (e.g., "UIWindow") |
+| type | TEXT | Entry type (Class, Method, Property, etc.) |
+| language | TEXT | Programming language (swift, objc) |
+| framework | TEXT | Framework name (UIKit, Foundation, etc.) |
+| path | TEXT | Relative path to markdown file |
+| abstract | TEXT | Brief description |
+| declaration | TEXT | Code signature |
+| deprecated | INTEGER | 1 if deprecated |
+| beta | INTEGER | 1 if beta |
 
 ## Output Structure
 

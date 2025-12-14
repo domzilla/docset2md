@@ -24,6 +24,8 @@ export interface ConverterOptions {
   verbose?: boolean;
   /** Entry filters (types, frameworks, languages, limit) */
   filters?: EntryFilters;
+  /** Generate searchable index (search.db) */
+  generateIndex?: boolean;
 }
 
 /**
@@ -40,6 +42,10 @@ export interface ConversionResult {
   writeStats: WriteStats;
   /** Time taken in milliseconds */
   elapsedMs: number;
+  /** Number of entries indexed (if generateIndex enabled) */
+  indexEntries?: number;
+  /** Whether the search binary was built successfully */
+  searchBinaryBuilt?: boolean;
 }
 
 /**

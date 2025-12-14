@@ -54,6 +54,8 @@ interface ConvertOptions {
   download?: boolean;
   /** Validate links after conversion */
   validate?: boolean;
+  /** Generate searchable index (search.db) */
+  index?: boolean;
 }
 
 /**
@@ -76,6 +78,7 @@ async function main() {
     .option('-v, --verbose', 'Enable verbose output')
     .option('--download', 'Download missing content from Apple API (Apple docsets only)')
     .option('--validate', 'Validate internal links after conversion')
+    .option('--index', 'Generate searchable index (search.db)')
     .action(convert);
 
   program
@@ -181,6 +184,7 @@ async function convert(docsetPath: string, options: ConvertOptions) {
       outputDir: resolve(options.output),
       verbose: options.verbose,
       filters,
+      generateIndex: options.index,
     },
     onProgress
   );
@@ -200,6 +204,12 @@ async function convert(docsetPath: string, options: ConvertOptions) {
   console.log(`Files written: ${result.writeStats.filesWritten.toLocaleString()}`);
   console.log(`Directories created: ${result.writeStats.directoriesCreated}`);
   console.log(`Total size: ${(result.writeStats.bytesWritten / 1024 / 1024).toFixed(1)} MB`);
+  if (result.indexEntries !== undefined) {
+    console.log(`Search index: ${result.indexEntries.toLocaleString()} entries (search.db)`);
+    if (result.searchBinaryBuilt) {
+      console.log(`Search binary: ${resolve(options.output)}/search`);
+    }
+  }
 
   // Run link validation if requested
   if (options.validate) {

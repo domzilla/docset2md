@@ -13,7 +13,10 @@
     "dev": "tsc && node dist/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "build:search-cli": "bun build --compile --outfile=dist/docset-search src/search-cli/index.ts",
+    "build:search-cli:linux": "bun build --compile --target=bun-linux-x64 --outfile=dist/docset-search-linux src/search-cli/index.ts",
+    "build:search-cli:windows": "bun build --compile --target=bun-windows-x64 --outfile=dist/docset-search.exe src/search-cli/index.ts"
   },
   "keywords": [
     "docset",
