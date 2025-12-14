@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
 import type { MarkdownGenerator } from '../shared/MarkdownGenerator.js';
 import { BaseConverter } from '../shared/converter/BaseConverter.js';
+import type { StandardFormat } from './StandardFormat.js';
 
 /**
  * Converter for Standard Dash format docsets.
@@ -48,10 +49,20 @@ export class StandardConverter extends BaseConverter {
   }
 
   /**
-   * Reset index tracking state.
+   * Reset index tracking state and build link mapping.
+   *
+   * The link mapping enables internal .html links in the content to be
+   * converted to their corresponding .md output paths.
    */
   protected resetIndexTracking(): void {
     this.typeItems.clear();
+
+    // Build and set link mapping for internal link resolution
+    const standardFormat = this.format as StandardFormat;
+    if (typeof standardFormat.buildLinkMapping === 'function') {
+      const linkMap = standardFormat.buildLinkMapping();
+      standardFormat.setLinkMapping(linkMap);
+    }
   }
 
   /**

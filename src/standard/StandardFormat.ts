@@ -17,7 +17,9 @@ import type {
   ParsedContent,
   EntryFilters,
   FormatInitOptions,
+  LinkMapping,
 } from '../shared/formats/types.js';
+import { sanitizeFileName } from '../shared/utils/sanitize.js';
 import { TarixExtractor } from '../shared/TarixExtractor.js';
 import { HtmlParser } from '../shared/HtmlParser.js';
 import { normalizeType, denormalizeTypes } from '../shared/utils/typeNormalizer.js';
@@ -52,6 +54,7 @@ export class StandardFormat implements DocsetFormat {
   private htmlParser: HtmlParser = new HtmlParser();
   private docsetName: string = '';
   private initialized = false;
+  private linkMap: Map<string, LinkMapping> | null = null;
 
   /** @inheritdoc */
   getName(): string {
@@ -203,6 +206,12 @@ export class StandardFormat implements DocsetFormat {
 
     if (!html) return null;
 
+    // Set link context for internal link resolution
+    if (this.linkMap) {
+      const currentTypeDir = entry.type.toLowerCase();
+      this.htmlParser.setLinkContext(this.linkMap, currentTypeDir);
+    }
+
     return this.htmlParser.parse(html, entry.name, entry.type);
   }
 
@@ -239,6 +248,66 @@ export class StandardFormat implements DocsetFormat {
     this.db?.close();
     this.tarix?.close();
     this.initialized = false;
+  }
+
+  /**
+   * Set the link mapping for internal link resolution.
+   *
+   * Call this with the result of buildLinkMapping() before extracting content
+   * to enable internal .html links to be converted to .md links.
+   *
+   * @param linkMap - Map from HTML filenames to output paths
+   */
+  setLinkMapping(linkMap: Map<string, LinkMapping>): void {
+    this.linkMap = linkMap;
+  }
+
+  /**
+   * Build a mapping from HTML filenames to output markdown paths.
+   *
+   * This mapping is used to convert internal .html links in the content
+   * to their corresponding .md output paths.
+   *
+   * @returns Map from HTML filename (e.g., "class.iteratoraggregate.html") to LinkMapping
+   *
+   * @example
+   * ```typescript
+   * const linkMap = format.buildLinkMapping();
+   * // linkMap.get("class.iteratoraggregate.html")
+   * // => { outputPath: "interface/iteratoraggregate.md", type: "Interface", name: "IteratorAggregate" }
+   * ```
+   */
+  buildLinkMapping(): Map<string, LinkMapping> {
+    if (!this.db) throw new Error('Not initialized');
+
+    const linkMap = new Map<string, LinkMapping>();
+
+    const stmt = this.db.prepare('SELECT name, type, path FROM searchIndex');
+
+    for (const row of stmt.iterate() as Iterable<{
+      name: string;
+      type: string;
+      path: string;
+    }>) {
+      // Extract the HTML filename from the path
+      // Path formats: "www.php.net/manual/en/class.iteratoraggregate.html" or just "class.iteratoraggregate.html"
+      const pathWithoutFragment = row.path.split('#')[0];
+      const htmlFilename = pathWithoutFragment.split('/').pop() || pathWithoutFragment;
+
+      // Normalize the type and build output path
+      const normalizedType = normalizeType(row.type);
+      const typeDir = normalizedType.toLowerCase();
+      const sanitizedName = sanitizeFileName(row.name);
+      const outputPath = `${typeDir}/${sanitizedName}.md`;
+
+      linkMap.set(htmlFilename, {
+        outputPath,
+        type: normalizedType,
+        name: row.name,
+      });
+    }
+
+    return linkMap;
   }
 
   /**

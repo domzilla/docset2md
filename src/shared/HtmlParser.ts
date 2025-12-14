@@ -10,7 +10,7 @@
 
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
-import type { ParsedContent } from './formats/types.js';
+import type { ParsedContent, LinkMapping } from './formats/types.js';
 
 /**
  * Parses HTML documentation pages into ParsedContent.
@@ -32,6 +32,8 @@ import type { ParsedContent } from './formats/types.js';
  */
 export class HtmlParser {
   private turndown: TurndownService;
+  private linkMap: Map<string, LinkMapping> | null = null;
+  private currentTypeDir: string = '';
 
   /**
    * Create a new HtmlParser with preconfigured turndown rules.
@@ -62,8 +64,99 @@ export class HtmlParser {
       },
     });
 
+    // Custom rule for internal links - transforms .html links to .md
+    this.turndown.addRule('internalLinks', {
+      filter: (node) => {
+        return node.nodeName === 'A' && node.getAttribute('href') !== null;
+      },
+      replacement: (content, node) => {
+        const href = (node as Element).getAttribute('href') || '';
+
+        // Skip empty links or javascript links
+        if (!href || href.startsWith('javascript:')) {
+          return content;
+        }
+
+        // Keep external URLs unchanged
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          return `[${content}](${href})`;
+        }
+
+        // Skip mailto and tel links
+        if (href.startsWith('mailto:') || href.startsWith('tel:')) {
+          return `[${content}](${href})`;
+        }
+
+        // Handle anchor-only links (same page)
+        if (href.startsWith('#')) {
+          return `[${content}](${href})`;
+        }
+
+        // Try to transform internal .html links
+        if (this.linkMap) {
+          // Extract filename and anchor from href
+          const [pathPart, anchor] = href.split('#');
+          const htmlFilename = pathPart.split('/').pop() || pathPart;
+
+          const mapping = this.linkMap.get(htmlFilename);
+          if (mapping) {
+            // Compute relative path from current type directory to target
+            const relativePath = this.computeRelativePath(this.currentTypeDir, mapping.outputPath);
+            const anchorSuffix = anchor ? `#${anchor}` : '';
+            return `[${content}](${relativePath}${anchorSuffix})`;
+          }
+
+          // No mapping found - return plain text (link target doesn't exist)
+          return content;
+        }
+
+        // No link map configured - keep original link
+        return `[${content}](${href})`;
+      },
+    });
+
     // Remove script and style tags
     this.turndown.remove(['script', 'style', 'noscript']);
+  }
+
+  /**
+   * Set link mapping context for internal link resolution.
+   *
+   * Call this before parsing to enable internal link transformation.
+   *
+   * @param linkMap - Map from HTML filenames to output paths
+   * @param currentTypeDir - Current entry's type directory (e.g., "class")
+   */
+  setLinkContext(linkMap: Map<string, LinkMapping>, currentTypeDir: string): void {
+    this.linkMap = linkMap;
+    this.currentTypeDir = currentTypeDir;
+  }
+
+  /**
+   * Clear link mapping context.
+   */
+  clearLinkContext(): void {
+    this.linkMap = null;
+    this.currentTypeDir = '';
+  }
+
+  /**
+   * Compute relative path from one type directory to a target path.
+   *
+   * @param fromDir - Source type directory (e.g., "class")
+   * @param toPath - Target output path (e.g., "interface/iteratoraggregate.md")
+   * @returns Relative path (e.g., "../interface/iteratoraggregate.md")
+   */
+  private computeRelativePath(fromDir: string, toPath: string): string {
+    const [targetDir, targetFile] = toPath.split('/');
+
+    if (fromDir === targetDir) {
+      // Same directory - use relative path
+      return `./${targetFile}`;
+    } else {
+      // Different directory - go up one level and into target directory
+      return `../${targetDir}/${targetFile}`;
+    }
   }
 
   /**

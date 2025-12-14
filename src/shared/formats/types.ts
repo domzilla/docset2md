@@ -221,6 +221,21 @@ export interface DocsetFormat {
 }
 
 /**
+ * Link mapping for internal link resolution.
+ *
+ * Maps HTML filenames to their corresponding output paths,
+ * enabling internal links to be converted from .html to .md format.
+ */
+export interface LinkMapping {
+  /** Output path relative to output root (e.g., "interface/iteratoraggregate.md") */
+  outputPath: string;
+  /** Entry type (e.g., "Interface", "Class") */
+  type: string;
+  /** Entry name (e.g., "IteratorAggregate") */
+  name: string;
+}
+
+/**
  * Docset metadata from Info.plist.
  *
  * Contains information about the docset read from the Info.plist
