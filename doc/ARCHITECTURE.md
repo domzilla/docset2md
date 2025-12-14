@@ -103,7 +103,8 @@ src/
 │   ├── SearchIndexWriter.ts # Creates search.db during conversion
 │   └── BunBuilder.ts        # Bun detection and binary building
 ├── search-cli/              # Standalone search CLI (Bun-based)
-│   ├── index.ts             # CLI entry point (finds search.db in own dir)
+│   ├── docc-search.ts       # DocC CLI with --language support
+│   ├── standard-search.ts   # Standard/CoreData CLI (no language)
 │   ├── SearchIndexReader.ts # Queries search index with bun:sqlite
 │   └── formatters.ts        # Output formatters (simple, table, JSON)
 └── shared/                  # Shared infrastructure
@@ -580,28 +581,40 @@ CREATE VIRTUAL TABLE entries_fts USING fts5(
 - If Bun is not installed, `search.db` is still created (usable with any SQLite client)
 - User sees helpful installation instructions
 
+### Search Binary Variants
+
+Two search binary variants are built depending on the docset format:
+
+| Variant | Used By | Language Filtering |
+|---------|---------|-------------------|
+| `docc-search` | Apple DocC | Yes (`--language swift/objc`) |
+| `standard-search` | Standard Dash, CoreData | No |
+
 ### Search Binary Usage
 
 The binary automatically finds `search.db` in its own directory:
 
+**DocC variant (Apple docsets):**
 ```bash
-# Basic search
 ./output/search "UIWindow"
-
-# Prefix search
-./output/search "view*"
-
-# Filter by type and framework
+./output/search "view*" --language swift
 ./output/search "window" --type Class --framework UIKit
+./output/search --list-languages
+```
 
-# List available types or frameworks
+**Standard variant (Standard/CoreData docsets):**
+```bash
+./output/search "array_map"
+./output/search "date*" --type Function
+./output/search "json" --framework PHP
+```
+
+**Common options (both variants):**
+```bash
 ./output/search --list-types
 ./output/search --list-frameworks
-
-# Output formats
-./output/search "window" --format simple   # default
-./output/search "window" --format table
-./output/search "window" --format json
+./output/search "query" --format json
+./output/search "query" --limit 50
 ```
 
 ### FTS5 Query Features

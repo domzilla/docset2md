@@ -32,7 +32,8 @@ src/
 │   ├── SearchIndexWriter.ts    # Creates search.db during conversion
 │   └── BunBuilder.ts           # Bun detection and binary building
 ├── search-cli/                 # Standalone search CLI (Bun)
-│   ├── index.ts                # CLI entry point
+│   ├── docc-search.ts          # DocC CLI with --language support
+│   ├── standard-search.ts      # Standard/CoreData CLI (no language)
 │   ├── SearchIndexReader.ts    # Queries search index with bun:sqlite
 │   └── formatters.ts           # Output formatters (simple, table, JSON)
 └── shared/                     # Shared infrastructure

@@ -13,6 +13,7 @@ import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '
 import type { MarkdownGenerator } from '../shared/MarkdownGenerator.js';
 import { BaseConverter } from '../shared/converter/BaseConverter.js';
 import type { StandardFormat } from './StandardFormat.js';
+import type { SearchBinaryVariant } from '../search/BunBuilder.js';
 
 /**
  * Converter for Standard Dash format docsets.
@@ -161,5 +162,15 @@ export class StandardConverter extends BaseConverter {
       const rootPath = join(outputDir, '_index.md');
       this.writeFile(rootPath, rootIndex);
     }
+  }
+
+  /**
+   * Get the search binary variant for Standard format.
+   * Standard format uses the variant without language filtering.
+   *
+   * @returns 'standard' variant
+   */
+  protected getSearchBinaryVariant(): SearchBinaryVariant {
+    return 'standard';
   }
 }

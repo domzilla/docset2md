@@ -19,6 +19,7 @@ import {
   buildSearchBinary,
   BunNotInstalledError,
   printBunInstallInstructions,
+  type SearchBinaryVariant,
 } from '../../search/BunBuilder.js';
 import type {
   DocsetConverter,
@@ -183,7 +184,7 @@ export abstract class BaseConverter implements DocsetConverter {
 
       // Try to build the search binary
       try {
-        searchBinaryBuilt = buildSearchBinary(options.outputDir);
+        searchBinaryBuilt = buildSearchBinary(options.outputDir, this.getSearchBinaryVariant());
       } catch (error) {
         if (error instanceof BunNotInstalledError) {
           printBunInstallInstructions();
@@ -354,4 +355,11 @@ export abstract class BaseConverter implements DocsetConverter {
     filePath: string,
     outputDir: string
   ): void;
+
+  /**
+   * Get the search binary variant to build for this format.
+   *
+   * @returns 'docc' for Apple DocC (with --language support) or 'standard' for other formats
+   */
+  protected abstract getSearchBinaryVariant(): SearchBinaryVariant;
 }

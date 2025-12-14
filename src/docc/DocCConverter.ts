@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
 import type { MarkdownGenerator } from '../shared/MarkdownGenerator.js';
 import { BaseConverter } from '../shared/converter/BaseConverter.js';
+import type { SearchBinaryVariant } from '../search/BunBuilder.js';
 
 /**
  * Converter for Apple DocC format docsets.
@@ -215,5 +216,15 @@ export class DocCConverter extends BaseConverter {
       const indexPath = join(outputDir, langDir, '_index.md');
       this.writeFile(indexPath, indexContent);
     }
+  }
+
+  /**
+   * Get the search binary variant for DocC format.
+   * DocC uses the variant with --language support for Swift/Objective-C.
+   *
+   * @returns 'docc' variant
+   */
+  protected getSearchBinaryVariant(): SearchBinaryVariant {
+    return 'docc';
   }
 }

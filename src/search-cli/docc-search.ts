@@ -1,13 +1,14 @@
 #!/usr/bin/env bun
 
 /**
- * @file index.ts
- * @module search-cli
+ * @file docc-search.ts
+ * @module search-cli/docc-search
  * @author Dominic Rodemer
  * @created 2025-12-14
  * @license MIT
  *
- * @fileoverview CLI entry point for searching converted documentation.
+ * @fileoverview CLI entry point for searching Apple DocC docsets.
+ * This variant includes --language filtering for Swift/Objective-C.
  * The binary finds search.db in its own directory by default.
  */
 
@@ -109,38 +110,101 @@ function parseArgs(): {
  * Print usage information.
  */
 function printUsage(): void {
-    console.log(`search - Search converted documentation
+    console.log(`search - Search converted Apple DocC documentation
 
-Usage:
+USAGE
   ./search <query> [options]
-  ./search --list-types
-  ./search --list-frameworks
-  ./search --list-languages
+  ./search --list-types | --list-frameworks | --list-languages
 
-The search binary automatically finds search.db in its own directory.
+DESCRIPTION
+  Full-text search across Apple developer documentation converted from DocC
+  format. Uses SQLite FTS5 with BM25 ranking for relevance scoring.
 
-Arguments:
-  query                 Search query (supports: prefix*, "exact phrase", AND/OR/NOT)
+  The search binary automatically finds search.db in its own directory.
+  Use --db to specify an alternate location.
 
-Options:
-  -t, --type <type>     Filter by entry type (e.g., Class, Method, Property)
-  -f, --framework <fw>  Filter by framework (e.g., UIKit, Foundation)
-  -l, --language <lang> Filter by language (e.g., swift, objc)
-  -n, --limit <n>       Maximum results (default: 20)
-  --format <fmt>        Output format: simple, table, json (default: simple)
-  --db <path>           Path to search.db (default: same directory as binary)
+ARGUMENTS
+  <query>               Search query using FTS5 syntax (see QUERY SYNTAX below)
 
-List Commands:
-  --list-types          List all entry types in the index
-  --list-frameworks     List all frameworks in the index
-  --list-languages      List all languages in the index
+OPTIONS
+  -t, --type <type>     Filter by entry type (e.g., Class, Struct, Protocol,
+                        Method, Property, Enum, Function, Framework)
+  -f, --framework <fw>  Filter by framework (e.g., UIKit, Foundation, SwiftUI)
+  -l, --language <lang> Filter by programming language:
+                          swift  - Swift documentation only
+                          objc   - Objective-C documentation only
+  -n, --limit <n>       Maximum number of results to return (default: 20)
+  --format <fmt>        Output format:
+                          simple - Human-readable text (default)
+                          table  - Tabular format with columns
+                          json   - JSON array for programmatic use
+  --db <path>           Path to search.db file or directory containing it
+  -h, --help            Show this help message
 
-Examples:
-  ./search "UIWindow"
-  ./search "window*" --type Class
-  ./search "view" --framework UIKit --limit 10
-  ./search "init*" --format json
-  ./search --list-types
+LIST COMMANDS
+  --list-types          Show all entry types with counts
+  --list-frameworks     Show all frameworks with counts
+  --list-languages      Show all languages with counts
+
+QUERY SYNTAX
+  The search uses SQLite FTS5 full-text search. Supported query patterns:
+
+  Simple terms:
+    UIWindow            Match entries containing "UIWindow"
+    view controller     Match entries containing both "view" AND "controller"
+
+  Prefix matching:
+    view*               Match entries starting with "view" (view, viewController, ...)
+    UI*                 Match entries starting with "UI" (UIKit, UIWindow, ...)
+
+  Phrase matching:
+    "view controller"   Match exact phrase "view controller"
+    "init with"         Match exact phrase "init with"
+
+  Boolean operators:
+    view AND window     Both terms must be present
+    view OR window      Either term can be present
+    view NOT controller Match "view" but exclude "controller"
+    (view OR window) AND controller
+                        Combine operators with parentheses
+
+  Column-specific search:
+    name:UIWindow       Search only in symbol names
+    abstract:manages    Search only in descriptions
+    framework:UIKit     Search only in framework names
+
+EXAMPLES
+  Basic searches:
+    ./search UIWindow
+    ./search "table view"
+    ./search view*
+
+  Filtered searches:
+    ./search window --type Class
+    ./search "view*" --type Class --framework UIKit
+    ./search init --language swift
+    ./search delegate --type Protocol --language objc
+
+  Output formats:
+    ./search UIWindow --format json
+    ./search view --format table --limit 50
+
+  Boolean queries:
+    ./search "view AND controller"
+    ./search "button OR label" --type Class
+    ./search "view NOT controller" --framework UIKit
+
+  Discovery:
+    ./search --list-types
+    ./search --list-frameworks
+    ./search --list-languages
+
+OUTPUT
+  Results are ranked by relevance using BM25 scoring. Symbol names are
+  weighted highest, followed by type, framework, description, and declaration.
+
+  The path field shows the relative location of the markdown file containing
+  the full documentation for each result.
 `);
 }
 
