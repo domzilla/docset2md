@@ -10,6 +10,7 @@
 
 import type { DocsetFormat } from '../shared/formats/types.js';
 import { StandardConverter } from '../standard/StandardConverter.js';
+import type { CoreDataFormat } from './CoreDataFormat.js';
 
 /**
  * Converter for CoreData format docsets.
@@ -36,5 +37,21 @@ export class CoreDataConverter extends StandardConverter {
    */
   constructor(format: DocsetFormat, docsetName: string) {
     super(format, docsetName);
+  }
+
+  /**
+   * Reset index tracking state and build link mapping.
+   *
+   * Overrides StandardConverter to use CoreDataFormat's link mapping methods.
+   */
+  protected resetIndexTracking(): void {
+    this.typeItems.clear();
+
+    // Build and set link mapping for internal link resolution
+    const coreDataFormat = this.format as CoreDataFormat;
+    if (typeof coreDataFormat.buildLinkMapping === 'function') {
+      const linkMap = coreDataFormat.buildLinkMapping();
+      coreDataFormat.setLinkMapping(linkMap);
+    }
   }
 }
