@@ -72,11 +72,10 @@ export class MarkdownGenerator {
       sections.push(doc.abstract);
     }
 
-    // Declaration
+    // Declaration (rendered as plain markdown with type links)
     if (doc.declaration) {
-      const lang = doc.language === 'swift' ? 'swift' : 'objectivec';
       sections.push('## Declaration');
-      sections.push('```' + lang + '\n' + doc.declaration + '\n```');
+      sections.push(doc.declaration);
     }
 
     // Overview

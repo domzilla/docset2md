@@ -134,7 +134,7 @@ describe('MarkdownGenerator', () => {
       expect(md).toContain("A window object displays the app's content.");
     });
 
-    it('should render Swift code declaration', () => {
+    it('should render Swift declaration', () => {
       const doc: ParsedDocumentation = {
         title: 'UIWindow',
         kind: 'symbol',
@@ -146,12 +146,12 @@ describe('MarkdownGenerator', () => {
       const md = generator.generate(doc);
 
       expect(md).toContain('## Declaration');
-      expect(md).toContain('```swift');
       expect(md).toContain('class UIWindow : UIView');
-      expect(md).toContain('```');
+      // Declarations are now plain markdown (not fenced code blocks) to support type links
+      expect(md).not.toContain('```swift');
     });
 
-    it('should render Objective-C code declaration', () => {
+    it('should render Objective-C declaration', () => {
       const doc: ParsedDocumentation = {
         title: 'UIWindow',
         kind: 'symbol',
@@ -162,8 +162,10 @@ describe('MarkdownGenerator', () => {
 
       const md = generator.generate(doc);
 
-      expect(md).toContain('```objectivec');
+      expect(md).toContain('## Declaration');
       expect(md).toContain('@interface UIWindow : UIView');
+      // Declarations are now plain markdown (not fenced code blocks) to support type links
+      expect(md).not.toContain('```objectivec');
     });
 
     it('should include overview section', () => {

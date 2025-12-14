@@ -135,7 +135,7 @@ export class DocCParser {
       framework: this.extractFramework(doc),
       platforms: metadata?.platforms,
       abstract: this.renderAbstract(doc.abstract),
-      declaration: this.renderDeclaration(doc.primaryContentSections, language),
+      declaration: this.renderDeclaration(doc.primaryContentSections, language, doc.references),
       overview: this.renderOverview(doc.primaryContentSections, doc.references),
       parameters: this.extractParameters(doc.primaryContentSections, doc.references),
       returnValue: this.extractReturnValue(doc.primaryContentSections, doc.references),
@@ -176,9 +176,13 @@ export class DocCParser {
   }
 
   /**
-   * Render code declaration for the target language.
+   * Render code declaration for the target language with type links.
    */
-  private renderDeclaration(sections?: ContentSection[], language?: 'swift' | 'objc'): string | undefined {
+  private renderDeclaration(
+    sections?: ContentSection[],
+    language?: 'swift' | 'objc',
+    references?: Record<string, Reference>
+  ): string | undefined {
     if (!sections) return undefined;
 
     for (const section of sections) {
@@ -191,11 +195,11 @@ export class DocCParser {
               continue;
             }
           }
-          return this.renderDeclarationTokens(decl);
+          return this.renderDeclarationTokens(decl, references);
         }
         // Fallback to first declaration
         if (section.declarations.length > 0) {
-          return this.renderDeclarationTokens(section.declarations[0]);
+          return this.renderDeclarationTokens(section.declarations[0], references);
         }
       }
     }
@@ -203,10 +207,26 @@ export class DocCParser {
   }
 
   /**
-   * Convert declaration tokens to a code string.
+   * Convert declaration tokens to markdown with type links.
+   * Type identifiers with references are rendered as links.
    */
-  private renderDeclarationTokens(decl: Declaration): string {
-    return decl.tokens.map(t => t.text).join('');
+  private renderDeclarationTokens(decl: Declaration, references?: Record<string, Reference>): string {
+    return decl.tokens
+      .map(token => {
+        // Check if this token has a reference (type link)
+        if (token.identifier && references) {
+          const ref = references[token.identifier];
+          if (ref?.url && ref.title) {
+            // Resolve the URL to a relative path
+            const relativePath = this.buildRelativePathFromUrl(ref.url, ref.title);
+            if (relativePath) {
+              return `[${token.text}](${relativePath})`;
+            }
+          }
+        }
+        return token.text;
+      })
+      .join('');
   }
 
   /**
