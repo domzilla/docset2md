@@ -57,6 +57,106 @@ const BM25_WEIGHTS = {
 };
 
 /**
+ * Escape a query string for safe use with FTS5 MATCH.
+ *
+ * FTS5 has its own query syntax with keywords (AND, OR, NOT, NEAR) and
+ * special characters (*, ", :, etc.). This function escapes user input
+ * by quoting individual tokens while preserving intentional wildcards.
+ *
+ * Behavior:
+ * - Simple terms are quoted: `NSURL` → `"NSURL"`
+ * - Prefix wildcards are preserved: `bookmark*` → `"bookmark"*`
+ * - User-quoted phrases are preserved: `"exact phrase"` → `"exact phrase"`
+ * - Keywords become literals: `view and controller` → `"view" "and" "controller"`
+ *
+ * @param query - Raw user query string
+ * @returns Escaped query safe for FTS5 MATCH
+ *
+ * @example
+ * escapeForFts5('NSURL bookmark*')
+ * // Returns: "NSURL" "bookmark"*
+ *
+ * @example
+ * escapeForFts5('Support In-App Purchases and interactions')
+ * // Returns: "Support" "In-App" "Purchases" "and" "interactions"
+ *
+ * @example
+ * escapeForFts5('"exact phrase" other*')
+ * // Returns: "exact phrase" "other"*
+ */
+function escapeForFts5(query: string): string {
+    const tokens: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    let i = 0;
+
+    // Tokenize: split on whitespace, but keep quoted phrases together
+    while (i < query.length) {
+        const char = query[i];
+
+        if (char === '"') {
+            if (inQuotes) {
+                // End of quoted phrase
+                current += char;
+                tokens.push(current);
+                current = '';
+                inQuotes = false;
+            } else {
+                // Start of quoted phrase
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                }
+                current = char;
+                inQuotes = true;
+            }
+            i++;
+        } else if (/\s/.test(char) && !inQuotes) {
+            // Whitespace outside quotes - end of token
+            if (current.trim()) {
+                tokens.push(current.trim());
+            }
+            current = '';
+            i++;
+        } else {
+            current += char;
+            i++;
+        }
+    }
+
+    // Don't forget the last token
+    if (current.trim()) {
+        tokens.push(current.trim());
+    }
+
+    // Process each token
+    const escaped = tokens.map(token => {
+        // Already quoted by user - preserve as-is (but escape internal quotes)
+        if (token.startsWith('"') && token.endsWith('"')) {
+            const inner = token.slice(1, -1);
+            // Escape any internal double quotes
+            return `"${inner.replace(/"/g, '""')}"`;
+        }
+
+        // Check for wildcard suffix
+        const hasWildcard = token.endsWith('*');
+        const base = hasWildcard ? token.slice(0, -1) : token;
+
+        // Skip empty tokens
+        if (!base) {
+            return hasWildcard ? '*' : '';
+        }
+
+        // Escape internal double quotes and wrap in quotes
+        const quotedBase = `"${base.replace(/"/g, '""')}"`;
+
+        // Put wildcard outside quotes if present
+        return hasWildcard ? `${quotedBase}*` : quotedBase;
+    });
+
+    return escaped.filter(t => t).join(' ');
+}
+
+/**
  * Reads and queries a search index database created by SearchIndexWriter.
  *
  * Uses FTS5 full-text search with BM25 ranking for relevance scoring.
@@ -97,9 +197,9 @@ export class SearchIndexReader {
         const conditions: string[] = [];
         const params: (string | number)[] = [];
 
-        // FTS5 match condition
+        // FTS5 match condition with escaped query
         conditions.push('entries_fts MATCH ?');
-        params.push(query);
+        params.push(escapeForFts5(query));
 
         // Optional filters
         if (options.type) {

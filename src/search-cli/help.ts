@@ -14,30 +14,24 @@ import type { CliConfig } from './cli-core.js';
  * Shared QUERY SYNTAX section - identical for all variants.
  */
 export const QUERY_SYNTAX_SECTION = `QUERY SYNTAX
-  The search uses SQLite FTS5 full-text search. Supported query patterns:
+  The search uses SQLite FTS5 full-text search. Query terms are automatically
+  escaped to prevent conflicts with FTS5 syntax (e.g., "and", "or" in text).
 
   Simple terms:
     <term>              Match entries containing the term
-    term1 term2         Match entries containing both terms (implicit AND)
+    term1 term2         Match entries containing all terms (implicit AND)
 
   Prefix matching:
     term*               Match entries starting with "term"
+                        Example: bookmark* matches bookmark, bookmarkData, etc.
 
   Phrase matching:
-    "exact phrase"      Match exact phrase
+    "exact phrase"      Match exact phrase (words in order)
+                        Example: "table view" matches only "table view"
 
-  Boolean operators:
-    term1 AND term2     Both terms must be present
-    term1 OR term2      Either term can be present
-    term1 NOT term2     Match term1 but exclude term2
-    (term1 OR term2) AND term3
-                        Combine operators with parentheses
-
-  Column-specific search:
-    name:term           Search only in symbol names
-    abstract:term       Search only in descriptions
-    framework:term      Search only in framework names
-    type:term           Search only in entry types`;
+  Combined patterns:
+    NSURL bookmark*     Match entries with "NSURL" AND starting with "bookmark"
+    "in-app" purchase*  Match phrase "in-app" AND prefix "purchase*"`;
 
 /**
  * Shared OUTPUT section - identical for all variants.
