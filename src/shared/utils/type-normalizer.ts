@@ -13,27 +13,27 @@
  * Combines mappings from both StandardDash and CoreData formats.
  */
 const TYPE_MAP: Record<string, string> = {
-  // Common types
-  func: 'Function',
-  cl: 'Class',
-  clm: 'Method',
-  clconst: 'Constant',
-  tdef: 'Type',
-  macro: 'Macro',
-  cat: 'Category',
-  instm: 'Method',
-  instp: 'Property',
-  intf: 'Interface',
-  struct: 'Struct',
-  enum: 'Enum',
-  union: 'Union',
-  var: 'Variable',
-  const: 'Constant',
-  // CoreData specific
-  file: 'File',
-  keyword: 'Keyword',
-  attribute: 'Attribute',
-  guide: 'Guide',
+    // Common types
+    func: 'Function',
+    cl: 'Class',
+    clm: 'Method',
+    clconst: 'Constant',
+    tdef: 'Type',
+    macro: 'Macro',
+    cat: 'Category',
+    instm: 'Method',
+    instp: 'Property',
+    intf: 'Interface',
+    struct: 'Struct',
+    enum: 'Enum',
+    union: 'Union',
+    var: 'Variable',
+    const: 'Constant',
+    // CoreData specific
+    file: 'File',
+    keyword: 'Keyword',
+    attribute: 'Attribute',
+    guide: 'Guide',
 };
 
 /**
@@ -41,23 +41,23 @@ const TYPE_MAP: Record<string, string> = {
  * Used for building SQL queries that match multiple type codes.
  */
 const REVERSE_MAP: Record<string, string[]> = {
-  Function: ['Function', 'func'],
-  Class: ['Class', 'cl'],
-  Method: ['Method', 'clm', 'instm'],
-  Constant: ['Constant', 'clconst', 'const'],
-  Type: ['Type', 'tdef'],
-  Macro: ['Macro', 'macro'],
-  Category: ['Category', 'cat'],
-  Property: ['Property', 'instp'],
-  Interface: ['Interface', 'intf'],
-  Struct: ['Struct', 'struct'],
-  Enum: ['Enum', 'enum'],
-  Union: ['Union', 'union'],
-  Variable: ['Variable', 'var'],
-  File: ['File', 'file'],
-  Keyword: ['Keyword', 'keyword'],
-  Attribute: ['Attribute', 'attribute'],
-  Guide: ['Guide', 'guide'],
+    Function: ['Function', 'func'],
+    Class: ['Class', 'cl'],
+    Method: ['Method', 'clm', 'instm'],
+    Constant: ['Constant', 'clconst', 'const'],
+    Type: ['Type', 'tdef'],
+    Macro: ['Macro', 'macro'],
+    Category: ['Category', 'cat'],
+    Property: ['Property', 'instp'],
+    Interface: ['Interface', 'intf'],
+    Struct: ['Struct', 'struct'],
+    Enum: ['Enum', 'enum'],
+    Union: ['Union', 'union'],
+    Variable: ['Variable', 'var'],
+    File: ['File', 'file'],
+    Keyword: ['Keyword', 'keyword'],
+    Attribute: ['Attribute', 'attribute'],
+    Guide: ['Guide', 'guide'],
 };
 
 /**
@@ -76,8 +76,8 @@ const REVERSE_MAP: Record<string, string[]> = {
  * ```
  */
 export function normalizeType(type: string): string {
-  const lower = type.toLowerCase();
-  return TYPE_MAP[lower] || type;
+    const lower = type.toLowerCase();
+    return TYPE_MAP[lower] || type;
 }
 
 /**
@@ -96,7 +96,7 @@ export function normalizeType(type: string): string {
  * ```
  */
 export function denormalizeTypes(type: string): string[] {
-  return REVERSE_MAP[type] || [type];
+    return REVERSE_MAP[type] || [type];
 }
 
 /**
@@ -115,7 +115,7 @@ export function denormalizeTypes(type: string): string[] {
  * ```
  */
 export function denormalizeType(type: string): string {
-  const codes = REVERSE_MAP[type];
-  // Return the short code (second element) if available, otherwise the type
-  return codes?.[1] || type;
+    const codes = REVERSE_MAP[type];
+    // Return the short code (second element) if available, otherwise the type
+    return codes?.[1] || type;
 }

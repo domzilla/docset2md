@@ -1,0 +1,369 @@
+/**
+ * @file BaseConverter.ts
+ * @module shared/converter/BaseConverter
+ * @author Dominic Rodemer
+ * @created 2025-12-13
+ * @license MIT
+ *
+ * @fileoverview Abstract base class for docset converters with shared logic.
+ */
+
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
+import type { ParsedDocumentation, TopicItem } from '../../docc/types.js';
+import { sanitizeFileName } from '../utils/sanitize.js';
+import { MarkdownGenerator } from '../markdown-generator.js';
+import { SearchIndexWriter } from '../../search/search-index-writer.js';
+import {
+    buildSearchBinary,
+    BunNotInstalledError,
+    printBunInstallInstructions,
+    type SearchBinaryVariant,
+} from '../../search/bun-builder.js';
+import type {
+    DocsetConverter,
+    ConverterOptions,
+    ConversionResult,
+    ProgressCallback,
+    WriteStats,
+} from './types.js';
+
+/**
+ * Abstract base class providing shared conversion logic.
+ *
+ * Subclasses must implement:
+ * - getOutputPath(): Define output file structure
+ * - generateIndexes(): Generate format-specific index files
+ * - trackForIndex(): Track items for index generation
+ *
+ * @example
+ * ```typescript
+ * class MyConverter extends BaseConverter {
+ *   getOutputPath(entry, content, outputDir) {
+ *     return join(outputDir, entry.type, `${entry.name}.md`);
+ *   }
+ *
+ *   generateIndexes(outputDir, generator) {
+ *     // Generate index files
+ *   }
+ *
+ *   protected trackForIndex(entry, content, filePath, outputDir) {
+ *     // Track items for index generation
+ *   }
+ * }
+ * ```
+ */
+export abstract class BaseConverter implements DocsetConverter {
+    protected format: DocsetFormat;
+    protected generator: MarkdownGenerator;
+    protected createdDirs: Set<string> = new Set();
+    protected filesWritten = 0;
+    protected bytesWritten = 0;
+    protected searchIndexWriter: SearchIndexWriter | null = null;
+
+    /**
+     * Create a new BaseConverter.
+     * @param format - The initialized format handler
+     */
+    constructor(format: DocsetFormat) {
+        this.format = format;
+        this.generator = new MarkdownGenerator();
+    }
+
+    /**
+     * Get the format handler.
+     */
+    getFormat(): DocsetFormat {
+        return this.format;
+    }
+
+    /**
+     * Get the format name for display.
+     */
+    getFormatName(): string {
+        return this.format.getName();
+    }
+
+    /**
+     * Main conversion loop - shared across all formats.
+     *
+     * @param options - Conversion options
+     * @param onProgress - Optional progress callback
+     * @returns Conversion result with statistics
+     */
+    async convert(
+        options: ConverterOptions,
+        onProgress?: ProgressCallback
+    ): Promise<ConversionResult> {
+        const startTime = Date.now();
+        let processed = 0;
+        let successful = 0;
+        let failed = 0;
+
+        // Reset state
+        this.createdDirs.clear();
+        this.filesWritten = 0;
+        this.bytesWritten = 0;
+        this.resetIndexTracking();
+
+        // Ensure output directory exists
+        if (!existsSync(options.outputDir)) {
+            mkdirSync(options.outputDir, { recursive: true });
+        }
+
+        // Initialize search index if requested
+        if (options.generateIndex) {
+            const indexPath = join(options.outputDir, 'search.db');
+            this.searchIndexWriter = new SearchIndexWriter(indexPath);
+        }
+
+        const totalCount = this.format.getEntryCount(options.filters);
+        const limit = options.filters?.limit;
+
+        for (const entry of this.format.iterateEntries(options.filters)) {
+            if (limit && processed >= limit) break;
+            processed++;
+
+            if (onProgress) {
+                onProgress(processed, limit ?? totalCount, entry);
+            }
+
+            try {
+                const content = await this.format.extractContent(entry);
+                if (!content) {
+                    if (options.verbose) {
+                        console.log(`  -> No content found for: ${entry.name}`);
+                    }
+                    failed++;
+                    continue;
+                }
+
+                const markdown = this.generateMarkdown(content);
+                const filePath = this.getOutputPath(entry, content, options.outputDir);
+
+                this.writeFile(filePath, markdown);
+                this.trackForIndex(entry, content, filePath, options.outputDir);
+
+                // Add to search index if enabled
+                if (this.searchIndexWriter) {
+                    const relativePath = filePath.replace(options.outputDir + '/', '');
+                    this.searchIndexWriter.addEntry({
+                        name: entry.name,
+                        type: entry.type,
+                        language: entry.language,
+                        framework: content.framework,
+                        path: relativePath,
+                        abstract: content.abstract,
+                        declaration: content.declaration,
+                        deprecated: content.deprecated,
+                        beta: content.beta,
+                    });
+                }
+
+                successful++;
+            } catch (error) {
+                if (options.verbose) {
+                    console.error(`  -> Error processing ${entry.name}:`, error);
+                }
+                failed++;
+            }
+        }
+
+        // Generate index files
+        this.generateIndexes(options.outputDir, this.generator);
+
+        // Close search index and get entry count
+        let indexEntries: number | undefined;
+        let searchBinaryBuilt = false;
+
+        if (this.searchIndexWriter) {
+            indexEntries = this.searchIndexWriter.getEntryCount();
+            this.searchIndexWriter.close();
+            this.searchIndexWriter = null;
+
+            // Try to build the search binary
+            try {
+                searchBinaryBuilt = buildSearchBinary(options.outputDir, this.getSearchBinaryVariant());
+            } catch (error) {
+                if (error instanceof BunNotInstalledError) {
+                    printBunInstallInstructions();
+                } else {
+                    console.error('Failed to build search binary:', error);
+                }
+            }
+        }
+
+        return {
+            processed,
+            successful,
+            failed,
+            writeStats: {
+                filesWritten: this.filesWritten,
+                directoriesCreated: this.createdDirs.size,
+                bytesWritten: this.bytesWritten,
+            },
+            elapsedMs: Date.now() - startTime,
+            indexEntries,
+            searchBinaryBuilt,
+        };
+    }
+
+    /**
+     * Convert ParsedContent to markdown string.
+     * Shared across all converters.
+     *
+     * @param content - Parsed content from format handler
+     * @returns Markdown string
+     */
+    protected generateMarkdown(content: ParsedContent): string {
+        const doc: ParsedDocumentation = {
+            title: content.title,
+            kind: content.type,
+            role: content.type,
+            language: (content.language as 'swift' | 'objc') || 'swift',
+            framework: content.framework,
+            abstract: content.abstract,
+            declaration: content.declaration,
+            overview: content.description,
+            parameters: content.parameters,
+            returnValue: content.returnValue,
+            contentSections: content.contentSections?.map(s => ({
+                heading: s.heading,
+                content: s.content,
+            })),
+            topics: content.topics?.map(t => ({
+                title: t.title,
+                items: t.items.map(this.convertToTopicItem),
+            })),
+            seeAlso: content.seeAlso
+                ? [{ title: 'See Also', items: content.seeAlso.map(this.convertToTopicItem) }]
+                : undefined,
+            relationships: content.relationships?.map(r => ({
+                kind: r.kind,
+                title: r.title,
+                items: r.items.map(this.convertToTopicItem),
+            })),
+            hierarchy: content.hierarchy,
+            deprecated: content.deprecated,
+            beta: content.beta,
+            platforms: content.platforms?.map(p => ({
+                name: p.name,
+                introducedAt: p.version,
+            })),
+        };
+
+        return this.generator.generate(doc);
+    }
+
+    /**
+     * Convert ContentItem to TopicItem.
+     *
+     * @param item - Content item to convert
+     * @returns TopicItem for use in MarkdownGenerator
+     */
+    protected convertToTopicItem(item: ContentItem): TopicItem {
+        return {
+            title: item.title,
+            url: item.url,
+            abstract: item.abstract,
+            required: item.required,
+            deprecated: item.deprecated,
+            beta: item.beta,
+        };
+    }
+
+    /**
+     * Write a file, ensuring directory exists.
+     *
+     * @param filePath - Full path to write
+     * @param content - File content
+     */
+    protected writeFile(filePath: string, content: string): void {
+        const dir = dirname(filePath);
+        this.ensureDir(dir);
+        writeFileSync(filePath, content, 'utf-8');
+        this.filesWritten++;
+        this.bytesWritten += Buffer.byteLength(content, 'utf-8');
+    }
+
+    /**
+     * Ensure directory exists.
+     *
+     * @param dir - Directory path to ensure exists
+     */
+    protected ensureDir(dir: string): void {
+        if (!this.createdDirs.has(dir)) {
+            if (!existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
+            }
+            this.createdDirs.add(dir);
+        }
+    }
+
+    /**
+     * Sanitize a string for use as a filename.
+     * @param name - Raw name to sanitize
+     * @returns Safe filename string
+     */
+    protected sanitizeFileName(name: string): string {
+        return sanitizeFileName(name);
+    }
+
+    /**
+     * Close the converter and release resources.
+     */
+    close(): void {
+        this.format.close();
+    }
+
+    /**
+     * Reset index tracking state.
+     * Called at the start of each conversion.
+     */
+    protected abstract resetIndexTracking(): void;
+
+    /**
+     * Determine the output file path for an entry.
+     *
+     * @param entry - The entry to get path for
+     * @param content - Parsed content for the entry
+     * @param outputDir - Base output directory
+     * @returns Full file path for the markdown output
+     */
+    abstract getOutputPath(
+        entry: NormalizedEntry,
+        content: ParsedContent,
+        outputDir: string
+    ): string;
+
+    /**
+     * Generate all index files for the conversion output.
+     *
+     * @param outputDir - Base output directory
+     * @param generator - Markdown generator for index content
+     */
+    abstract generateIndexes(outputDir: string, generator: MarkdownGenerator): void;
+
+    /**
+     * Track an entry for index generation.
+     *
+     * @param entry - Entry being processed
+     * @param content - Parsed content
+     * @param filePath - Output file path
+     * @param outputDir - Base output directory
+     */
+    protected abstract trackForIndex(
+        entry: NormalizedEntry,
+        content: ParsedContent,
+        filePath: string,
+        outputDir: string
+    ): void;
+
+    /**
+     * Get the search binary variant to build for this format.
+     *
+     * @returns 'docc' for Apple DocC (with --language support) or 'standard' for other formats
+     */
+    protected abstract getSearchBinaryVariant(): SearchBinaryVariant;
+}

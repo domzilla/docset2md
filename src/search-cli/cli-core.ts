@@ -12,7 +12,8 @@
 
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { SearchIndexReader } from './SearchIndexReader.js';
+
+import { SearchIndexReader } from './search-index-reader.js';
 import { formatResults, formatList, type OutputFormat } from './formatters.js';
 import { buildHelpText } from './help.js';
 

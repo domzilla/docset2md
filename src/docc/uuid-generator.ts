@@ -31,28 +31,28 @@ import { createHash } from 'node:crypto';
  * ```
  */
 export function generateUuid(requestKey: string): string {
-  // Determine language prefix and extract canonical path
-  let prefix: string;
-  let canonicalPath: string;
+    // Determine language prefix and extract canonical path
+    let prefix: string;
+    let canonicalPath: string;
 
-  if (requestKey.startsWith('ls/')) {
-    prefix = 'ls';
-    canonicalPath = '/' + requestKey.slice(3);
-  } else if (requestKey.startsWith('lc/')) {
-    prefix = 'lc';
-    canonicalPath = '/' + requestKey.slice(3);
-  } else {
-    throw new Error(`Invalid request key format: ${requestKey}`);
-  }
+    if (requestKey.startsWith('ls/')) {
+        prefix = 'ls';
+        canonicalPath = '/' + requestKey.slice(3);
+    } else if (requestKey.startsWith('lc/')) {
+        prefix = 'lc';
+        canonicalPath = '/' + requestKey.slice(3);
+    } else {
+        throw new Error(`Invalid request key format: ${requestKey}`);
+    }
 
-  // Compute SHA-1 hash
-  const hash = createHash('sha1').update(canonicalPath).digest();
+    // Compute SHA-1 hash
+    const hash = createHash('sha1').update(canonicalPath).digest();
 
-  // Truncate to first 6 bytes and encode as base64url
-  const truncated = hash.subarray(0, 6);
-  const suffix = truncated.toString('base64url');
+    // Truncate to first 6 bytes and encode as base64url
+    const truncated = hash.subarray(0, 6);
+    const suffix = truncated.toString('base64url');
 
-  return prefix + suffix;
+    return prefix + suffix;
 }
 
 /**
@@ -69,10 +69,10 @@ export function generateUuid(requestKey: string): string {
  * ```
  */
 export function getDocPath(requestKey: string): string {
-  if (requestKey.startsWith('ls/') || requestKey.startsWith('lc/')) {
-    return '/' + requestKey.slice(3);
-  }
-  return '/' + requestKey;
+    if (requestKey.startsWith('ls/') || requestKey.startsWith('lc/')) {
+        return '/' + requestKey.slice(3);
+    }
+    return '/' + requestKey;
 }
 
 /**
@@ -89,8 +89,8 @@ export function getDocPath(requestKey: string): string {
  * ```
  */
 export function extractFramework(requestKey: string): string | undefined {
-  const match = requestKey.match(/l[sc]\/documentation\/([^/]+)/);
-  return match?.[1];
+    const match = requestKey.match(/l[sc]\/documentation\/([^/]+)/);
+    return match?.[1];
 }
 
 /**
@@ -106,5 +106,5 @@ export function extractFramework(requestKey: string): string | undefined {
  * ```
  */
 export function getLanguage(requestKey: string): 'swift' | 'objc' {
-  return requestKey.startsWith('ls/') ? 'swift' : 'objc';
+    return requestKey.startsWith('ls/') ? 'swift' : 'objc';
 }

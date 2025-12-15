@@ -9,6 +9,7 @@
  */
 
 import Database from 'better-sqlite3';
+
 import type { SearchEntry } from './types.js';
 import { SCHEMA_STATEMENTS, INSERT_ENTRY } from './schema.js';
 

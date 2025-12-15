@@ -220,7 +220,7 @@ export class SearchIndexReader {
 
         const sql = `
             SELECT e.*,
-                   bm25(entries_fts, ${weights}) as score
+                          bm25(entries_fts, ${weights}) as score
             FROM entries e
             JOIN entries_fts ON e.id = entries_fts.rowid
             WHERE ${conditions.join(' AND ')}

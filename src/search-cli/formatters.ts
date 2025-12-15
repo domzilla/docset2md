@@ -8,7 +8,7 @@
  * @fileoverview Output formatters for search results.
  */
 
-import type { SearchResult } from './SearchIndexReader.js';
+import type { SearchResult } from './search-index-reader.js';
 
 /**
  * Output format type.

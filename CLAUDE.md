@@ -2,57 +2,63 @@
 
 A Node.js TypeScript CLI tool that converts documentation docsets to Markdown files for AI agent consumption.
 
+## Code Style
+
+**IMPORTANT:** All code in this project MUST strictly follow the [Node.js Style Guide](~/Agents/Style Guides/node-js-style-guide.md). This style guide is mandatory and must be adhered to when writing, modifying, or reviewing any code in this codebase.
+
+Before submitting any code changes, verify they conform to the style guide.
+
 ## Project Structure
 
 ```
 src/
 ├── index.ts                    # CLI entry point (commander-based)
 ├── factory/                    # Factory classes
-│   ├── FormatDetector.ts       # Format auto-detection
-│   └── ConverterFactory.ts     # Creates format-specific converters
+│   ├── format-detector.ts      # Format auto-detection
+│   └── converter-factory.ts    # Creates format-specific converters
 ├── docc/                       # Apple DocC format (all DocC-specific code)
-│   ├── DocCFormat.ts           # DocC format handler
-│   ├── DocCConverter.ts        # DocC converter: language/framework/item.md
-│   ├── DocCParser.ts           # Parses DocC JSON into structured data
-│   ├── IndexReader.ts          # Reads docSet.dsidx SQLite database
-│   ├── CacheReader.ts          # Reads cache.db for content locations
-│   ├── ContentExtractor.ts     # Brotli decompression and JSON extraction
-│   ├── UuidGenerator.ts        # SHA-1 based UUID generation for cache lookup
-│   ├── AppleApiDownloader.ts   # Downloads missing content from Apple API
+│   ├── docc-format.ts          # DocC format handler
+│   ├── docc-converter.ts       # DocC converter: language/framework/item.md
+│   ├── docc-parser.ts          # Parses DocC JSON into structured data
+│   ├── index-reader.ts         # Reads docSet.dsidx SQLite database
+│   ├── cache-reader.ts         # Reads cache.db for content locations
+│   ├── content-extractor.ts    # Brotli decompression and JSON extraction
+│   ├── uuid-generator.ts       # SHA-1 based UUID generation for cache lookup
+│   ├── apple-api-downloader.ts # Downloads missing content from Apple API
 │   └── types.ts                # TypeScript interfaces for DocC schema
 ├── standard/                   # Standard Dash format
-│   ├── StandardFormat.ts       # Standard Dash format handler
-│   └── StandardConverter.ts    # Standard converter: type/item.md
+│   ├── standard-format.ts      # Standard Dash format handler
+│   └── standard-converter.ts   # Standard converter: type/item.md
 ├── coredata/                   # CoreData format
-│   ├── CoreDataFormat.ts       # CoreData format handler
-│   └── CoreDataConverter.ts    # CoreData converter (extends StandardConverter)
+│   ├── coredata-format.ts      # CoreData format handler
+│   └── coredata-converter.ts   # CoreData converter (extends StandardConverter)
 ├── search/                     # Search index generation
 │   ├── types.ts                # Search entry interfaces
 │   ├── schema.ts               # SQLite FTS5 schema
-│   ├── SearchIndexWriter.ts    # Creates search.db during conversion
-│   └── BunBuilder.ts           # Bun detection and binary building
+│   ├── search-index-writer.ts  # Creates search.db during conversion
+│   └── bun-builder.ts          # Bun detection and binary building
 ├── search-cli/                 # Standalone search CLI (Bun)
 │   ├── cli-core.ts             # Shared CLI logic (parseArgs, main, help)
 │   ├── help.ts                 # Shared help text sections
 │   ├── docc-search.ts          # DocC CLI entry point (thin wrapper)
 │   ├── standard-search.ts      # Standard/CoreData CLI entry point
-│   ├── SearchIndexReader.ts    # Queries search index with bun:sqlite
+│   ├── search-index-reader.ts  # Queries search index with bun:sqlite
 │   └── formatters.ts           # Output formatters (simple, table, JSON)
 └── shared/                     # Shared infrastructure
     ├── formats/                # Format abstraction layer
     │   └── types.ts            # DocsetFormat interface and types
     ├── converter/              # Converter abstraction layer
     │   ├── types.ts            # DocsetConverter interface and types
-    │   └── BaseConverter.ts    # Abstract base with shared conversion logic
+    │   └── base-converter.ts   # Abstract base with shared conversion logic
     ├── utils/                  # Shared utilities
     │   ├── sanitize.ts         # Filename sanitization
-    │   └── typeNormalizer.ts   # Type code normalization
-    ├── TarixExtractor.ts       # Tarix archive extraction for Dash docsets
-    ├── HtmlParser.ts           # Parses HTML using cheerio/turndown
-    ├── MarkdownGenerator.ts    # Converts parsed docs to markdown
-    ├── FileWriter.ts           # Writes output files
-    ├── PathResolver.ts         # Resolves documentation paths to file paths
-    └── LinkValidator.ts        # Validates internal markdown links
+    │   └── type-normalizer.ts  # Type code normalization
+    ├── tarix-extractor.ts      # Tarix archive extraction for Dash docsets
+    ├── html-parser.ts          # Parses HTML using cheerio/turndown
+    ├── markdown-generator.ts   # Converts parsed docs to markdown
+    ├── file-writer.ts          # Writes output files
+    ├── path-resolver.ts        # Resolves documentation paths to file paths
+    └── link-validator.ts       # Validates internal markdown links
 ```
 
 ## Supported Formats
@@ -306,28 +312,3 @@ Use `scripts/extract-framework-apple-docset.ts` to create smaller test docsets:
 ```bash
 npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o test_data/input UIKit
 ```
-
-## Code Style
-
-### File Headers
-
-Every newly generated TypeScript file must include a file header in the following format:
-
-```typescript
-/**
- * @file filename.ts
- * @module path/to/module
- * @author Dominic Rodemer
- * @created YYYY-MM-DD
- * @license MIT
- *
- * @fileoverview Short description of the file's purpose.
- */
-```
-
-- `@file`: The filename
-- `@module`: The module path (e.g., `db/CacheReader`, `tests/unit/parser/DocCParser`)
-- `@author`: Dominic Rodemer
-- `@created`: The file creation date in ISO format
-- `@license`: MIT
-- `@fileoverview`: A concise one-line description of what the file does

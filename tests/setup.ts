@@ -23,19 +23,19 @@ export const C_DOCSET_PATH = resolve(TEST_DATA_DIR, 'C.docset');
 
 // Helper to check if Apple test data is available
 export function hasAppleTestData(): boolean {
-  return existsSync(APPLE_DOCSET_PATH);
+    return existsSync(APPLE_DOCSET_PATH);
 }
 
 // Helper to check if PHP test data is available
 export function hasPhpTestData(): boolean {
-  return existsSync(PHP_DOCSET_PATH);
+    return existsSync(PHP_DOCSET_PATH);
 }
 
 // Helper to check if C test data is available
 export function hasCTestData(): boolean {
-  return existsSync(C_DOCSET_PATH);
+    return existsSync(C_DOCSET_PATH);
 }
 
 // Skip message for missing Apple test data
 export const APPLE_SKIP_MESSAGE =
-  'Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit';
+    'Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit';

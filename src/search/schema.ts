@@ -13,16 +13,16 @@
  */
 export const CREATE_ENTRIES_TABLE = `
 CREATE TABLE IF NOT EXISTS entries (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    language TEXT,
-    framework TEXT,
-    path TEXT NOT NULL,
-    abstract TEXT,
-    declaration TEXT,
-    deprecated INTEGER DEFAULT 0,
-    beta INTEGER DEFAULT 0
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        language TEXT,
+        framework TEXT,
+        path TEXT NOT NULL,
+        abstract TEXT,
+        declaration TEXT,
+        deprecated INTEGER DEFAULT 0,
+        beta INTEGER DEFAULT 0
 )`;
 
 /**
@@ -31,13 +31,13 @@ CREATE TABLE IF NOT EXISTS entries (
  */
 export const CREATE_FTS_TABLE = `
 CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
-    name,
-    type,
-    framework,
-    abstract,
-    declaration,
-    content='entries',
-    content_rowid='id'
+        name,
+        type,
+        framework,
+        abstract,
+        declaration,
+        content='entries',
+        content_rowid='id'
 )`;
 
 /**
@@ -45,8 +45,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
  */
 export const CREATE_INSERT_TRIGGER = `
 CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
-    INSERT INTO entries_fts(rowid, name, type, framework, abstract, declaration)
-    VALUES (new.id, new.name, new.type, new.framework, new.abstract, new.declaration);
+        INSERT INTO entries_fts(rowid, name, type, framework, abstract, declaration)
+        VALUES (new.id, new.name, new.type, new.framework, new.abstract, new.declaration);
 END`;
 
 /**
@@ -54,8 +54,8 @@ END`;
  */
 export const CREATE_DELETE_TRIGGER = `
 CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
-    INSERT INTO entries_fts(entries_fts, rowid, name, type, framework, abstract, declaration)
-    VALUES ('delete', old.id, old.name, old.type, old.framework, old.abstract, old.declaration);
+        INSERT INTO entries_fts(entries_fts, rowid, name, type, framework, abstract, declaration)
+        VALUES ('delete', old.id, old.name, old.type, old.framework, old.abstract, old.declaration);
 END`;
 
 /**
@@ -63,10 +63,10 @@ END`;
  */
 export const CREATE_UPDATE_TRIGGER = `
 CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
-    INSERT INTO entries_fts(entries_fts, rowid, name, type, framework, abstract, declaration)
-    VALUES ('delete', old.id, old.name, old.type, old.framework, old.abstract, old.declaration);
-    INSERT INTO entries_fts(rowid, name, type, framework, abstract, declaration)
-    VALUES (new.id, new.name, new.type, new.framework, new.abstract, new.declaration);
+        INSERT INTO entries_fts(entries_fts, rowid, name, type, framework, abstract, declaration)
+        VALUES ('delete', old.id, old.name, old.type, old.framework, old.abstract, old.declaration);
+        INSERT INTO entries_fts(rowid, name, type, framework, abstract, declaration)
+        VALUES (new.id, new.name, new.type, new.framework, new.abstract, new.declaration);
 END`;
 
 /**
