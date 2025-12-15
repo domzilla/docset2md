@@ -57,6 +57,23 @@ export function printBunInstallInstructions(): void {
 }
 
 /**
+ * Get the source directory for search CLI files.
+ * When running from dist/, we need to resolve back to src/.
+ */
+function getSearchCliSourceDir(): string {
+    // __dirname is dist/search/ when running compiled code
+    // We need to find src/search-cli/ relative to project root
+    let dir = __dirname;
+
+    // If we're in dist/, go up and into src/
+    if (dir.includes('/dist/') || dir.endsWith('/dist')) {
+        dir = dir.replace('/dist/', '/src/').replace(/\/dist$/, '/src');
+    }
+
+    return join(dir, '../search-cli');
+}
+
+/**
  * Build the search binary and copy it to the output directory.
  *
  * @param outputDir - Directory where the binary should be placed
@@ -71,7 +88,7 @@ export function buildSearchBinary(outputDir: string, variant: SearchBinaryVarian
 
     // Path to the search CLI source based on variant
     const srcFile = variant === 'docc' ? 'docc-search.ts' : 'standard-search.ts';
-    const srcPath = join(__dirname, '../search-cli', srcFile);
+    const srcPath = join(getSearchCliSourceDir(), srcFile);
 
     // Output binary path
     const outPath = join(outputDir, 'search');
