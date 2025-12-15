@@ -19,6 +19,7 @@ docset2md is a CLI tool that extracts and converts documentation .docsets bundle
 - **Index Generation**: Creates navigable index files for each section
 - **Cross-Reference Links**: Converts internal documentation links to relative Markdown links
 - **Flexible Filtering**: Filter by type, framework, or language
+- **Full-Text Search**: Optional searchable index with standalone search binary
 
 ## Supported Formats
 
@@ -141,6 +142,53 @@ output/
     └── php_version.md
 ```
 
+## Search Index
+
+Use the `--index` flag to generate a searchable SQLite database and standalone search binary:
+
+```bash
+npx docset2md <docset-path> -o <output-dir> --index
+```
+
+This creates:
+- `search.db` - SQLite FTS5 full-text search index
+- `search` - Standalone search binary (requires [Bun](https://bun.sh/) to build)
+
+### Search CLI Usage
+
+```bash
+cd <output-dir>
+
+# Basic search
+./search "UIWindow"
+./search "array_map"
+
+# Prefix search
+./search "bookmark*"
+
+# Phrase search
+./search '"table view"'
+
+# Filter by type or framework
+./search "window" --type Class
+./search "view" --framework UIKit
+
+# Apple docsets: filter by language
+./search "init" --language swift
+
+# List available filters
+./search --list-types
+./search --list-frameworks
+```
+
+### Search Features
+
+- **FTS5 Full-Text Search**: Fast search with BM25 relevance ranking
+- **Auto-Escaping**: Query terms automatically escaped (words like "and", "or" work correctly)
+- **Prefix Matching**: `bookmark*` matches `bookmark`, `bookmarkData`, etc.
+- **Phrase Matching**: `"exact phrase"` for exact matches
+- **Filtering**: By type, framework, or language (Apple docsets)
+
 ## CLI Options
 
 | Option | Description |
@@ -151,6 +199,7 @@ output/
 | `-t, --type <types...>` | Filter by entry types |
 | `--limit <n>` | Limit number of entries to convert |
 | `--download` | Download missing content from Apple API (Apple docsets) |
+| `--index` | Generate searchable index with standalone search binary |
 | `--validate` | Validate internal links after conversion |
 | `-v, --verbose` | Enable verbose output |
 | `-h, --help` | Show help |
