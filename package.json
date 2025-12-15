@@ -8,7 +8,7 @@
     "docset2md": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run lint && npm run format:check && tsc",
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
