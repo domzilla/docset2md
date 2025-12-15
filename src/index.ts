@@ -25,10 +25,15 @@
  * ```
  */
 
-import { existsSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { program } from 'commander';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageJson = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf-8'));
+const VERSION = packageJson.version;
 
 import { FormatDetector } from './factory/format-detector.js';
 import { ConverterFactory } from './factory/converter-factory.js';
@@ -70,7 +75,7 @@ async function main(): Promise<void> {
     program
         .name('docset2md')
         .description('Convert documentation docsets to Markdown')
-        .version('1.0.0')
+        .version(VERSION)
         .argument('<docset>', 'Path to the .docset directory')
         .option('-o, --output <dir>', 'Output directory', './output')
         .option(
