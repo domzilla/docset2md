@@ -8,6 +8,7 @@
  * @fileoverview Converter for DocC docsets with Language/Framework/Item.md structure.
  */
 
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
 import type { MarkdownGenerator } from '../shared/MarkdownGenerator.js';
@@ -165,7 +166,7 @@ export class DocCConverter extends BaseConverter {
    * Generate all index files for Apple docsets.
    *
    * Creates:
-   * - Framework indexes: swift/uikit/_index.md
+   * - Framework indexes: swift/uikit/_index.md (merged with Framework entry if exists)
    * - Language root indexes: swift/_index.md
    *
    * @param outputDir - Base output directory
@@ -178,14 +179,30 @@ export class DocCConverter extends BaseConverter {
         if (items.length === 0) continue;
 
         const langDir = lang === 'swift' ? 'swift' : 'objective-c';
-        const indexContent = generator.generateIndex(
-          framework,
-          `Documentation for the ${framework} framework.`,
-          items.sort((a, b) => a.title.localeCompare(b.title)).map(this.convertToTopicItem)
-        );
-
         const indexPath = join(outputDir, langDir, framework, '_index.md');
-        this.writeFile(indexPath, indexContent);
+
+        // Check if Framework entry already created this file
+        if (existsSync(indexPath)) {
+          // Merge: append Contents section to existing Framework content
+          const existing = readFileSync(indexPath, 'utf-8');
+
+          // Only append if Contents section doesn't already exist
+          if (!existing.includes('## Contents')) {
+            const sortedItems = items
+              .sort((a, b) => a.title.localeCompare(b.title))
+              .map(this.convertToTopicItem);
+            const contentsSection = this.generateContentsSection(sortedItems);
+            this.writeFile(indexPath, existing + '\n\n' + contentsSection);
+          }
+        } else {
+          // No Framework entry - generate full index with fallback description
+          const indexContent = generator.generateIndex(
+            framework,
+            `Documentation for the ${framework} framework.`,
+            items.sort((a, b) => a.title.localeCompare(b.title)).map(this.convertToTopicItem)
+          );
+          this.writeFile(indexPath, indexContent);
+        }
       }
     }
 
@@ -216,6 +233,43 @@ export class DocCConverter extends BaseConverter {
       const indexPath = join(outputDir, langDir, '_index.md');
       this.writeFile(indexPath, indexContent);
     }
+  }
+
+  /**
+   * Generate just the Contents section markdown.
+   *
+   * @param items - Topic items to include in the Contents section
+   * @returns Markdown string for the Contents section
+   */
+  private generateContentsSection(items: Array<{ title: string; url?: string; abstract?: string; deprecated?: boolean; beta?: boolean }>): string {
+    const lines: string[] = ['## Contents', ''];
+
+    for (const item of items) {
+      let line = '- ';
+
+      if (item.url) {
+        line += `[${item.title}](${item.url})`;
+      } else {
+        line += item.title;
+      }
+
+      // Add markers
+      const markers: string[] = [];
+      if (item.deprecated) markers.push('Deprecated');
+      if (item.beta) markers.push('Beta');
+      if (markers.length > 0) {
+        line += ` *(${markers.join(', ')})*`;
+      }
+
+      // Add abstract
+      if (item.abstract) {
+        line += `: ${item.abstract}`;
+      }
+
+      lines.push(line);
+    }
+
+    return lines.join('\n');
   }
 
   /**
