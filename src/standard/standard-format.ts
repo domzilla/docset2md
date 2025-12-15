@@ -82,7 +82,9 @@ export class StandardFormat implements DocsetFormat {
         // and NOT be CoreData format (no ZTOKEN table)
         try {
             const db = new Database(indexPath, { readonly: true });
-            const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>;
+            const tables = db
+                .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+                .all() as Array<{ name: string }>;
             const tableNames = tables.map(t => t.name);
             db.close();
 
@@ -221,9 +223,9 @@ export class StandardFormat implements DocsetFormat {
     getTypes(): string[] {
         if (!this.db) return [];
 
-        const rows = this.db.prepare(
-            'SELECT DISTINCT type FROM searchIndex ORDER BY type'
-        ).all() as Array<{ type: string }>;
+        const rows = this.db
+            .prepare('SELECT DISTINCT type FROM searchIndex ORDER BY type')
+            .all() as Array<{ type: string }>;
 
         return rows.map(r => normalizeType(r.type));
     }
@@ -366,7 +368,12 @@ export class StandardFormat implements DocsetFormat {
             // Extract path from URL
             try {
                 const url = new URL(withoutFragment);
-                return this.docsetName + '.docset/Contents/Resources/Documents/' + url.host + url.pathname;
+                return (
+                    this.docsetName +
+                    '.docset/Contents/Resources/Documents/' +
+                    url.host +
+                    url.pathname
+                );
             } catch {
                 return null;
             }
@@ -385,5 +392,4 @@ export class StandardFormat implements DocsetFormat {
         // Assume it's a relative path in Documents
         return withoutFragment;
     }
-
 }

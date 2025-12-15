@@ -9,7 +9,11 @@
  */
 
 import { StandardConverter } from '../../../src/standard/standard-converter.js';
-import type { DocsetFormat, NormalizedEntry, ParsedContent } from '../../../src/shared/formats/types.js';
+import type {
+    DocsetFormat,
+    NormalizedEntry,
+    ParsedContent,
+} from '../../../src/shared/formats/types.js';
 
 describe('StandardConverter', () => {
     let converter: StandardConverter;

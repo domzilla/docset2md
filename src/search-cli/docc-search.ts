@@ -15,16 +15,13 @@ import { createCli } from './cli-core.js';
 
 createCli({
     name: 'Apple DocC documentation',
-    description: 'Full-text search across Apple developer documentation converted from DocC\n  format. Uses SQLite FTS5 with BM25 ranking for relevance scoring.',
+    description:
+        'Full-text search across Apple developer documentation converted from DocC\n  format. Uses SQLite FTS5 with BM25 ranking for relevance scoring.',
     supportsLanguage: true,
     typeExamples: 'Class, Struct, Protocol, Method, Property, Enum, Function, Framework',
     frameworkExamples: 'framework (e.g., UIKit, Foundation, SwiftUI)',
     examples: {
-        basicSearches: [
-            './search UIWindow',
-            './search "table view"',
-            './search view*',
-        ],
+        basicSearches: ['./search UIWindow', './search "table view"', './search view*'],
         filteredSearches: [
             './search window --type Class',
             './search "view*" --type Class --framework UIKit',

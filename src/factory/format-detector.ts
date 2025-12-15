@@ -44,9 +44,9 @@ export class FormatDetector {
     constructor() {
         // Register formats in priority order (most specific first)
         this.formats = [
-            new DocCFormat(),      // DocC with cache.db + fs/
-            new CoreDataFormat(),  // CoreData schema with ZTOKEN tables
-            new StandardFormat(),  // Simple searchIndex + HTML (fallback)
+            new DocCFormat(), // DocC with cache.db + fs/
+            new CoreDataFormat(), // CoreData schema with ZTOKEN tables
+            new StandardFormat(), // Simple searchIndex + HTML (fallback)
         ];
     }
 
@@ -60,7 +60,10 @@ export class FormatDetector {
      * @param options - Optional format-specific initialization options
      * @returns Initialized format handler, or null if no format matches
      */
-    async detectFormat(docsetPath: string, options?: FormatInitOptions): Promise<DocsetFormat | null> {
+    async detectFormat(
+        docsetPath: string,
+        options?: FormatInitOptions
+    ): Promise<DocsetFormat | null> {
         for (const format of this.formats) {
             if (await format.detect(docsetPath)) {
                 await format.initialize(docsetPath, options);

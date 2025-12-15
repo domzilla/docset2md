@@ -9,10 +9,9 @@
  */
 
 import { existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
-import { join, dirname, basename } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FormatDetector } from '../../src/factory/format-detector.js';
-import type { DocsetFormat } from '../../src/shared/formats/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -68,12 +67,14 @@ describe('Multi-Format Support', () => {
         if (docsets.length === 0) {
             throw new Error(
                 `No docsets found in ${TEST_DATA_DIR}. ` +
-                'Please add .docset directories to test_data/input/ before running integration tests. ' +
-                'For Apple docsets, run: npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o test_data/input UIKit'
+                    'Please add .docset directories to test_data/input/ before running integration tests. ' +
+                    'For Apple docsets, run: npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o test_data/input UIKit'
             );
         }
 
-        console.log(`\nDiscovered ${docsets.length} docset(s): ${docsets.map(d => d.name).join(', ')}\n`);
+        console.log(
+            `\nDiscovered ${docsets.length} docset(s): ${docsets.map(d => d.name).join(', ')}\n`
+        );
 
         // Prepare output directory
         if (!existsSync(OUTPUT_DIR)) {
@@ -218,7 +219,9 @@ describe('Multi-Format Support', () => {
                 const types = format!.getTypes();
                 expect(Array.isArray(types)).toBe(true);
                 expect(types.length).toBeGreaterThan(0);
-                console.log(`    Types: ${types.slice(0, 5).join(', ')}${types.length > 5 ? '...' : ''}`);
+                console.log(
+                    `    Types: ${types.slice(0, 5).join(', ')}${types.length > 5 ? '...' : ''}`
+                );
 
                 format!.close();
             }

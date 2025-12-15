@@ -14,6 +14,10 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "lint": "eslint src tests scripts",
+    "lint:fix": "eslint src tests scripts --fix",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts' 'scripts/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts' 'scripts/**/*.ts'",
     "build:search-cli": "bun build --compile --outfile=dist/docset-search src/search-cli/index.ts",
     "build:search-cli:linux": "bun build --compile --target=bun-linux-x64 --outfile=dist/docset-search-linux src/search-cli/index.ts",
     "build:search-cli:windows": "bun build --compile --target=bun-windows-x64 --outfile=dist/docset-search.exe src/search-cli/index.ts"
@@ -39,7 +43,12 @@
     "@types/node": "^22.10.2",
     "@types/tar-stream": "^3.1.4",
     "@types/turndown": "^5.0.6",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "jest": "^30.2.0",
+    "prettier": "^3.7.4",
     "ts-jest": "^29.4.6",
     "typescript": "^5.7.2"
   }

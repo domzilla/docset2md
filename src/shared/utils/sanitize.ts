@@ -36,8 +36,8 @@ export function sanitizeFileName(name: string): string {
         const paramLabels = paramsSection
             .replace(/[()]/g, '') // Remove parentheses
             .split(':') // Split by colons
-            .map((p) => p.trim().split(/\s+/).pop() || '') // Get the label (last word before colon)
-            .filter((p) => p && p !== '_') // Remove empty and underscore-only labels
+            .map(p => p.trim().split(/\s+/).pop() || '') // Get the label (last word before colon)
+            .filter(p => p && p !== '_') // Remove empty and underscore-only labels
             .join('_');
 
         sanitized = paramLabels ? `${methodName}_${paramLabels}` : methodName;

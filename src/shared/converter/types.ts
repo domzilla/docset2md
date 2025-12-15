@@ -8,7 +8,12 @@
  * @fileoverview Type definitions for docset converters.
  */
 
-import type { DocsetFormat, NormalizedEntry, ParsedContent, EntryFilters } from '../formats/types.js';
+import type {
+    DocsetFormat,
+    NormalizedEntry,
+    ParsedContent,
+    EntryFilters,
+} from '../formats/types.js';
 import type { MarkdownGenerator } from '../markdown-generator.js';
 import type { WriteStats } from '../file-writer.js';
 

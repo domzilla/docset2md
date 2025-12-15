@@ -9,7 +9,12 @@
  */
 
 import { join } from 'node:path';
-import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
+import type {
+    DocsetFormat,
+    NormalizedEntry,
+    ParsedContent,
+    ContentItem,
+} from '../shared/formats/types.js';
 import type { MarkdownGenerator } from '../shared/markdown-generator.js';
 import { BaseConverter } from '../shared/converter/base-converter.js';
 import type { StandardFormat } from './standard-format.js';
@@ -77,11 +82,7 @@ export class StandardConverter extends BaseConverter {
      * @param outputDir - Base output directory
      * @returns Full file path for the markdown output
      */
-    getOutputPath(
-        entry: NormalizedEntry,
-        content: ParsedContent,
-        outputDir: string
-    ): string {
+    getOutputPath(entry: NormalizedEntry, content: ParsedContent, outputDir: string): string {
         const typeDir = entry.type.toLowerCase();
         const fileName = this.sanitizeFileName(entry.name) + '.md';
         return join(outputDir, typeDir, fileName);
@@ -98,8 +99,8 @@ export class StandardConverter extends BaseConverter {
     protected trackForIndex(
         entry: NormalizedEntry,
         content: ParsedContent,
-        filePath: string,
-        outputDir: string
+        _filePath: string,
+        _outputDir: string
     ): void {
         const relativeUrl = `./${this.sanitizeFileName(entry.name)}.md`;
 

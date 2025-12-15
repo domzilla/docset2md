@@ -66,14 +66,18 @@ interface ConvertOptions {
  * Sets up the commander program with all available commands and options,
  * then parses command-line arguments to execute the appropriate action.
  */
-async function main() {
+async function main(): Promise<void> {
     program
         .name('docset2md')
         .description('Convert documentation docsets to Markdown')
         .version('1.0.0')
         .argument('<docset>', 'Path to the .docset directory')
         .option('-o, --output <dir>', 'Output directory', './output')
-        .option('-l, --language <lang>', 'Language to export (swift, objc, both) - Apple docsets only', 'both')
+        .option(
+            '-l, --language <lang>',
+            'Language to export (swift, objc, both) - Apple docsets only',
+            'both'
+        )
         .option('-f, --framework <names...>', 'Filter by framework name(s)')
         .option('-t, --type <types...>', 'Filter by entry type(s)')
         .option('--limit <n>', 'Limit number of entries to process')
@@ -113,7 +117,7 @@ async function main() {
  * @param docsetPath - Path to the .docset directory
  * @param options - Conversion options (output dir, filters, etc.)
  */
-async function convert(docsetPath: string, options: ConvertOptions) {
+async function convert(docsetPath: string, options: ConvertOptions): Promise<void> {
     const resolvedPath = resolve(docsetPath);
     const docsetName = basename(resolvedPath).replace('.docset', '');
 
@@ -153,8 +157,8 @@ async function convert(docsetPath: string, options: ConvertOptions) {
             ? options.language === 'swift'
                 ? ['swift']
                 : options.language === 'objc'
-                    ? ['objc']
-                    : ['swift', 'objc']
+                  ? ['objc']
+                  : ['swift', 'objc']
             : undefined,
         limit: options.limit ? parseInt(String(options.limit)) : undefined,
     };
@@ -165,7 +169,11 @@ async function convert(docsetPath: string, options: ConvertOptions) {
     const startTime = Date.now();
 
     // Progress callback
-    const onProgress: ProgressCallback = (current: number, total: number, entry: NormalizedEntry) => {
+    const onProgress: ProgressCallback = (
+        current: number,
+        total: number,
+        entry: NormalizedEntry
+    ) => {
         const percent = Math.floor((current / total) * 100);
         const elapsed = (Date.now() - startTime) / 1000;
         const rate = elapsed > 0 ? Math.floor(current / elapsed) : 0;
@@ -175,7 +183,9 @@ async function convert(docsetPath: string, options: ConvertOptions) {
         } else {
             const prevPercent = Math.floor(((current - 1) / total) * 100);
             if (percent !== prevPercent || current % 100 === 0 || current === total) {
-                process.stdout.write(`\rProgress: ${current.toLocaleString()}/${total.toLocaleString()} (${percent}%) - ${rate}/sec    `);
+                process.stdout.write(
+                    `\rProgress: ${current.toLocaleString()}/${total.toLocaleString()} (${percent}%) - ${rate}/sec    `
+                );
             }
         }
     };
@@ -230,7 +240,7 @@ async function convert(docsetPath: string, options: ConvertOptions) {
  *
  * @param docsetPath - Path to the .docset directory
  */
-async function listTypes(docsetPath: string) {
+async function listTypes(docsetPath: string): Promise<void> {
     const resolvedPath = resolve(docsetPath);
 
     if (!existsSync(resolvedPath)) {
@@ -263,7 +273,7 @@ async function listTypes(docsetPath: string) {
  *
  * @param docsetPath - Path to the .docset directory
  */
-async function listFrameworks(docsetPath: string) {
+async function listFrameworks(docsetPath: string): Promise<void> {
     const resolvedPath = resolve(docsetPath);
 
     if (!existsSync(resolvedPath)) {
@@ -301,7 +311,7 @@ async function listFrameworks(docsetPath: string) {
  *
  * @param docsetPath - Path to the .docset directory
  */
-async function showInfo(docsetPath: string) {
+async function showInfo(docsetPath: string): Promise<void> {
     const resolvedPath = resolve(docsetPath);
 
     if (!existsSync(resolvedPath)) {

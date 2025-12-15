@@ -12,8 +12,7 @@
 import Database from 'better-sqlite3';
 import { createHash } from 'node:crypto';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, resolve } from 'node:path';
 
 function generateUuid(requestKey: string): string {
     let prefix: string;
@@ -36,7 +35,7 @@ function generateUuid(requestKey: string): string {
     return prefix + suffix;
 }
 
-function printUsage() {
+function printUsage(): void {
     console.log(`
 Usage: npx tsx scripts/extract-framework-apple-docset.ts -i <source.docset> -o <output-dir> <framework> [framework2 ...]
 
@@ -95,7 +94,10 @@ const FRAMEWORK_DISPLAY_NAMES: Record<string, string> = {
 
 function getDisplayName(framework: string): string {
     const lower = framework.toLowerCase();
-    return FRAMEWORK_DISPLAY_NAMES[lower] || framework.charAt(0).toUpperCase() + framework.slice(1).toLowerCase();
+    return (
+        FRAMEWORK_DISPLAY_NAMES[lower] ||
+        framework.charAt(0).toUpperCase() + framework.slice(1).toLowerCase()
+    );
 }
 
 interface ParsedArgs {
@@ -129,7 +131,7 @@ function parseArgs(args: string[]): ParsedArgs | null {
     return { input: resolve(input), output: resolve(output), frameworks };
 }
 
-async function main() {
+async function main(): Promise<void> {
     const args = process.argv.slice(2);
 
     if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
@@ -155,9 +157,10 @@ async function main() {
     const frameworksDisplay = frameworkArgs.map(getDisplayName);
 
     // Generate output name based on frameworks
-    const docsetName = frameworks.length === 1
-        ? `Apple_${frameworksDisplay[0]}_Reference.docset`
-        : `Apple_Test_Reference.docset`;
+    const docsetName =
+        frameworks.length === 1
+            ? `Apple_${frameworksDisplay[0]}_Reference.docset`
+            : `Apple_Test_Reference.docset`;
 
     const targetDocset = join(outputDir, docsetName);
 
@@ -196,22 +199,32 @@ async function main() {
 
     // Copy version.plist and Resources
     copyFileSync(join(sourceDocuments, 'version.plist'), join(targetDocuments, 'version.plist'));
-    cpSync(join(sourceDocuments, 'Resources'), join(targetDocuments, 'Resources'), { recursive: true });
+    cpSync(join(sourceDocuments, 'Resources'), join(targetDocuments, 'Resources'), {
+        recursive: true,
+    });
 
     // Open source databases
     console.log('Opening source databases...');
-    const sourceIndex = new Database(join(sourceDocset, 'Contents/Resources/docSet.dsidx'), { readonly: true });
+    const sourceIndex = new Database(join(sourceDocset, 'Contents/Resources/docSet.dsidx'), {
+        readonly: true,
+    });
     const sourceCache = new Database(join(sourceDocuments, 'cache.db'), { readonly: true });
 
     // Build query for multiple frameworks
-    const frameworkConditions = frameworks.map(f => `path LIKE '%/documentation/${f}%'`).join(' OR ');
+    const frameworkConditions = frameworks
+        .map(f => `path LIKE '%/documentation/${f}%'`)
+        .join(' OR ');
 
     console.log('Querying framework entries...');
-    const entries = sourceIndex.prepare(`
+    const entries = sourceIndex
+        .prepare(
+            `
         SELECT id, name, type, path
         FROM searchIndex
         WHERE ${frameworkConditions}
-    `).all() as Array<{ id: number; name: string; type: string; path: string }>;
+    `
+        )
+        .all() as Array<{ id: number; name: string; type: string; path: string }>;
 
     console.log(`Found ${entries.length} entries`);
 
@@ -286,7 +299,9 @@ async function main() {
         CREATE INDEX idx_searchIndex_name ON searchIndex(name);
     `);
 
-    const insertIndex = targetIndex.prepare('INSERT INTO searchIndex (id, name, type, path) VALUES (?, ?, ?, ?)');
+    const insertIndex = targetIndex.prepare(
+        'INSERT INTO searchIndex (id, name, type, path) VALUES (?, ?, ?, ?)'
+    );
     const insertMany = targetIndex.transaction((entryList: typeof entries) => {
         for (const entry of entryList) {
             insertIndex.run(entry.id, entry.name, entry.type, entry.path);
@@ -325,14 +340,19 @@ async function main() {
     `);
 
     // Copy metadata
-    const metadata = sourceCache.prepare('SELECT key, value FROM metadata').all() as Array<{ key: string; value: Buffer }>;
+    const metadata = sourceCache.prepare('SELECT key, value FROM metadata').all() as Array<{
+        key: string;
+        value: Buffer;
+    }>;
     const insertMeta = targetCache.prepare('INSERT INTO metadata (key, value) VALUES (?, ?)');
     for (const m of metadata) {
         insertMeta.run(m.key, m.value);
     }
 
     // Insert refs
-    const insertRef = targetCache.prepare('INSERT INTO refs (uuid, data_id, offset, length) VALUES (?, ?, ?, ?)');
+    const insertRef = targetCache.prepare(
+        'INSERT INTO refs (uuid, data_id, offset, length) VALUES (?, ?, ?, ?)'
+    );
     const insertRefs = targetCache.transaction((refList: typeof refs) => {
         for (const ref of refList) {
             insertRef.run(ref.uuid, ref.data_id, ref.offset, ref.length);
@@ -341,7 +361,9 @@ async function main() {
     insertRefs(refs);
 
     // Create empty data entries for the data_ids we reference (they're read from fs/)
-    const insertData = targetCache.prepare('INSERT INTO data (row_id, data, is_compressed) VALUES (?, NULL, 1)');
+    const insertData = targetCache.prepare(
+        'INSERT INTO data (row_id, data, is_compressed) VALUES (?, NULL, 1)'
+    );
     for (const dataId of dataIds) {
         insertData.run(dataId);
     }

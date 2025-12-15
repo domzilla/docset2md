@@ -28,7 +28,7 @@ describe('ConverterFactory', () => {
             getTypes: () => [],
             getCategories: () => [],
             supportsMultipleLanguages: () => name === 'Apple DocC',
-            getLanguages: () => name === 'Apple DocC' ? ['swift', 'objc'] : [],
+            getLanguages: () => (name === 'Apple DocC' ? ['swift', 'objc'] : []),
             close: () => {},
         } as DocsetFormat;
     }

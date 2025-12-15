@@ -722,4 +722,3 @@ export interface ParsedDocumentation {
     /** Whether this is a beta API */
     beta?: boolean;
 }
-

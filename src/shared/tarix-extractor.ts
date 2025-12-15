@@ -61,9 +61,9 @@ export class TarixExtractor {
      * @returns true if the file exists in the tarix index
      */
     hasFile(path: string): boolean {
-        const row = this.indexDb.prepare(
-            'SELECT hash FROM tarindex WHERE path = ?'
-        ).get(path) as { hash: string } | undefined;
+        const row = this.indexDb.prepare('SELECT hash FROM tarindex WHERE path = ?').get(path) as
+            | { hash: string }
+            | undefined;
 
         return row !== undefined;
     }
@@ -73,9 +73,9 @@ export class TarixExtractor {
      * @returns Array of all file paths in the index
      */
     getFilePaths(): string[] {
-        const rows = this.indexDb.prepare(
-            'SELECT path FROM tarindex ORDER BY path'
-        ).all() as Array<{ path: string }>;
+        const rows = this.indexDb
+            .prepare('SELECT path FROM tarindex ORDER BY path')
+            .all() as Array<{ path: string }>;
 
         return rows.map(r => r.path);
     }
@@ -86,9 +86,9 @@ export class TarixExtractor {
      * @returns Array of matching file paths
      */
     getFilePathsMatching(pattern: string): string[] {
-        const rows = this.indexDb.prepare(
-            'SELECT path FROM tarindex WHERE path LIKE ? ORDER BY path'
-        ).all(pattern) as Array<{ path: string }>;
+        const rows = this.indexDb
+            .prepare('SELECT path FROM tarindex WHERE path LIKE ? ORDER BY path')
+            .all(pattern) as Array<{ path: string }>;
 
         return rows.map(r => r.path);
     }
@@ -107,9 +107,9 @@ export class TarixExtractor {
         }
 
         // Look up in index
-        const row = this.indexDb.prepare(
-            'SELECT hash FROM tarindex WHERE path = ?'
-        ).get(path) as { hash: string } | undefined;
+        const row = this.indexDb.prepare('SELECT hash FROM tarindex WHERE path = ?').get(path) as
+            | { hash: string }
+            | undefined;
 
         if (!row) {
             throw new Error(`File not found in tarix index: ${path}`);

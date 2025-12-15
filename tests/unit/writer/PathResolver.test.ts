@@ -19,28 +19,51 @@ describe('PathResolver', () => {
 
     describe('resolveFilePath', () => {
         it('should create swift directory for swift language', () => {
-            const path = resolver.resolveFilePath('ls/documentation/uikit/uiwindow', 'swift', 'UIWindow');
+            const path = resolver.resolveFilePath(
+                'ls/documentation/uikit/uiwindow',
+                'swift',
+                'UIWindow'
+            );
 
             expect(path).toContain('/swift/');
         });
 
         it('should create objective-c directory for objc language', () => {
-            const path = resolver.resolveFilePath('lc/documentation/uikit/uiwindow', 'objc', 'UIWindow');
+            const path = resolver.resolveFilePath(
+                'lc/documentation/uikit/uiwindow',
+                'objc',
+                'UIWindow'
+            );
 
             expect(path).toContain('/objective-c/');
         });
 
         it('should use lowercase framework names', () => {
-            const tests = ['uikit', 'appkit', 'swiftui', 'foundation', 'coregraphics', 'avfoundation'];
+            const tests = [
+                'uikit',
+                'appkit',
+                'swiftui',
+                'foundation',
+                'coregraphics',
+                'avfoundation',
+            ];
 
             for (const input of tests) {
-                const path = resolver.resolveFilePath(`ls/documentation/${input}/someclass`, 'swift', 'SomeClass');
+                const path = resolver.resolveFilePath(
+                    `ls/documentation/${input}/someclass`,
+                    'swift',
+                    'SomeClass'
+                );
                 expect(path).toContain(`/${input}/`);
             }
         });
 
         it('should handle custom frameworks with lowercase', () => {
-            const path = resolver.resolveFilePath('ls/documentation/customframework/item', 'swift', 'Item');
+            const path = resolver.resolveFilePath(
+                'ls/documentation/customframework/item',
+                'swift',
+                'Item'
+            );
 
             expect(path).toContain('/customframework/');
         });
@@ -136,7 +159,9 @@ describe('PathResolver', () => {
         it('should convert method signatures to unique filenames', () => {
             expect(resolver.sanitizeFileName('init(frame:)')).toBe('init_frame');
             expect(resolver.sanitizeFileName('init(coder:)')).toBe('init_coder');
-            expect(resolver.sanitizeFileName('perform(_:with:afterDelay:)')).toBe('perform_with_afterdelay');
+            expect(resolver.sanitizeFileName('perform(_:with:afterDelay:)')).toBe(
+                'perform_with_afterdelay'
+            );
         });
 
         it('should collapse multiple underscores and lowercase', () => {
@@ -165,7 +190,9 @@ describe('PathResolver', () => {
         it('should handle complex method signatures', () => {
             expect(resolver.sanitizeFileName('subscript(_:)')).toBe('subscript');
             expect(resolver.sanitizeFileName('encode(to:)')).toBe('encode_to');
-            expect(resolver.sanitizeFileName('application(_:didFinishLaunchingWithOptions:)')).toBe('application_didfinishlaunchingwithoptions');
+            expect(resolver.sanitizeFileName('application(_:didFinishLaunchingWithOptions:)')).toBe(
+                'application_didfinishlaunchingwithoptions'
+            );
         });
 
         it('should lowercase valid characters for filesystem consistency', () => {

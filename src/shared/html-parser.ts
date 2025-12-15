@@ -47,7 +47,7 @@ export class HtmlParser {
 
         // Custom rule for code blocks with language hints
         this.turndown.addRule('codeBlocks', {
-            filter: (node) => {
+            filter: node => {
                 return (
                     node.nodeName === 'PRE' &&
                     node.firstChild !== null &&
@@ -66,7 +66,7 @@ export class HtmlParser {
 
         // Custom rule for internal links - transforms .html links to .md
         this.turndown.addRule('internalLinks', {
-            filter: (node) => {
+            filter: node => {
                 return node.nodeName === 'A' && node.getAttribute('href') !== null;
             },
             replacement: (content, node) => {
@@ -101,7 +101,10 @@ export class HtmlParser {
                     const mapping = this.linkMap.get(htmlFilename);
                     if (mapping) {
                         // Compute relative path from current type directory to target
-                        const relativePath = this.computeRelativePath(this.currentTypeDir, mapping.outputPath);
+                        const relativePath = this.computeRelativePath(
+                            this.currentTypeDir,
+                            mapping.outputPath
+                        );
                         const anchorSuffix = anchor ? `#${anchor}` : '';
                         return `[${content}](${relativePath}${anchorSuffix})`;
                     }
@@ -350,17 +353,10 @@ export class HtmlParser {
     /**
      * Extract function parameters
      */
-    private extractParameters($: cheerio.CheerioAPI): Array<{ name: string; description: string }> | undefined {
+    private extractParameters(
+        $: cheerio.CheerioAPI
+    ): Array<{ name: string; description: string }> | undefined {
         const params: Array<{ name: string; description: string }> = [];
-
-        // Try common parameter table/list formats
-        const paramSelectors = [
-            '.parameters dt, .parameters dd',
-            '.params dt, .params dd',
-            '.arguments dt, .arguments dd',
-            'table.params tr',
-            '.parameter-list li',
-        ];
 
         // Try definition list format
         const dts = $('.parameters dt, .params dt, .arguments dt');

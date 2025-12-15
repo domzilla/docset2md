@@ -155,7 +155,7 @@ export class ContentExtractor {
             }
 
             return null;
-        } catch (error) {
+        } catch {
             // Silently fail for invalid entries
             return null;
         }

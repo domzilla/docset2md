@@ -10,7 +10,12 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../shared/formats/types.js';
+import type {
+    DocsetFormat,
+    NormalizedEntry,
+    ParsedContent,
+    ContentItem,
+} from '../shared/formats/types.js';
 import type { MarkdownGenerator } from '../shared/markdown-generator.js';
 import { BaseConverter } from '../shared/converter/base-converter.js';
 import type { SearchBinaryVariant } from '../search/bun-builder.js';
@@ -66,11 +71,7 @@ export class DocCConverter extends BaseConverter {
      * @param outputDir - Base output directory
      * @returns Full file path for the markdown output
      */
-    getOutputPath(
-        entry: NormalizedEntry,
-        content: ParsedContent,
-        outputDir: string
-    ): string {
+    getOutputPath(entry: NormalizedEntry, content: ParsedContent, outputDir: string): string {
         const langDir = entry.language === 'swift' ? 'swift' : 'objective-c';
         const framework = (content.framework || 'other').toLowerCase();
 
@@ -93,7 +94,12 @@ export class DocCConverter extends BaseConverter {
             }
         } else {
             // Fallback
-            filePath = join(outputDir, langDir, framework, this.sanitizeFileName(entry.name) + '.md');
+            filePath = join(
+                outputDir,
+                langDir,
+                framework,
+                this.sanitizeFileName(entry.name) + '.md'
+            );
         }
 
         return filePath;
@@ -110,8 +116,8 @@ export class DocCConverter extends BaseConverter {
     protected trackForIndex(
         entry: NormalizedEntry,
         content: ParsedContent,
-        filePath: string,
-        outputDir: string
+        _filePath: string,
+        _outputDir: string
     ): void {
         const key = `${entry.type}:${entry.name}:${entry.language || ''}`;
         if (this.seenEntries.has(key)) return;
@@ -199,7 +205,9 @@ export class DocCConverter extends BaseConverter {
                     const indexContent = generator.generateIndex(
                         framework,
                         `Documentation for the ${framework} framework.`,
-                        items.sort((a, b) => a.title.localeCompare(b.title)).map(this.convertToTopicItem)
+                        items
+                            .sort((a, b) => a.title.localeCompare(b.title))
+                            .map(this.convertToTopicItem)
                     );
                     this.writeFile(indexPath, indexContent);
                 }
@@ -241,7 +249,15 @@ export class DocCConverter extends BaseConverter {
      * @param items - Topic items to include in the Contents section
      * @returns Markdown string for the Contents section
      */
-    private generateContentsSection(items: Array<{ title: string; url?: string; abstract?: string; deprecated?: boolean; beta?: boolean }>): string {
+    private generateContentsSection(
+        items: Array<{
+            title: string;
+            url?: string;
+            abstract?: string;
+            deprecated?: boolean;
+            beta?: boolean;
+        }>
+    ): string {
         const lines: string[] = ['## Contents', ''];
 
         for (const item of items) {

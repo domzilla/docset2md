@@ -8,7 +8,7 @@
  * @fileoverview Converts parsed documentation into formatted markdown files.
  */
 
-import type { ParsedDocumentation, DocCContentSection, TopicItem, Platform } from '../docc/types.js';
+import type { ParsedDocumentation, TopicItem, Platform } from '../docc/types.js';
 
 /**
  * Generates markdown files from parsed documentation.

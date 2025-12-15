@@ -49,10 +49,10 @@ export interface SearchOptions {
  * Higher values = more important in ranking.
  */
 const BM25_WEIGHTS = {
-    name: 10.0,       // Symbol name is most important
-    type: 5.0,        // Entry type
-    framework: 2.0,   // Framework name
-    abstract: 1.0,    // Description
+    name: 10.0, // Symbol name is most important
+    type: 5.0, // Entry type
+    framework: 2.0, // Framework name
+    abstract: 1.0, // Description
     declaration: 1.0, // Code signature
 };
 

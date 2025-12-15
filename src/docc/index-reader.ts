@@ -117,7 +117,7 @@ export class IndexReader {
     getEntriesByType(type: string, language?: 'swift' | 'objc'): IndexEntry[] {
         return this.getEntries({
             types: [type],
-            languages: language ? [language] : undefined
+            languages: language ? [language] : undefined,
         });
     }
 
@@ -190,7 +190,12 @@ export class IndexReader {
      * @param row - Database row with id, name, type, path
      * @returns Parsed IndexEntry or null if path format is invalid
      */
-    private parseEntry(row: { id: number; name: string; type: string; path: string }): IndexEntry | null {
+    private parseEntry(row: {
+        id: number;
+        name: string;
+        type: string;
+        path: string;
+    }): IndexEntry | null {
         // Parse the path to extract request_key and language
         // Format: dash-apple-api://load?request_key=ls/documentation/...#<metadata>
         const match = row.path.match(/request_key=(l[sc]\/[^#]+)/);

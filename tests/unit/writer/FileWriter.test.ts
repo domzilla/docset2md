@@ -54,13 +54,23 @@ describe('FileWriter', () => {
         });
 
         it('should write Swift entries to swift directory', () => {
-            const filePath = writer.writeEntry('ls/documentation/uikit/uiview', 'swift', 'UIView', '# UIView');
+            const filePath = writer.writeEntry(
+                'ls/documentation/uikit/uiview',
+                'swift',
+                'UIView',
+                '# UIView'
+            );
 
             expect(filePath).toContain('/swift/');
         });
 
         it('should write Objective-C entries to objective-c directory', () => {
-            const filePath = writer.writeEntry('lc/documentation/uikit/uiview', 'objc', 'UIView', '# UIView');
+            const filePath = writer.writeEntry(
+                'lc/documentation/uikit/uiview',
+                'objc',
+                'UIView',
+                '# UIView'
+            );
 
             expect(filePath).toContain('/objective-c/');
         });
@@ -128,7 +138,12 @@ describe('FileWriter', () => {
         it('should track directories created', () => {
             writer.resetStats();
             writer.writeEntry('ls/documentation/uikit/uiwindow', 'swift', 'UIWindow', '# UIWindow');
-            writer.writeEntry('ls/documentation/foundation/nsstring', 'swift', 'NSString', '# NSString');
+            writer.writeEntry(
+                'ls/documentation/foundation/nsstring',
+                'swift',
+                'NSString',
+                '# NSString'
+            );
 
             const stats = writer.getStats();
 

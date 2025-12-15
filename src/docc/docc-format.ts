@@ -185,12 +185,14 @@ export class DocCFormat implements DocsetFormat {
      * @param filters - Generic entry filters
      * @returns IndexReader-compatible filter object
      */
-    private convertFilters(filters?: EntryFilters): {
-        types?: string[];
-        frameworks?: string[];
-        languages?: Array<'swift' | 'objc'>;
-        limit?: number;
-    } | undefined {
+    private convertFilters(filters?: EntryFilters):
+        | {
+              types?: string[];
+              frameworks?: string[];
+              languages?: Array<'swift' | 'objc'>;
+              limit?: number;
+          }
+        | undefined {
         if (!filters) return undefined;
 
         return {

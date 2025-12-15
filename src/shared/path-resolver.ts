@@ -137,11 +137,7 @@ export class PathResolver {
         const upCount = fromParts.length - commonLength;
         const downParts = toParts.slice(commonLength);
 
-        const relativeParts = [
-            ...Array(upCount).fill('..'),
-            ...downParts,
-            basename(toPath),
-        ];
+        const relativeParts = [...Array(upCount).fill('..'), ...downParts, basename(toPath)];
 
         return relativeParts.join('/');
     }

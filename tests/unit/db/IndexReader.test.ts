@@ -26,7 +26,9 @@ describe('IndexReader', () => {
 
     beforeAll(() => {
         if (!hasTestData) {
-            console.warn('Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit');
+            console.warn(
+                'Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit'
+            );
             return;
         }
         indexReader = new IndexReader(INDEX_PATH);
@@ -96,7 +98,8 @@ describe('IndexReader', () => {
 
             const swiftCount = indexReader.getCount({ languages: ['swift'] });
             const objcCount = indexReader.getCount({ languages: ['objc'] });
-            const bothCount = indexReader.getCount();
+            // bothCount not used but validates total count works
+            indexReader.getCount();
             // Sum may be less than total due to duplicates
             expect(swiftCount).toBeGreaterThan(0);
             expect(objcCount).toBeGreaterThan(0);

@@ -68,9 +68,10 @@ function formatSimple(results: SearchResult[]): string {
         // Abstract if present
         if (result.abstract) {
             // Truncate long abstracts
-            const abstract = result.abstract.length > 100
-                ? result.abstract.substring(0, 100) + '...'
-                : result.abstract;
+            const abstract =
+                result.abstract.length > 100
+                    ? result.abstract.substring(0, 100) + '...'
+                    : result.abstract;
             lines.push(`  ${abstract}`);
         }
 
@@ -111,12 +112,14 @@ function formatTable(results: SearchResult[]): string {
 
     // Rows
     const rows = results.map(r => {
-        const name = r.name.length > nameWidth
-            ? r.name.substring(0, nameWidth - 3) + '...'
-            : r.name.padEnd(nameWidth);
-        const path = r.path.length > pathWidth
-            ? r.path.substring(0, pathWidth - 3) + '...'
-            : r.path.padEnd(pathWidth);
+        const name =
+            r.name.length > nameWidth
+                ? r.name.substring(0, nameWidth - 3) + '...'
+                : r.name.padEnd(nameWidth);
+        const path =
+            r.path.length > pathWidth
+                ? r.path.substring(0, pathWidth - 3) + '...'
+                : r.path.padEnd(pathWidth);
 
         return [
             name,
@@ -156,10 +159,7 @@ function formatJson(results: SearchResult[], query: string): string {
 /**
  * Format types/frameworks list.
  */
-export function formatList(
-    items: Array<{ name: string; count: number }>,
-    title: string
-): string {
+export function formatList(items: Array<{ name: string; count: number }>, title: string): string {
     if (items.length === 0) {
         return `No ${title.toLowerCase()} found.`;
     }

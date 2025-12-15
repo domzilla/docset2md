@@ -9,7 +9,11 @@
  */
 
 import { DocCConverter } from '../../../src/docc/docc-converter.js';
-import type { DocsetFormat, NormalizedEntry, ParsedContent } from '../../../src/shared/formats/types.js';
+import type {
+    DocsetFormat,
+    NormalizedEntry,
+    ParsedContent,
+} from '../../../src/shared/formats/types.js';
 
 describe('DocCConverter', () => {
     let converter: DocCConverter;

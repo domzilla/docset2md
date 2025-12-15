@@ -72,7 +72,10 @@ describe('DocCParser', () => {
             const doc: DocCDocument = {
                 schemaVersion: { major: 0, minor: 3, patch: 0 },
                 kind: 'symbol',
-                identifier: { url: '/documentation/foundation/nsstring', interfaceLanguage: 'swift' },
+                identifier: {
+                    url: '/documentation/foundation/nsstring',
+                    interfaceLanguage: 'swift',
+                },
                 metadata: { title: 'NSString', role: 'symbol' },
                 references: {},
             };
@@ -180,13 +183,16 @@ describe('DocCParser', () => {
                 topicSections: [
                     {
                         title: 'Getting the Root View Controller',
-                        identifiers: ['doc://com.apple.UIKit/documentation/UIKit/UIWindow/rootViewController'],
+                        identifiers: [
+                            'doc://com.apple.UIKit/documentation/UIKit/UIWindow/rootViewController',
+                        ],
                     },
                 ],
                 references: {
                     'doc://com.apple.UIKit/documentation/UIKit/UIWindow/rootViewController': {
                         type: 'topic',
-                        identifier: 'doc://com.apple.UIKit/documentation/UIKit/UIWindow/rootViewController',
+                        identifier:
+                            'doc://com.apple.UIKit/documentation/UIKit/UIWindow/rootViewController',
                         title: 'rootViewController',
                         url: '/documentation/uikit/uiwindow/rootviewcontroller',
                         abstract: [{ type: 'text', text: 'The root view controller.' }],
@@ -207,7 +213,10 @@ describe('DocCParser', () => {
             const doc: DocCDocument = {
                 schemaVersion: { major: 0, minor: 3, patch: 0 },
                 kind: 'symbol',
-                identifier: { url: '/documentation/uikit/uiwindow/init(frame:)', interfaceLanguage: 'swift' },
+                identifier: {
+                    url: '/documentation/uikit/uiwindow/init(frame:)',
+                    interfaceLanguage: 'swift',
+                },
                 metadata: { title: 'init(frame:)', role: 'symbol' },
                 primaryContentSections: [
                     {
@@ -215,7 +224,14 @@ describe('DocCParser', () => {
                         parameters: [
                             {
                                 name: 'frame',
-                                content: [{ type: 'paragraph', inlineContent: [{ type: 'text', text: 'The frame rectangle.' }] }],
+                                content: [
+                                    {
+                                        type: 'paragraph',
+                                        inlineContent: [
+                                            { type: 'text', text: 'The frame rectangle.' },
+                                        ],
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -241,8 +257,16 @@ describe('DocCParser', () => {
                 },
                 references: {
                     'doc://UIKit': { type: 'topic', identifier: 'doc://UIKit', title: 'UIKit' },
-                    'doc://UIKit/UIView': { type: 'topic', identifier: 'doc://UIKit/UIView', title: 'UIView' },
-                    'doc://UIKit/UIWindow': { type: 'topic', identifier: 'doc://UIKit/UIWindow', title: 'UIWindow' },
+                    'doc://UIKit/UIView': {
+                        type: 'topic',
+                        identifier: 'doc://UIKit/UIView',
+                        title: 'UIView',
+                    },
+                    'doc://UIKit/UIWindow': {
+                        type: 'topic',
+                        identifier: 'doc://UIKit/UIWindow',
+                        title: 'UIWindow',
+                    },
                 },
             };
 

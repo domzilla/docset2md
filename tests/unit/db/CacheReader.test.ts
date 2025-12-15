@@ -27,7 +27,9 @@ describe('CacheReader', () => {
 
     beforeAll(() => {
         if (!hasTestData) {
-            console.warn('Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit');
+            console.warn(
+                'Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit'
+            );
             return;
         }
         cacheReader = new CacheReader(CACHE_DB_PATH);

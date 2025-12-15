@@ -8,7 +8,12 @@
  * @fileoverview Unit tests for UUID generation and request key parsing.
  */
 
-import { generateUuid, getDocPath, extractFramework, getLanguage } from '../../../src/docc/uuid-generator.js';
+import {
+    generateUuid,
+    getDocPath,
+    extractFramework,
+    getLanguage,
+} from '../../../src/docc/uuid-generator.js';
 
 describe('UuidGenerator', () => {
     describe('generateUuid', () => {
@@ -47,7 +52,9 @@ describe('UuidGenerator', () => {
         });
 
         it('should throw for invalid request key format (wrong prefix)', () => {
-            expect(() => generateUuid('xx/documentation/uikit')).toThrow('Invalid request key format');
+            expect(() => generateUuid('xx/documentation/uikit')).toThrow(
+                'Invalid request key format'
+            );
         });
 
         it('should handle deep nested paths', () => {
@@ -71,8 +78,9 @@ describe('UuidGenerator', () => {
         });
 
         it('should handle deep paths', () => {
-            expect(getDocPath('ls/documentation/uikit/uiwindow/rootviewcontroller'))
-                .toBe('/documentation/uikit/uiwindow/rootviewcontroller');
+            expect(getDocPath('ls/documentation/uikit/uiwindow/rootviewcontroller')).toBe(
+                '/documentation/uikit/uiwindow/rootviewcontroller'
+            );
         });
 
         it('should handle paths without language prefix', () => {

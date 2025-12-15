@@ -79,7 +79,9 @@ export class CoreDataFormat implements DocsetFormat {
 
         try {
             const db = new Database(indexPath, { readonly: true });
-            const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>;
+            const tables = db
+                .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+                .all() as Array<{ name: string }>;
             const tableNames = tables.map(t => t.name);
             db.close();
 
@@ -225,9 +227,9 @@ export class CoreDataFormat implements DocsetFormat {
     getTypes(): string[] {
         if (!this.db) return [];
 
-        const rows = this.db.prepare(
-            'SELECT DISTINCT ZTYPENAME FROM ZTOKENTYPE ORDER BY ZTYPENAME'
-        ).all() as Array<{ ZTYPENAME: string }>;
+        const rows = this.db
+            .prepare('SELECT DISTINCT ZTYPENAME FROM ZTOKENTYPE ORDER BY ZTYPENAME')
+            .all() as Array<{ ZTYPENAME: string }>;
 
         return rows.map(r => normalizeType(r.ZTYPENAME));
     }
@@ -238,12 +240,16 @@ export class CoreDataFormat implements DocsetFormat {
         if (!this.db) return [];
 
         // Try to get top-level nodes
-        const rows = this.db.prepare(`
+        const rows = this.db
+            .prepare(
+                `
             SELECT DISTINCT ZKNAME as name
             FROM ZNODE
             WHERE ZKNAME IS NOT NULL
             ORDER BY ZKNAME
-        `).all() as Array<{ name: string }>;
+        `
+            )
+            .all() as Array<{ name: string }>;
 
         return rows.map(r => r.name).filter(n => n && n.length > 0);
     }

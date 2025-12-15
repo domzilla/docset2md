@@ -81,7 +81,10 @@ function getSearchCliSourceDir(): string {
  * @returns true if binary was built successfully, false otherwise
  * @throws BunNotInstalledError if Bun is not installed
  */
-export function buildSearchBinary(outputDir: string, variant: SearchBinaryVariant = 'standard'): boolean {
+export function buildSearchBinary(
+    outputDir: string,
+    variant: SearchBinaryVariant = 'standard'
+): boolean {
     if (!isBunInstalled()) {
         throw new BunNotInstalledError();
     }

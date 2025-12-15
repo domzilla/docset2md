@@ -46,32 +46,35 @@ describe('Converter Pipeline Integration', () => {
             }
         });
 
-        (hasTestData ? it : it.skip)('should convert Apple docset with proper directory structure', async () => {
-            const outputDir = join(tempDir, 'apple-output');
-            mkdirSync(outputDir, { recursive: true });
+        (hasTestData ? it : it.skip)(
+            'should convert Apple docset with proper directory structure',
+            async () => {
+                const outputDir = join(tempDir, 'apple-output');
+                mkdirSync(outputDir, { recursive: true });
 
-            const registry = new FormatDetector();
-            const format = await registry.detectFormat(APPLE_DOCSET_PATH);
+                const registry = new FormatDetector();
+                const format = await registry.detectFormat(APPLE_DOCSET_PATH);
 
-            expect(format).not.toBeNull();
-            expect(format!.getName()).toBe('Apple DocC');
+                expect(format).not.toBeNull();
+                expect(format!.getName()).toBe('Apple DocC');
 
-            const converter = ConverterFactory.createConverter(format!, 'Apple');
+                const converter = ConverterFactory.createConverter(format!, 'Apple');
 
-            const result = await converter.convert({
-                outputDir,
-                filters: { limit: 10 },
-            });
+                const result = await converter.convert({
+                    outputDir,
+                    filters: { limit: 10 },
+                });
 
-            expect(result.processed).toBe(10);
-            expect(result.successful).toBeGreaterThan(0);
-            expect(result.writeStats.filesWritten).toBeGreaterThan(0);
+                expect(result.processed).toBe(10);
+                expect(result.successful).toBeGreaterThan(0);
+                expect(result.writeStats.filesWritten).toBeGreaterThan(0);
 
-            // Check directory structure
-            expect(existsSync(join(outputDir, 'swift'))).toBe(true);
+                // Check directory structure
+                expect(existsSync(join(outputDir, 'swift'))).toBe(true);
 
-            converter.close();
-        });
+                converter.close();
+            }
+        );
 
         (hasTestData ? it : it.skip)('should generate index files for Apple docset', async () => {
             const outputDir = join(tempDir, 'apple-index-output');
@@ -108,84 +111,93 @@ describe('Converter Pipeline Integration', () => {
             }
         });
 
-        (hasTestData ? it : it.skip)('should convert Standard Dash docset with proper directory structure', async () => {
-            const outputDir = join(tempDir, 'php-output');
-            mkdirSync(outputDir, { recursive: true });
+        (hasTestData ? it : it.skip)(
+            'should convert Standard Dash docset with proper directory structure',
+            async () => {
+                const outputDir = join(tempDir, 'php-output');
+                mkdirSync(outputDir, { recursive: true });
 
-            const registry = new FormatDetector();
-            const format = await registry.detectFormat(PHP_DOCSET_PATH);
+                const registry = new FormatDetector();
+                const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
-            expect(format).not.toBeNull();
-            expect(format!.getName()).toBe('Standard Dash');
+                expect(format).not.toBeNull();
+                expect(format!.getName()).toBe('Standard Dash');
 
-            const converter = ConverterFactory.createConverter(format!, 'PHP');
+                const converter = ConverterFactory.createConverter(format!, 'PHP');
 
-            const result = await converter.convert({
-                outputDir,
-                filters: { limit: 10 },
-            });
+                const result = await converter.convert({
+                    outputDir,
+                    filters: { limit: 10 },
+                });
 
-            expect(result.processed).toBe(10);
-            expect(result.successful).toBeGreaterThan(0);
-            expect(result.writeStats.filesWritten).toBeGreaterThan(0);
+                expect(result.processed).toBe(10);
+                expect(result.successful).toBeGreaterThan(0);
+                expect(result.writeStats.filesWritten).toBeGreaterThan(0);
 
-            converter.close();
-        });
+                converter.close();
+            }
+        );
 
-        (hasTestData ? it : it.skip)('should generate index files for Standard Dash docset', async () => {
-            const outputDir = join(tempDir, 'php-index-output');
-            mkdirSync(outputDir, { recursive: true });
+        (hasTestData ? it : it.skip)(
+            'should generate index files for Standard Dash docset',
+            async () => {
+                const outputDir = join(tempDir, 'php-index-output');
+                mkdirSync(outputDir, { recursive: true });
 
-            const registry = new FormatDetector();
-            const format = await registry.detectFormat(PHP_DOCSET_PATH);
+                const registry = new FormatDetector();
+                const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
-            const converter = ConverterFactory.createConverter(format!, 'PHP');
+                const converter = ConverterFactory.createConverter(format!, 'PHP');
 
-            await converter.convert({
-                outputDir,
-                filters: { limit: 50 },
-            });
+                await converter.convert({
+                    outputDir,
+                    filters: { limit: 50 },
+                });
 
-            // Check for root index
-            expect(existsSync(join(outputDir, '_index.md'))).toBe(true);
+                // Check for root index
+                expect(existsSync(join(outputDir, '_index.md'))).toBe(true);
 
-            // Check for type directories
-            const contents = readdirSync(outputDir);
-            expect(contents.length).toBeGreaterThan(1); // At least _index.md + type dirs
+                // Check for type directories
+                const contents = readdirSync(outputDir);
+                expect(contents.length).toBeGreaterThan(1); // At least _index.md + type dirs
 
-            converter.close();
-        });
+                converter.close();
+            }
+        );
     });
 
     describe('Progress callback', () => {
         const hasTestData = hasPhpTestData();
 
-        (hasTestData ? it : it.skip)('should call progress callback during conversion', async () => {
-            const outputDir = join(tempDir, 'progress-output');
-            mkdirSync(outputDir, { recursive: true });
+        (hasTestData ? it : it.skip)(
+            'should call progress callback during conversion',
+            async () => {
+                const outputDir = join(tempDir, 'progress-output');
+                mkdirSync(outputDir, { recursive: true });
 
-            const registry = new FormatDetector();
-            const format = await registry.detectFormat(PHP_DOCSET_PATH);
+                const registry = new FormatDetector();
+                const format = await registry.detectFormat(PHP_DOCSET_PATH);
 
-            const converter = ConverterFactory.createConverter(format!, 'PHP');
+                const converter = ConverterFactory.createConverter(format!, 'PHP');
 
-            const progressCalls: number[] = [];
-            const onProgress = (current: number) => {
-                progressCalls.push(current);
-            };
+                const progressCalls: number[] = [];
+                const onProgress = (current: number) => {
+                    progressCalls.push(current);
+                };
 
-            await converter.convert(
-                {
-                    outputDir,
-                    filters: { limit: 5 },
-                },
-                onProgress
-            );
+                await converter.convert(
+                    {
+                        outputDir,
+                        filters: { limit: 5 },
+                    },
+                    onProgress
+                );
 
-            expect(progressCalls).toEqual([1, 2, 3, 4, 5]);
+                expect(progressCalls).toEqual([1, 2, 3, 4, 5]);
 
-            converter.close();
-        });
+                converter.close();
+            }
+        );
     });
 
     describe('Conversion statistics', () => {

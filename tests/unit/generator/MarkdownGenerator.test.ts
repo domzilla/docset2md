@@ -227,7 +227,11 @@ describe('MarkdownGenerator', () => {
                     {
                         title: 'Properties',
                         items: [
-                            { title: 'rootViewController', url: './rootViewController.md', abstract: 'The root view controller.' },
+                            {
+                                title: 'rootViewController',
+                                url: './rootViewController.md',
+                                abstract: 'The root view controller.',
+                            },
                             { title: 'windowLevel', url: './windowLevel.md' },
                         ],
                     },

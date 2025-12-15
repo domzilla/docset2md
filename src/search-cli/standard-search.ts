@@ -15,16 +15,13 @@ import { createCli } from './cli-core.js';
 
 createCli({
     name: 'documentation',
-    description: 'Full-text search across converted documentation.\n  Uses SQLite FTS5 with BM25 ranking for relevance scoring.',
+    description:
+        'Full-text search across converted documentation.\n  Uses SQLite FTS5 with BM25 ranking for relevance scoring.',
     supportsLanguage: false,
     typeExamples: 'Function, Class, Method, Constant, Property, Type, Macro, Guide',
     frameworkExamples: 'framework or category name',
     examples: {
-        basicSearches: [
-            './search array_map',
-            './search "date time"',
-            './search json*',
-        ],
+        basicSearches: ['./search array_map', './search "date time"', './search json*'],
         filteredSearches: [
             './search array --type Function',
             './search Date --type Class',

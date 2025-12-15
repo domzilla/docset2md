@@ -10,7 +10,12 @@
 
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import type { DocsetFormat, NormalizedEntry, ParsedContent, ContentItem } from '../formats/types.js';
+import type {
+    DocsetFormat,
+    NormalizedEntry,
+    ParsedContent,
+    ContentItem,
+} from '../formats/types.js';
 import type { ParsedDocumentation, TopicItem } from '../../docc/types.js';
 import { sanitizeFileName } from '../utils/sanitize.js';
 import { MarkdownGenerator } from '../markdown-generator.js';
@@ -26,7 +31,6 @@ import type {
     ConverterOptions,
     ConversionResult,
     ProgressCallback,
-    WriteStats,
 } from './types.js';
 
 /**
@@ -184,7 +188,10 @@ export abstract class BaseConverter implements DocsetConverter {
 
             // Try to build the search binary
             try {
-                searchBinaryBuilt = buildSearchBinary(options.outputDir, this.getSearchBinaryVariant());
+                searchBinaryBuilt = buildSearchBinary(
+                    options.outputDir,
+                    this.getSearchBinaryVariant()
+                );
             } catch (error) {
                 if (error instanceof BunNotInstalledError) {
                     printBunInstallInstructions();

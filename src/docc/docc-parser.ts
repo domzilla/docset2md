@@ -18,7 +18,6 @@ import type {
     ContentSection,
     Declaration,
     Reference,
-    Platform,
 } from './types.js';
 import { sanitizeFileName } from '../shared/utils/sanitize.js';
 
@@ -136,11 +135,18 @@ export class DocCParser {
             framework: this.extractFramework(doc),
             platforms: metadata?.platforms,
             abstract: this.renderAbstract(doc.abstract),
-            declaration: this.renderDeclaration(doc.primaryContentSections, language, doc.references),
+            declaration: this.renderDeclaration(
+                doc.primaryContentSections,
+                language,
+                doc.references
+            ),
             overview: undefined, // Deprecated: use contentSections instead
             parameters: this.extractParameters(doc.primaryContentSections, doc.references),
             returnValue: undefined, // Deprecated: use contentSections instead
-            contentSections: this.extractContentSections(doc.primaryContentSections, doc.references),
+            contentSections: this.extractContentSections(
+                doc.primaryContentSections,
+                doc.references
+            ),
             topics: this.extractTopics(doc.topicSections, doc.references),
             seeAlso: this.extractTopics(doc.seeAlsoSections, doc.references),
             relationships: this.extractRelationships(doc),
@@ -212,7 +218,10 @@ export class DocCParser {
      * Convert declaration tokens to markdown with type links.
      * Type identifiers with references are rendered as links.
      */
-    private renderDeclarationTokens(decl: Declaration, references?: Record<string, Reference>): string {
+    private renderDeclarationTokens(
+        decl: Declaration,
+        references?: Record<string, Reference>
+    ): string {
         return decl.tokens
             .map(token => {
                 // Check if this token has a reference (type link)
@@ -234,7 +243,10 @@ export class DocCParser {
     /**
      * Render overview/content sections to markdown.
      */
-    private renderOverview(sections?: ContentSection[], references?: Record<string, Reference>): string | undefined {
+    private renderOverview(
+        sections?: ContentSection[],
+        references?: Record<string, Reference>
+    ): string | undefined {
         if (!sections) return undefined;
 
         const contentSections = sections.filter(s => s.kind === 'content' && s.content);
@@ -284,7 +296,11 @@ export class DocCParser {
             if (section.kind === 'content' && section.content) {
                 // Look for return value content after parameters
                 for (const block of section.content) {
-                    if (block.type === 'heading' && 'text' in block && block.text?.toLowerCase().includes('return')) {
+                    if (
+                        block.type === 'heading' &&
+                        'text' in block &&
+                        block.text?.toLowerCase().includes('return')
+                    ) {
                         // Find the content after this heading
                         const idx = section.content.indexOf(block);
                         const nextBlocks = section.content.slice(idx + 1);
@@ -484,9 +500,7 @@ export class DocCParser {
         // Convert dots to slashes for nested types (e.g., XPCListener.IncomingSessionRequest -> xpclistener/incomingsessionrequest)
         // This matches how files are written based on database paths which use slashes for nesting
         const normalizedPath = targetPathAfterFramework.toLowerCase().replace(/\./g, '/');
-        const targetPathParts = normalizedPath
-            ? normalizedPath.split('/')
-            : [];
+        const targetPathParts = normalizedPath ? normalizedPath.split('/') : [];
 
         // Check if target exists in docset before generating link
         // Normalize URL: strip domain prefix if present and convert dots to slashes
@@ -509,9 +523,10 @@ export class DocCParser {
         }
 
         // Use URL segment for filename (not title) to match actual file naming
-        const urlFileName = targetPathParts.length > 0
-            ? this.sanitizeFileName(targetPathParts[targetPathParts.length - 1]) + '.md'
-            : this.sanitizeFileName(title) + '.md';
+        const urlFileName =
+            targetPathParts.length > 0
+                ? this.sanitizeFileName(targetPathParts[targetPathParts.length - 1]) + '.md'
+                : this.sanitizeFileName(title) + '.md';
 
         // Extract source framework and path from source document
         let sourceFramework: string | null = null;
@@ -752,7 +767,10 @@ export class DocCParser {
         references?: Record<string, Reference>
     ): string {
         return block.items
-            .map(item => '- ' + this.renderBlockContent(item.content, references).replace(/\n/g, '\n  '))
+            .map(
+                item =>
+                    '- ' + this.renderBlockContent(item.content, references).replace(/\n/g, '\n  ')
+            )
             .join('\n');
     }
 
@@ -763,7 +781,11 @@ export class DocCParser {
     ): string {
         const start = block.start ?? 1;
         return block.items
-            .map((item, i) => `${start + i}. ` + this.renderBlockContent(item.content, references).replace(/\n/g, '\n   '))
+            .map(
+                (item, i) =>
+                    `${start + i}. ` +
+                    this.renderBlockContent(item.content, references).replace(/\n/g, '\n   ')
+            )
             .join('\n');
     }
 
@@ -793,16 +815,20 @@ export class DocCParser {
                 return '| |';
             }
 
-            return '| ' +
-                cells.map(cellContent => this.renderBlockContent(cellContent, references).replace(/\|/g, '\\|')).join(' | ') +
-                ' |';
+            return (
+                '| ' +
+                cells
+                    .map(cellContent =>
+                        this.renderBlockContent(cellContent, references).replace(/\|/g, '\\|')
+                    )
+                    .join(' | ') +
+                ' |'
+            );
         });
 
         // Create header separator - get column count from first row
         const firstRow = block.rows[0];
-        const colCount = Array.isArray(firstRow)
-            ? firstRow.length
-            : (firstRow?.cells?.length ?? 1);
+        const colCount = Array.isArray(firstRow) ? firstRow.length : (firstRow?.cells?.length ?? 1);
         const separator = '| ' + Array(colCount).fill('---').join(' | ') + ' |';
 
         // If there's a header row, use first row as header
@@ -882,7 +908,12 @@ export class DocCParser {
      * Render a reference as a markdown link.
      */
     private renderReference(
-        content: { type: 'reference'; identifier: string; isActive?: boolean; overridingTitle?: string },
+        content: {
+            type: 'reference';
+            identifier: string;
+            isActive?: boolean;
+            overridingTitle?: string;
+        },
         references?: Record<string, Reference>
     ): string {
         const ref = references?.[content.identifier];
@@ -926,7 +957,7 @@ export class DocCParser {
     /**
      * Resolve a documentation URL to a file path using registered mappings.
      */
-    private resolveUrl(url: string, title?: string): string | null {
+    private resolveUrl(url: string, _title?: string): string | null {
         // First try to find in our registered mappings
         const normalized = this.normalizeDocUrl(url);
         if (normalized) {

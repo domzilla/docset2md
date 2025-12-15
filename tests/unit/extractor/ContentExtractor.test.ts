@@ -26,7 +26,9 @@ describe('ContentExtractor', () => {
 
     beforeAll(() => {
         if (!hasTestData) {
-            console.warn('Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit');
+            console.warn(
+                'Apple test data not found. Run: npx tsx scripts/extract-framework-apple-docset.ts UIKit'
+            );
             return;
         }
         extractor = new ContentExtractor(APPLE_DOCSET_PATH);

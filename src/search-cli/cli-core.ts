@@ -197,8 +197,8 @@ export function createCli(config: CliConfig): void {
     }
 
     // For list commands, we don't need a query
-    const needsQuery = !args.listTypes && !args.listFrameworks &&
-        !(config.supportsLanguage && args.listLanguages);
+    const needsQuery =
+        !args.listTypes && !args.listFrameworks && !(config.supportsLanguage && args.listLanguages);
 
     if (needsQuery && !args.query) {
         console.log(buildHelpText(config));
@@ -212,28 +212,34 @@ export function createCli(config: CliConfig): void {
         // List commands
         if (args.listTypes) {
             const types = reader.getTypes();
-            console.log(formatList(
-                types.map(t => ({ name: t.type, count: t.count })),
-                'Entry Types'
-            ));
+            console.log(
+                formatList(
+                    types.map(t => ({ name: t.type, count: t.count })),
+                    'Entry Types'
+                )
+            );
             return;
         }
 
         if (args.listFrameworks) {
             const frameworks = reader.getFrameworks();
-            console.log(formatList(
-                frameworks.map(f => ({ name: f.framework, count: f.count })),
-                'Frameworks'
-            ));
+            console.log(
+                formatList(
+                    frameworks.map(f => ({ name: f.framework, count: f.count })),
+                    'Frameworks'
+                )
+            );
             return;
         }
 
         if (config.supportsLanguage && args.listLanguages) {
             const languages = reader.getLanguages();
-            console.log(formatList(
-                languages.map(l => ({ name: l.language, count: l.count })),
-                'Languages'
-            ));
+            console.log(
+                formatList(
+                    languages.map(l => ({ name: l.language, count: l.count })),
+                    'Languages'
+                )
+            );
             return;
         }
 
