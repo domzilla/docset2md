@@ -32,8 +32,10 @@ src/
 │   ├── SearchIndexWriter.ts    # Creates search.db during conversion
 │   └── BunBuilder.ts           # Bun detection and binary building
 ├── search-cli/                 # Standalone search CLI (Bun)
-│   ├── docc-search.ts          # DocC CLI with --language support
-│   ├── standard-search.ts      # Standard/CoreData CLI (no language)
+│   ├── cli-core.ts             # Shared CLI logic (parseArgs, main, help)
+│   ├── help.ts                 # Shared help text sections
+│   ├── docc-search.ts          # DocC CLI entry point (thin wrapper)
+│   ├── standard-search.ts      # Standard/CoreData CLI entry point
 │   ├── SearchIndexReader.ts    # Queries search index with bun:sqlite
 │   └── formatters.ts           # Output formatters (simple, table, JSON)
 └── shared/                     # Shared infrastructure
@@ -153,9 +155,9 @@ output/
 ### Features
 
 - **SQLite FTS5**: Full-text search with BM25 ranking
+- **Auto-escaping**: Query terms automatically escaped to prevent FTS5 syntax conflicts
 - **Prefix search**: `UIWin*` matches `UIWindow`, `UIWindowScene`, etc.
 - **Phrase search**: `"view controller"` for exact matches
-- **Boolean operators**: `UIKit AND view`, `window OR scene`
 - **Filtering**: By type, framework, or language
 
 ### Bun Requirement
