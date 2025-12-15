@@ -813,21 +813,24 @@ export class DocCParser {
     return rows.join('\n');
   }
 
-  /** Render term list as definition list. */
+  /** Render term list as bullet list with bold terms. */
   private renderTermList(
     block: {
       type: 'termList';
-      items: Array<{ term: InlineContent; definition: InlineContent }>;
+      items: Array<{
+        term: { inlineContent: InlineContent[] };
+        definition: { content: BlockContent[] };
+      }>;
     },
     references?: Record<string, Reference>
   ): string {
     return block.items
       .map(item => {
-        const term = this.renderInlineContentSingle(item.term, references);
-        const def = this.renderInlineContentSingle(item.definition, references);
-        return `**${term}**: ${def}`;
+        const term = this.renderInlineContent(item.term.inlineContent, references);
+        const def = this.renderBlockContent(item.definition.content, references).trim();
+        return `- **${term}**: ${def}`;
       })
-      .join('\n\n');
+      .join('\n');
   }
 
   /**

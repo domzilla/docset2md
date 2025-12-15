@@ -221,9 +221,9 @@ export interface Parameter {
  */
 export interface DefinitionListItem {
   /** The term being defined */
-  term: InlineContent;
-  /** The definition */
-  definition: InlineContent;
+  term: { inlineContent: InlineContent[] };
+  /** The definition content */
+  definition: { content: BlockContent[] };
 }
 
 /**
