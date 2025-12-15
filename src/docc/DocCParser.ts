@@ -11,6 +11,7 @@
 import type {
   DocCDocument,
   ParsedDocumentation,
+  DocCContentSection,
   TopicItem,
   BlockContent,
   InlineContent,
@@ -136,9 +137,10 @@ export class DocCParser {
       platforms: metadata?.platforms,
       abstract: this.renderAbstract(doc.abstract),
       declaration: this.renderDeclaration(doc.primaryContentSections, language, doc.references),
-      overview: this.renderOverview(doc.primaryContentSections, doc.references),
+      overview: undefined, // Deprecated: use contentSections instead
       parameters: this.extractParameters(doc.primaryContentSections, doc.references),
-      returnValue: this.extractReturnValue(doc.primaryContentSections, doc.references),
+      returnValue: undefined, // Deprecated: use contentSections instead
+      contentSections: this.extractContentSections(doc.primaryContentSections, doc.references),
       topics: this.extractTopics(doc.topicSections, doc.references),
       seeAlso: this.extractTopics(doc.seeAlsoSections, doc.references),
       relationships: this.extractRelationships(doc),
@@ -270,6 +272,7 @@ export class DocCParser {
 
   /**
    * Extract return value description.
+   * @deprecated Use extractContentSections instead
    */
   private extractReturnValue(
     sections?: ContentSection[],
@@ -298,6 +301,68 @@ export class DocCParser {
       }
     }
     return undefined;
+  }
+
+  /**
+   * Extract content sections preserving their order.
+   * Each section is identified by its heading (Return Value, Discussion, etc.)
+   * and grouped with its content until the next heading.
+   */
+  private extractContentSections(
+    sections?: ContentSection[],
+    references?: Record<string, Reference>
+  ): DocCContentSection[] | undefined {
+    if (!sections) return undefined;
+
+    const result: DocCContentSection[] = [];
+
+    // Process each 'content' kind section
+    for (const section of sections) {
+      if (section.kind !== 'content' || !section.content) continue;
+
+      let currentHeading: string | null = null;
+      let currentContent: BlockContent[] = [];
+
+      for (const block of section.content) {
+        if (block.type === 'heading' && 'text' in block && block.text) {
+          // Save previous section if we have content
+          if (currentHeading && currentContent.length > 0) {
+            result.push({
+              heading: currentHeading,
+              content: this.renderBlockContent(currentContent, references),
+            });
+          }
+          // Start new section
+          currentHeading = block.text;
+          currentContent = [];
+        } else {
+          // Add to current content
+          currentContent.push(block);
+        }
+      }
+
+      // Save last section if we have content
+      if (currentHeading && currentContent.length > 0) {
+        result.push({
+          heading: currentHeading,
+          content: this.renderBlockContent(currentContent, references),
+        });
+      }
+
+      // Handle content without any headings (general overview)
+      if (!currentHeading && section.content.length > 0) {
+        // Check if all content is non-heading
+        const hasHeading = section.content.some(b => b.type === 'heading');
+        if (!hasHeading) {
+          result.push({
+            heading: 'Overview',
+            content: this.renderBlockContent(section.content, references),
+          });
+        }
+      }
+    }
+
+    return result.length > 0 ? result : undefined;
   }
 
   /**
@@ -821,6 +886,11 @@ export class DocCParser {
     const title = content.overridingTitle ?? ref?.title ?? content.identifier;
 
     if (ref?.url && content.isActive !== false) {
+      // Check if this is an external link (type: "link" with https:// URL)
+      if (ref.type === 'link' && ref.url.startsWith('https://')) {
+        return `[${title}](${ref.url})`;
+      }
+
       // Try to resolve to actual file path using our mapping
       const resolvedPath = this.resolveUrl(ref.url, ref.title);
       if (resolvedPath) {
@@ -832,7 +902,7 @@ export class DocCParser {
         if (relativePath) {
           return `[${title}](${relativePath})`;
         }
-        // External HTML link - render as plain text
+        // Target doesn't exist in docset - render as plain text
       }
     }
 

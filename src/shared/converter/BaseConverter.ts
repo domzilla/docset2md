@@ -228,6 +228,10 @@ export abstract class BaseConverter implements DocsetConverter {
       overview: content.description,
       parameters: content.parameters,
       returnValue: content.returnValue,
+      contentSections: content.contentSections?.map(s => ({
+        heading: s.heading,
+        content: s.content,
+      })),
       topics: content.topics?.map(t => ({
         title: t.title,
         items: t.items.map(this.convertToTopicItem),

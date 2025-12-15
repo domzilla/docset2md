@@ -217,6 +217,10 @@ export class DocCFormat implements DocsetFormat {
       description: parsed.overview,
       parameters: parsed.parameters,
       returnValue: parsed.returnValue,
+      contentSections: parsed.contentSections?.map(s => ({
+        heading: s.heading,
+        content: s.content,
+      })),
       topics: parsed.topics?.map(t => ({
         title: t.title,
         items: t.items.map(this.convertTopicItem),

@@ -671,6 +671,16 @@ export interface CacheRef {
 }
 
 /**
+ * A content section with a heading, used for preserving section order.
+ */
+export interface DocCContentSection {
+  /** Section heading (e.g., "Return Value", "Discussion") */
+  heading: string;
+  /** Markdown content for this section */
+  content: string;
+}
+
+/**
  * Parsed documentation ready for markdown generation.
  * A simplified representation of DocC content for output generation.
  */
@@ -697,6 +707,8 @@ export interface ParsedDocumentation {
   parameters?: Array<{ name: string; description: string }>;
   /** Return value description */
   returnValue?: string;
+  /** Ordered content sections (Return Value, Discussion, etc.) - placed after parameters */
+  contentSections?: DocCContentSection[];
   /** Grouped topic sections */
   topics?: Array<{ title: string; items: TopicItem[] }>;
   /** See Also sections */

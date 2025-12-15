@@ -8,7 +8,7 @@
  * @fileoverview Converts parsed documentation into formatted markdown files.
  */
 
-import type { ParsedDocumentation, TopicItem, Platform } from '../docc/types.js';
+import type { ParsedDocumentation, DocCContentSection, TopicItem, Platform } from '../docc/types.js';
 
 /**
  * Generates markdown files from parsed documentation.
@@ -78,21 +78,28 @@ export class MarkdownGenerator {
       sections.push(doc.declaration);
     }
 
-    // Overview
-    if (doc.overview) {
+    // Parameters (with proper indentation for multi-line content)
+    if (doc.parameters && doc.parameters.length > 0) {
+      sections.push('## Parameters');
+      sections.push(this.renderParameters(doc.parameters));
+    }
+
+    // Content sections (Return Value, Discussion, etc.) - in original order
+    if (doc.contentSections && doc.contentSections.length > 0) {
+      for (const section of doc.contentSections) {
+        sections.push(`## ${section.heading}`);
+        sections.push(section.content);
+      }
+    }
+
+    // Legacy support: Overview (deprecated, use contentSections)
+    if (!doc.contentSections && doc.overview) {
       sections.push('## Overview');
       sections.push(doc.overview);
     }
 
-    // Parameters
-    if (doc.parameters && doc.parameters.length > 0) {
-      sections.push('## Parameters');
-      const paramLines = doc.parameters.map(p => `- **${p.name}**: ${p.description}`);
-      sections.push(paramLines.join('\n'));
-    }
-
-    // Return Value
-    if (doc.returnValue) {
+    // Legacy support: Return Value (deprecated, use contentSections)
+    if (!doc.contentSections && doc.returnValue) {
       sections.push('## Return Value');
       sections.push(doc.returnValue);
     }
@@ -164,6 +171,40 @@ export class MarkdownGenerator {
         return str;
       })
       .join(', ');
+  }
+
+  /**
+   * Render parameters with proper indentation for multi-line content.
+   *
+   * Each parameter is rendered as a list item with the name in bold.
+   * Multi-line descriptions are properly indented under the list item,
+   * and blank lines are added between parameters for visual separation.
+   */
+  private renderParameters(params: Array<{ name: string; description: string }>): string {
+    return params
+      .map(p => {
+        const lines = p.description.split('\n');
+
+        // First line includes the parameter name
+        const firstLine = `- **${p.name}**: ${lines[0]}`;
+
+        if (lines.length === 1) {
+          return firstLine;
+        }
+
+        // Subsequent lines are indented with 2 spaces for proper list continuation
+        const restLines = lines.slice(1).map(line => {
+          // Empty lines stay empty (but still count as part of the list item)
+          if (line.trim() === '') {
+            return '';
+          }
+          // Indent non-empty lines
+          return '  ' + line;
+        });
+
+        return firstLine + '\n' + restLines.join('\n');
+      })
+      .join('\n\n'); // Double newline between parameters for visual separation
   }
 
   /**

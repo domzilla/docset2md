@@ -31,6 +31,17 @@ export interface NormalizedEntry {
 }
 
 /**
+ * A content section with a heading and markdown content.
+ * Used to preserve the original order of sections like Return Value, Discussion, etc.
+ */
+export interface ContentSection {
+  /** Section heading (e.g., "Return Value", "Discussion") */
+  heading: string;
+  /** Markdown content for this section */
+  content: string;
+}
+
+/**
  * Parsed content ready for markdown generation.
  *
  * Contains all documentation information extracted from an entry,
@@ -55,6 +66,8 @@ export interface ParsedContent {
   parameters?: Array<{ name: string; description: string }>;
   /** Return value description */
   returnValue?: string;
+  /** Ordered content sections (Return Value, Discussion, etc.) - placed after parameters */
+  contentSections?: ContentSection[];
   /** Topic sections with grouped items */
   topics?: Array<{ title: string; items: ContentItem[] }>;
   /** See Also references */
