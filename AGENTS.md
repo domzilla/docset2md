@@ -18,59 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2. Release tags are prefixed with `v` (e.g., `v2.0.1`)
 3. If a new tag exists that isn't in CHANGELOG.md, create a new version section with that tag's version and date, moving relevant [Unreleased] content under it
 
-## Project Structure
-
-```
-src/
-├── index.ts                    # CLI entry point (commander-based)
-├── factory/                    # Factory classes
-│   ├── format-detector.ts      # Format auto-detection
-│   └── converter-factory.ts    # Creates format-specific converters
-├── docc/                       # Apple DocC format (all DocC-specific code)
-│   ├── docc-format.ts          # DocC format handler
-│   ├── docc-converter.ts       # DocC converter: language/framework/item.md
-│   ├── docc-parser.ts          # Parses DocC JSON into structured data
-│   ├── index-reader.ts         # Reads docSet.dsidx SQLite database
-│   ├── cache-reader.ts         # Reads cache.db for content locations
-│   ├── content-extractor.ts    # Brotli decompression and JSON extraction
-│   ├── uuid-generator.ts       # SHA-1 based UUID generation for cache lookup
-│   ├── apple-api-downloader.ts # Downloads missing content from Apple API
-│   └── types.ts                # TypeScript interfaces for DocC schema
-├── standard/                   # Standard Dash format
-│   ├── standard-format.ts      # Standard Dash format handler
-│   └── standard-converter.ts   # Standard converter: type/item.md
-├── coredata/                   # CoreData format
-│   ├── coredata-format.ts      # CoreData format handler
-│   └── coredata-converter.ts   # CoreData converter (extends StandardConverter)
-├── search/                     # Search index generation
-│   ├── types.ts                # Search entry interfaces
-│   ├── schema.ts               # SQLite FTS5 schema
-│   ├── search-index-writer.ts  # Creates search.db during conversion
-│   └── bun-builder.ts          # Bun detection and binary building
-├── search-cli/                 # Standalone search CLI (Bun)
-│   ├── cli-core.ts             # Shared CLI logic (parseArgs, main, help)
-│   ├── help.ts                 # Shared help text sections
-│   ├── docc-search.ts          # DocC CLI entry point (thin wrapper)
-│   ├── standard-search.ts      # Standard/CoreData CLI entry point
-│   ├── search-index-reader.ts  # Queries search index with bun:sqlite
-│   └── formatters.ts           # Output formatters (simple, table, JSON)
-└── shared/                     # Shared infrastructure
-    ├── formats/                # Format abstraction layer
-    │   └── types.ts            # DocsetFormat interface and types
-    ├── converter/              # Converter abstraction layer
-    │   ├── types.ts            # DocsetConverter interface and types
-    │   └── base-converter.ts   # Abstract base with shared conversion logic
-    ├── utils/                  # Shared utilities
-    │   ├── sanitize.ts         # Filename sanitization
-    │   └── type-normalizer.ts  # Type code normalization
-    ├── tarix-extractor.ts      # Tarix archive extraction for Dash docsets
-    ├── html-parser.ts          # Parses HTML using cheerio/turndown
-    ├── markdown-generator.ts   # Converts parsed docs to markdown
-    ├── file-writer.ts          # Writes output files
-    ├── path-resolver.ts        # Resolves documentation paths to file paths
-    └── link-validator.ts       # Validates internal markdown links
-```
-
 ## Supported Formats
 
 | Format | Detection | Content Storage | Content Format |
